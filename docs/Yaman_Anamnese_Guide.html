@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💖 Anamnese Guide für Yaman | Medical History Guide | دليل التاريخ الطبي</title>
+    <style>
+        :root {
+            --primary: #667eea;
+            --primary-dark: #5a67d8;
+            --secondary: #ed64a6;
+            --accent: #f6ad55;
+            --success: #48bb78;
+            --text: #2d3748;
+            --text-light: #718096;
+            --bg: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #ed64a6 100%);
+            --card-bg: rgba(255, 255, 255, 0.95);
+            --shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            min-height: 100vh;
+            color: var(--text);
+            line-height: 1.7;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            padding: 60px 20px;
+            color: white;
+            position: relative;
+        }
+
+        .hero::before {
+            content: "💖";
+            font-size: 4rem;
+            display: block;
+            margin-bottom: 20px;
+            animation: heartbeat 1.5s infinite;
+        }
+
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .hero h1 {
+            font-size: 2.8rem;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .hero .personalized {
+            font-size: 1.4rem;
+            opacity: 0.95;
+            margin-bottom: 30px;
+        }
+
+        .hero .love-note {
+            background: rgba(255,255,255,0.2);
+            padding: 20px 40px;
+            border-radius: 30px;
+            display: inline-block;
+            backdrop-filter: blur(10px);
+            margin-top: 20px;
+        }
+
+        /* Language Tabs */
+        .lang-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .lang-tab {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            background: rgba(255,255,255,0.3);
+            color: white;
+            backdrop-filter: blur(5px);
+        }
+
+        .lang-tab:hover, .lang-tab.active {
+            background: white;
+            color: var(--primary);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        /* Content Cards */
+        .card {
+            background: var(--card-bg);
+            border-radius: 24px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card h2 {
+            color: var(--primary);
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .card h2 .icon {
+            font-size: 2rem;
+        }
+
+        .card h3 {
+            color: var(--primary-dark);
+            margin: 25px 0 15px;
+            font-size: 1.3rem;
+        }
+
+        /* Steps */
+        .steps {
+            counter-reset: step;
+        }
+
+        .step {
+            position: relative;
+            padding: 25px 30px 25px 80px;
+            margin: 20px 0;
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            border-radius: 16px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .step::before {
+            counter-increment: step;
+            content: counter(step);
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .step h4 {
+            color: var(--primary-dark);
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .step p {
+            color: var(--text-light);
+        }
+
+        /* Screenshot Placeholder */
+        .screenshot {
+            background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e0 100%);
+            border-radius: 16px;
+            padding: 60px 20px;
+            text-align: center;
+            margin: 20px 0;
+            border: 3px dashed #a0aec0;
+        }
+
+        .screenshot .icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .screenshot p {
+            color: var(--text-light);
+            font-size: 0.95rem;
+        }
+
+        /* Tips */
+        .tip {
+            background: linear-gradient(135deg, #c6f6d5 0%, #9ae6b4 100%);
+            padding: 20px 25px;
+            border-radius: 16px;
+            margin: 20px 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+        }
+
+        .tip .icon {
+            font-size: 1.5rem;
+        }
+
+        .tip-content h4 {
+            color: #276749;
+            margin-bottom: 5px;
+        }
+
+        .tip-content p {
+            color: #2f855a;
+        }
+
+        /* Warning */
+        .warning {
+            background: linear-gradient(135deg, #fed7d7 0%, #feb2b2 100%);
+            padding: 20px 25px;
+            border-radius: 16px;
+            margin: 20px 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+        }
+
+        .warning .icon {
+            font-size: 1.5rem;
+        }
+
+        .warning-content h4 {
+            color: #c53030;
+            margin-bottom: 5px;
+        }
+
+        .warning-content p {
+            color: #e53e3e;
+        }
+
+        /* Feature Grid */
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin: 30px 0;
+        }
+
+        .feature {
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            padding: 30px;
+            border-radius: 16px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .feature:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .feature .icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+
+        .feature h4 {
+            color: var(--primary-dark);
+            margin-bottom: 10px;
+        }
+
+        .feature p {
+            color: var(--text-light);
+            font-size: 0.95rem;
+        }
+
+        /* Checklist */
+        .checklist {
+            list-style: none;
+        }
+
+        .checklist li {
+            padding: 15px 20px;
+            margin: 10px 0;
+            background: #f7fafc;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .checklist li::before {
+            content: "✓";
+            width: 30px;
+            height: 30px;
+            background: var(--success);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        /* Personalized Footer */
+        .footer {
+            text-align: center;
+            padding: 50px 20px;
+            color: white;
+        }
+
+        .footer .heart {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            animation: heartbeat 1.5s infinite;
+        }
+
+        .footer h3 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+
+        .footer p {
+            opacity: 0.9;
+            margin: 10px 0;
+        }
+
+        .footer .signature {
+            margin-top: 30px;
+            font-style: italic;
+            opacity: 0.8;
+        }
+
+        /* Hidden content for language switching */
+        .lang-content {
+            display: none;
+        }
+
+        .lang-content.active {
+            display: block;
+        }
+
+        /* RTL for Arabic */
+        [dir="rtl"] {
+            direction: rtl;
+            text-align: right;
+        }
+
+        [dir="rtl"] .step {
+            padding: 25px 80px 25px 30px;
+            border-left: none;
+            border-right: 4px solid var(--primary);
+        }
+
+        [dir="rtl"] .step::before {
+            left: auto;
+            right: 20px;
+        }
+
+        /* Links */
+        a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        a:hover {
+            color: var(--secondary);
+            text-decoration: underline;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 30px;
+            border-radius: 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            margin: 10px 5px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-decoration: none;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--primary);
+            color: white;
+            text-decoration: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .card {
+                padding: 25px;
+            }
+
+            .step {
+                padding: 20px 20px 20px 70px;
+            }
+
+            [dir="rtl"] .step {
+                padding: 20px 70px 20px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <section class="hero">
+        <h1 id="hero-title">Anamnese Guide für Yaman</h1>
+        <p class="personalized" id="hero-subtitle">Mit Liebe erstellt, speziell für dich 💖</p>
+        <div class="love-note" id="hero-note">
+            Dieses Dokument wurde mit besonderer Sorgfalt und Liebe erstellt,<br>
+            um dir den Einstieg so einfach wie möglich zu machen.
+        </div>
+    </section>
+
+    <!-- Language Tabs -->
+    <div class="container">
+        <div class="lang-tabs">
+            <button class="lang-tab active" onclick="switchLang('de')">🇩🇪 Deutsch</button>
+            <button class="lang-tab" onclick="switchLang('en')">🇬🇧 English</button>
+            <button class="lang-tab" onclick="switchLang('ar')">🇸🇦 العربية</button>
+        </div>
+
+        <!-- German Content -->
+        <div class="lang-content active" id="lang-de">
+            <!-- Introduction Card -->
+            <div class="card">
+                <h2><span class="icon">👋</span> Willkommen, liebe Yaman!</h2>
+                <p>
+                    Dieses Dokument wurde mit besonderer Liebe und Sorgfalt speziell für dich erstellt. 
+                    Hier findest du eine vollständige Anleitung zur Nutzung des Anamnese-Suit Systems - 
+                    Schritt für Schritt erklärt, damit du sofort loslegen kannst!
+                </p>
+
+                <div class="tip">
+                    <span class="icon">💡</span>
+                    <div class="tip-content">
+                        <h4>Persönlicher Tipp</h4>
+                        <p>Nimm dir Zeit, diese Anleitung durchzugehen. Bei Fragen bin ich immer für dich da!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Links -->
+            <div class="card">
+                <h2><span class="icon">🔗</span> Schnellzugriff</h2>
+                <div class="features">
+                    <a href="../medical_anamnesis.html" class="feature" style="text-decoration: none;">
+                        <div class="icon">📋</div>
+                        <h4>Hauptanwendung öffnen</h4>
+                        <p>Starte die medizinische Anamnese</p>
+                    </a>
+                    <a href="../Anamnese_interactive.html" class="feature" style="text-decoration: none;">
+                        <div class="icon">💬</div>
+                        <h4>Chat-Version</h4>
+                        <p>Interaktive Chat-Anamnese</p>
+                    </a>
+                    <a href="../README.md" class="feature" style="text-decoration: none;">
+                        <div class="icon">📖</div>
+                        <h4>Dokumentation</h4>
+                        <p>Technische Details</p>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Step-by-Step Guide -->
+            <div class="card">
+                <h2><span class="icon">📚</span> Schritt-für-Schritt Anleitung</h2>
+                
+                <h3>1. Erste Schritte</h3>
+                <div class="steps">
+                    <div class="step">
+                        <h4>Anwendung öffnen</h4>
+                        <p>Öffne die Datei <strong>medical_anamnesis.html</strong> in deinem Webbrowser (Chrome, Firefox, Safari oder Edge empfohlen).</p>
+                    </div>
+                    <div class="step">
+                        <h4>Sprache wählen</h4>
+                        <p>Oben rechts findest du die Sprachauswahl. Du kannst zwischen Deutsch, Englisch, Türkisch, Russisch, Arabisch und vielen weiteren Sprachen wählen.</p>
+                    </div>
+                    <div class="step">
+                        <h4>Fragebogen-Typ auswählen</h4>
+                        <p>Wähle den passenden Anamnese-Bereich: Vollständige Anamnese, Hausarzt, Orthopädie, Pädiatrie oder Geriatrie.</p>
+                    </div>
+                </div>
+
+                <div class="screenshot">
+                    <div class="icon">📸</div>
+                    <p><strong>Screenshot:</strong> Startbildschirm mit Sprachauswahl und Fragebogen-Typen</p>
+                </div>
+
+                <h3>2. Fragebogen ausfüllen</h3>
+                <div class="steps">
+                    <div class="step">
+                        <h4>Basisdaten eingeben</h4>
+                        <p>Beginne mit Vorname, Nachname, Geschlecht und Geburtsdatum. Diese Felder sind Pflichtfelder.</p>
+                    </div>
+                    <div class="step">
+                        <h4>Fragen beantworten</h4>
+                        <p>Beantworte jede Frage sorgfältig. Der Fortschrittsbalken zeigt dir, wie weit du bist.</p>
+                    </div>
+                    <div class="step">
+                        <h4>Navigation nutzen</h4>
+                        <p>Mit "Zurück" kannst du vorherige Antworten ändern. "Überspringen" ist bei optionalen Fragen möglich.</p>
+                    </div>
+                </div>
+
+                <div class="warning">
+                    <span class="icon">⚠️</span>
+                    <div class="warning-content">
+                        <h4>Wichtiger Hinweis</h4>
+                        <p>Alle Daten bleiben lokal auf deinem Gerät. Es werden keine Daten an Server übertragen!</p>
+                    </div>
+                </div>
+
+                <h3>3. Daten exportieren</h3>
+                <div class="steps">
+                    <div class="step">
+                        <h4>JSON Export</h4>
+                        <p>Nach Abschluss kannst du alle Daten als JSON-Datei herunterladen.</p>
+                    </div>
+                    <div class="step">
+                        <h4>E-Mail versenden</h4>
+                        <p>Alternativ kannst du die Zusammenfassung direkt per E-Mail versenden.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Features -->
+            <div class="card">
+                <h2><span class="icon">✨</span> Besondere Funktionen</h2>
+                <div class="features">
+                    <div class="feature">
+                        <div class="icon">🌍</div>
+                        <h4>10+ Sprachen</h4>
+                        <p>Vollständig übersetzt in viele Sprachen inkl. RTL-Unterstützung</p>
+                    </div>
+                    <div class="feature">
+                        <div class="icon">📱</div>
+                        <h4>Responsiv</h4>
+                        <p>Perfekt auf Handy, Tablet und Desktop nutzbar</p>
+                    </div>
+                    <div class="feature">
+                        <div class="icon">🔒</div>
+                        <h4>Datenschutz</h4>
+                        <p>Alle Daten bleiben lokal auf deinem Gerät</p>
+                    </div>
+                    <div class="feature">
+                        <div class="icon">💾</div>
+                        <h4>Auto-Speichern</h4>
+                        <p>Dein Fortschritt wird automatisch gespeichert</p>
+                    </div>
+                    <div class="feature">
+                        <div class="icon">🎤</div>
+                        <h4>Spracheingabe</h4>
+                        <p>In der Chat-Version mit Mikrofon-Unterstützung</p>
+                    </div>
+                    <div class="feature">
+                        <div class="icon">🌙</div>
+                        <h4>Dark Mode</h4>
+                        <p>Angenehm für die Augen bei schlechten Lichtverhältnissen</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Checklist -->
+            <div class="card">
+                <h2><span class="icon">✅</span> Test-Checkliste</h2>
+                <p>Überprüfe diese Punkte, um sicherzustellen, dass alles funktioniert:</p>
+                <ul class="checklist">
+                    <li>Anwendung öffnet korrekt im Browser</li>
+                    <li>Sprachauswahl funktioniert für alle Sprachen</li>
+                    <li>Alle Fragebogen-Typen sind auswählbar</li>
+                    <li>Fortschrittsbalken aktualisiert sich</li>
+                    <li>Navigation (Zurück/Weiter) funktioniert</li>
+                    <li>Pflichtfelder werden validiert</li>
+                    <li>Export-Funktionen arbeiten korrekt</li>
+                    <li>E-Mail-Versand öffnet E-Mail-Client</li>
+                    <li>Responsive Design auf verschiedenen Geräten</li>
+                    <li>Daten bleiben lokal gespeichert</li>
+                </ul>
+            </div>
+
+            <!-- Support -->
+            <div class="card">
+                <h2><span class="icon">💌</span> Hilfe & Unterstützung</h2>
+                <p>
+                    Wenn du Fragen hast oder Hilfe brauchst, zögere nicht zu fragen! 
+                    Dieses Dokument wurde mit viel Liebe für dich erstellt, und ich bin immer hier, 
+                    um dir zu helfen.
+                </p>
+                <div style="text-align: center; margin-top: 30px;">
+                    <a href="../medical_anamnesis.html" class="btn btn-primary">
+                        🚀 Jetzt starten
+                    </a>
+                    <a href="../Anamnese_interactive.html" class="btn btn-secondary">
+                        💬 Chat-Version testen
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- English Content -->
+        <div class="lang-content" id="lang-en">
+            <div class="card">
+                <h2><span class="icon">👋</span> Welcome, dear Yaman!</h2>
+                <p>
+                    This document was created with special love and care just for you. 
+                    Here you'll find a complete guide to using the Anamnese-Suit System - 
+                    explained step by step so you can get started right away!
+                </p>
+
+                <div class="tip">
+                    <span class="icon">💡</span>
+                    <div class="tip-content">
+                        <h4>Personal Tip</h4>
+                        <p>Take your time going through this guide. I'm always here for you if you have questions!</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2><span class="icon">🔗</span> Quick Access</h2>
+                <div class="features">
+                    <a href="../medical_anamnesis.html" class="feature" style="text-decoration: none;">
+                        <div class="icon">📋</div>
+                        <h4>Open Main Application</h4>
+                        <p>Start the medical anamnesis</p>
+                    </a>
+                    <a href="../Anamnese_interactive.html" class="feature" style="text-decoration: none;">
+                        <div class="icon">💬</div>
+                        <h4>Chat Version</h4>
+                        <p>Interactive chat anamnesis</p>
+                    </a>
+                    <a href="../README.md" class="feature" style="text-decoration: none;">
+                        <div class="icon">📖</div>
+                        <h4>Documentation</h4>
+                        <p>Technical details</p>
+                    </a>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2><span class="icon">📚</span> Step-by-Step Guide</h2>
+                
+                <h3>1. Getting Started</h3>
+                <div class="steps">
+                    <div class="step">
+                        <h4>Open Application</h4>
+                        <p>Open the file <strong>medical_anamnesis.html</strong> in your web browser (Chrome, Firefox, Safari or Edge recommended).</p>
+                    </div>
+                    <div class="step">
+                        <h4>Select Language</h4>
+                        <p>In the top right corner, you'll find the language selection. You can choose between German, English, Turkish, Russian, Arabic and many more languages.</p>
+                    </div>
+                    <div class="step">
+                        <h4>Choose Questionnaire Type</h4>
+                        <p>Select the appropriate anamnesis section: Complete History, General Practice, Orthopedics, Pediatrics or Geriatrics.</p>
+                    </div>
+                </div>
+
+                <div class="screenshot">
+                    <div class="icon">📸</div>
+                    <p><strong>Screenshot:</strong> Start screen with language selection and questionnaire types</p>
+                </div>
+
+                <h3>2. Filling Out the Questionnaire</h3>
+                <div class="steps">
+                    <div class="step">
+                        <h4>Enter Basic Data</h4>
+                        <p>Start with first name, last name, gender and date of birth. These are required fields.</p>
+                    </div>
+                    <div class="step">
+                        <h4>Answer Questions</h4>
+                        <p>Answer each question carefully. The progress bar shows how far you've come.</p>
+                    </div>
+                    <div class="step">
+                        <h4>Use Navigation</h4>
+                        <p>Use "Back" to change previous answers. "Skip" is available for optional questions.</p>
+                    </div>
+                </div>
+
+                <div class="warning">
+                    <span class="icon">⚠️</span>
+                    <div class="warning-content">
+                        <h4>Important Note</h4>
+                        <p>All data stays locally on your device. No data is transmitted to servers!</p>
+                    </div>
+                </div>
+
+                <h3>3. Exporting Data</h3>
+                <div class="steps">
+                    <div class="step">
+                        <h4>JSON Export</h4>
+                        <p>After completion, you can download all data as a JSON file.</p>
+                    </div>
+                    <div class="step">
+                        <h4>Send Email</h4>
+                        <p>Alternatively, you can send the summary directly via email.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2><span class="icon">✨</span> Special Features</h2>
+                <div class="features">
+                    <div class="feature">
+                        <div class="icon">🌍</div>
+                        <h4>10+ Languages</h4>
+                        <p>Fully translated into many languages including RTL support</p>
+                    </div>
+                    <div class="feature">
+                        <div class="icon">📱</div>
+                        <h4>Responsive</h4>
+                        <p>Perfect on phone, tablet and desktop</p>
+                    </div>
+                    <div class="feature">
+                        <div class="icon">🔒</div>
+                        <h4>Privacy</h4>
+                        <p>All data stays locally on your device</p>
+                    </div>
+                    <div class="feature">
+                        <div class="icon">💾</div>
+                        <h4>Auto-Save</h4>
+                        <p>Your progress is automatically saved</p>
+                    </div>
+                    <div class="feature">
+                        <div class="icon">🎤</div>
+                        <h4>Voice Input</h4>
+                        <p>Microphone support in chat version</p>
+                    </div>
+                    <div class="feature">
+                        <div class="icon">🌙</div>
+                        <h4>Dark Mode</h4>
+                        <p>Easy on the eyes in low light</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2><span class="icon">✅</span> Test Checklist</h2>
+                <p>Check these points to make sure everything works:</p>
+                <ul class="checklist">
+                    <li>Application opens correctly in browser</li>
+                    <li>Language selection works for all languages</li>
+                    <li>All questionnaire types are selectable</li>
+                    <li>Progress bar updates correctly</li>
+                    <li>Navigation (Back/Next) works</li>
+                    <li>Required fields are validated</li>
+                    <li>Export functions work correctly</li>
+                    <li>Email sending opens email client</li>
+                    <li>Responsive design on different devices</li>
+                    <li>Data stays locally stored</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h2><span class="icon">💌</span> Help & Support</h2>
+                <p>
+                    If you have questions or need help, don't hesitate to ask! 
+                    This document was created with lots of love for you, and I'm always here 
+                    to help you.
+                </p>
+                <div style="text-align: center; margin-top: 30px;">
+                    <a href="../medical_anamnesis.html" class="btn btn-primary">
+                        🚀 Start Now
+                    </a>
+                    <a href="../Anamnese_interactive.html" class="btn btn-secondary">
+                        💬 Try Chat Version
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Arabic Content -->
+        <div class="lang-content" id="lang-ar" dir="rtl">
+            <div class="card">
+                <h2><span class="icon">👋</span> !أهلاً وسهلاً يا يمان العزيزة</h2>
+                <p>
+                    تم إنشاء هذا المستند بكل حب واهتمام خصيصاً لكِ.
+                    ستجدين هنا دليلاً كاملاً لاستخدام نظام Anamnese-Suit -
+                    شرح خطوة بخطوة حتى تتمكني من البدء على الفور!
+                </p>
+
+                <div class="tip">
+                    <span class="icon">💡</span>
+                    <div class="tip-content">
+                        <h4>نصيحة شخصية</h4>
+                        <p>خذي وقتك في قراءة هذا الدليل. أنا دائماً هنا لمساعدتك إذا كان لديك أي أسئلة!</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2><span class="icon">🔗</span> وصول سريع</h2>
+                <div class="features">
+                    <a href="../medical_anamnesis.html" class="feature" style="text-decoration: none;">
+                        <div class="icon">📋</div>
+                        <h4>فتح التطبيق الرئيسي</h4>
+                        <p>ابدأ التاريخ الطبي</p>
+                    </a>
+                    <a href="../Anamnese_interactive.html" class="feature" style="text-decoration: none;">
+                        <div class="icon">💬</div>
+                        <h4>نسخة المحادثة</h4>
+                        <p>التاريخ الطبي التفاعلي</p>
+                    </a>
+                    <a href="../README.md" class="feature" style="text-decoration: none;">
+                        <div class="icon">📖</div>
+                        <h4>التوثيق</h4>
+                        <p>التفاصيل التقنية</p>
+                    </a>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2><span class="icon">📚</span> دليل خطوة بخطوة</h2>
+                
+                <h3>١. البداية</h3>
+                <div class="steps">
+                    <div class="step">
+                        <h4>فتح التطبيق</h4>
+                        <p>افتحي الملف <strong>medical_anamnesis.html</strong> في متصفح الويب (يُنصح بـ Chrome أو Firefox أو Safari أو Edge).</p>
+                    </div>
+                    <div class="step">
+                        <h4>اختيار اللغة</h4>
+                        <p>في الزاوية العلوية اليمنى ستجدين اختيار اللغة. يمكنك الاختيار بين الألمانية والإنجليزية والتركية والروسية والعربية والعديد من اللغات الأخرى.</p>
+                    </div>
+                    <div class="step">
+                        <h4>اختيار نوع الاستبيان</h4>
+                        <p>اختاري قسم التاريخ الطبي المناسب: كامل أو طب الأسرة أو العظام أو الأطفال أو الشيخوخة.</p>
+                    </div>
+                </div>
+
+                <div class="screenshot">
+                    <div class="icon">📸</div>
+                    <p><strong>لقطة شاشة:</strong> شاشة البداية مع اختيار اللغة وأنواع الاستبيان</p>
+                </div>
+
+                <h3>٢. ملء الاستبيان</h3>
+                <div class="steps">
+                    <div class="step">
+                        <h4>إدخال البيانات الأساسية</h4>
+                        <p>ابدأي بالاسم الأول واسم العائلة والجنس وتاريخ الميلاد. هذه حقول إلزامية.</p>
+                    </div>
+                    <div class="step">
+                        <h4>الإجابة على الأسئلة</h4>
+                        <p>أجيبي على كل سؤال بعناية. شريط التقدم يُظهر مدى تقدمك.</p>
+                    </div>
+                    <div class="step">
+                        <h4>استخدام التنقل</h4>
+                        <p>استخدمي "رجوع" لتغيير الإجابات السابقة. "تخطي" متاح للأسئلة الاختيارية.</p>
+                    </div>
+                </div>
+
+                <div class="warning">
+                    <span class="icon">⚠️</span>
+                    <div class="warning-content">
+                        <h4>ملاحظة مهمة</h4>
+                        <p>جميع البيانات تبقى محلياً على جهازك. لا يتم نقل أي بيانات إلى الخوادم!</p>
+                    </div>
+                </div>
+
+                <h3>٣. تصدير البيانات</h3>
+                <div class="steps">
+                    <div class="step">
+                        <h4>تصدير JSON</h4>
+                        <p>بعد الانتهاء، يمكنك تنزيل جميع البيانات كملف JSON.</p>
+                    </div>
+                    <div class="step">
+                        <h4>إرسال بريد إلكتروني</h4>
+                        <p>بدلاً من ذلك، يمكنك إرسال الملخص مباشرة عبر البريد الإلكتروني.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2><span class="icon">✨</span> ميزات خاصة</h2>
+                <div class="features">
+                    <div class="feature">
+                        <div class="icon">🌍</div>
+                        <h4>١٠+ لغات</h4>
+                        <p>مترجم بالكامل إلى العديد من اللغات بما في ذلك دعم RTL</p>
+                    </div>
+                    <div class="feature">
+                        <div class="icon">📱</div>
+                        <h4>متجاوب</h4>
+                        <p>مثالي على الهاتف والجهاز اللوحي وسطح المكتب</p>
+                    </div>
+                    <div class="feature">
+                        <div class="icon">🔒</div>
+                        <h4>الخصوصية</h4>
+                        <p>جميع البيانات تبقى محلياً على جهازك</p>
+                    </div>
+                    <div class="feature">
+                        <div class="icon">💾</div>
+                        <h4>حفظ تلقائي</h4>
+                        <p>يتم حفظ تقدمك تلقائياً</p>
+                    </div>
+                    <div class="feature">
+                        <div class="icon">🎤</div>
+                        <h4>الإدخال الصوتي</h4>
+                        <p>دعم الميكروفون في نسخة المحادثة</p>
+                    </div>
+                    <div class="feature">
+                        <div class="icon">🌙</div>
+                        <h4>الوضع الداكن</h4>
+                        <p>مريح للعينين في الإضاءة الخافتة</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2><span class="icon">✅</span> قائمة الاختبار</h2>
+                <p>تحققي من هذه النقاط للتأكد من أن كل شيء يعمل:</p>
+                <ul class="checklist">
+                    <li>التطبيق يفتح بشكل صحيح في المتصفح</li>
+                    <li>اختيار اللغة يعمل لجميع اللغات</li>
+                    <li>جميع أنواع الاستبيان قابلة للاختيار</li>
+                    <li>شريط التقدم يتحدث بشكل صحيح</li>
+                    <li>التنقل (رجوع/التالي) يعمل</li>
+                    <li>الحقول المطلوبة يتم التحقق منها</li>
+                    <li>وظائف التصدير تعمل بشكل صحيح</li>
+                    <li>إرسال البريد الإلكتروني يفتح عميل البريد</li>
+                    <li>التصميم المتجاوب على الأجهزة المختلفة</li>
+                    <li>البيانات تبقى مخزنة محلياً</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h2><span class="icon">💌</span> المساعدة والدعم</h2>
+                <p>
+                    إذا كان لديك أسئلة أو تحتاجين للمساعدة، لا تترددي في السؤال!
+                    تم إنشاء هذا المستند بكثير من الحب لكِ، وأنا دائماً هنا
+                    لمساعدتك.
+                </p>
+                <div style="text-align: center; margin-top: 30px;">
+                    <a href="../medical_anamnesis.html" class="btn btn-primary">
+                        🚀 ابدأ الآن
+                    </a>
+                    <a href="../Anamnese_interactive.html" class="btn btn-secondary">
+                        💬 جرب نسخة المحادثة
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="heart">💖</div>
+        <h3 id="footer-title">Speziell für dich erstellt, Yaman!</h3>
+        <p id="footer-text">Mit viel Liebe und Sorgfalt zusammengestellt.</p>
+        <p class="signature" id="footer-sig">— Erstellt am 5. Dezember 2025 —</p>
+    </footer>
+
+    <script>
+        // Language switching functionality
+        function switchLang(lang) {
+            // Update active tab
+            document.querySelectorAll('.lang-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Update content visibility
+            document.querySelectorAll('.lang-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById('lang-' + lang).classList.add('active');
+
+            // Update hero section based on language
+            const heroTitles = {
+                'de': 'Anamnese Guide für Yaman',
+                'en': 'Anamnesis Guide for Yaman',
+                'ar': 'دليل التاريخ الطبي ليمان'
+            };
+            const heroSubtitles = {
+                'de': 'Mit Liebe erstellt, speziell für dich 💖',
+                'en': 'Created with love, just for you 💖',
+                'ar': '💖 تم إنشاؤه بحب، خصيصاً لكِ'
+            };
+            const heroNotes = {
+                'de': 'Dieses Dokument wurde mit besonderer Sorgfalt und Liebe erstellt,<br>um dir den Einstieg so einfach wie möglich zu machen.',
+                'en': 'This document was created with special care and love,<br>to make getting started as easy as possible for you.',
+                'ar': 'تم إنشاء هذا المستند بعناية وحب خاصين،<br>لجعل البدء سهلاً قدر الإمكان بالنسبة لكِ.'
+            };
+            const footerTitles = {
+                'de': 'Speziell für dich erstellt, Yaman!',
+                'en': 'Created specially for you, Yaman!',
+                'ar': '!تم إنشاؤه خصيصاً لكِ، يمان'
+            };
+            const footerTexts = {
+                'de': 'Mit viel Liebe und Sorgfalt zusammengestellt.',
+                'en': 'Compiled with lots of love and care.',
+                'ar': '.تم تجميعه بكثير من الحب والاهتمام'
+            };
+
+            document.getElementById('hero-title').textContent = heroTitles[lang] || heroTitles['de'];
+            document.getElementById('hero-subtitle').textContent = heroSubtitles[lang] || heroSubtitles['de'];
+            document.getElementById('hero-note').innerHTML = heroNotes[lang] || heroNotes['de'];
+            document.getElementById('footer-title').textContent = footerTitles[lang] || footerTitles['de'];
+            document.getElementById('footer-text').textContent = footerTexts[lang] || footerTexts['de'];
+
+            // Update document direction for RTL languages
+            if (lang === 'ar') {
+                document.body.style.direction = 'rtl';
+            } else {
+                document.body.style.direction = 'ltr';
+            }
+        }
+
+        // Test links on page load
+        window.addEventListener('load', function() {
+            console.log('🔗 Link Test Results:');
+            const links = document.querySelectorAll('a[href]');
+            links.forEach(link => {
+                console.log('✓ Link found:', link.href);
+            });
+        });
+    </script>
+</body>
+</html>
