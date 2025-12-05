@@ -1,0 +1,168 @@
+# Anamnesebogen (Bereinigte Fragenliste)
+
+## 1. Basisdaten
+* Nachname
+* Vorname
+* Geschlecht (männlich, weiblich, divers/weiß nicht)
+* Geburtsdatum (Tag / Monat / Jahr)
+
+## 2. Aktuelle Beschwerden & Anamnese
+* Haben Sie aktuell Beschwerden? (Ja / Nein)
+* Wie lange bestehen Ihre Beschwerden? (wenige Tage bis seit Jahren)
+* Wie häufig treten diese Beschwerden auf? (selten, täglich, ständig, etc.)
+* Wodurch werden Ihre Beschwerden ausgelöst? (Belastung, Kälte, Stehen, Essen, Wärme, ohne Auslöser) -> Freitext für weitere Symptome
+* Haben sich Ihre Beschwerden verändert? (abgeklungen, gebessert, unverändert, zunehmend)
+
+### Sonstige Auffälligkeiten (Screening)
+* Haben Sie sonstige Auffälligkeiten? (Fieber, Kraftlosigkeit, Nachtschweiß, Gewichtsverlust)
+
+#### Bei Fieber:
+* Tagesprofil (kontinuierlich, remittierend, intermittierend)
+* Schüttelfrost? (Ja/Nein)
+* Höchsttemperatur (°C) und Messmethode (rektal, oral, Ohr)
+* Begleitsymptome (Nackensteifigkeit, Lichtempfindlichkeit)
+* Auslösende Ursachen (Reise, Tierkontakt, Insektenstiche, Rohmilch, etc.)
+
+#### Bei Gewichtsverlust:
+* Appetit (normal, vermindert, frühe Sättigung)
+* Kalorienzufuhr, Mahlzeiten und Trinkmenge pro Tag
+* Symptome (Heiserkeit, Schluckstörung, Lymphknoten, Nachtschweiß, etc.)
+
+#### Bei Kraftlosigkeit:
+* Starkes Erschöpfungsgefühl?
+* Spontanes Einschlafen?
+* Aufstehen ohne Arme möglich?
+* Stürze in den letzten 4 Wochen (Anzahl)
+
+## 3. Spezifische Beschwerden (Systemabfrage)
+* Welche Beschwerden haben Sie? (Kategorie wählen):
+  - Angiologie (Durchblutung)
+  - Atemwege/Lunge
+  - Augen
+  - Haut/Weichteile
+  - Herz-Kreislauf
+  - HNO
+  - Magen-Darm
+  - Stoffwechsel/Hormone
+  - Bewegungsapparat (Muskeln/Knochen)
+  - Neurologie
+  - Psyche
+  - Urologie/Gynäkologie
+
+---
+### Detailfragen (je nach Auswahl oben)
+
+**A) Angiologie (Gefäße)**
+* Art: Einschränkung Gehstrecke, Gefühlsstörungen, Krampfadern, Ödeme, offene Beine.
+* Gehleistung: Schmerzfreie Gehstrecke (<50m bis >200m).
+* Venen: Schwere Beine, Juckreiz, Besenreiser.
+* Ödeme: Wo? (Arme, Gesicht, Füße, Knöchel).
+* Wunden: Wo? (Fuß, Hand, Rumpf). Dauer der Wunde?
+
+**B) Atemwege & Lunge**
+* Art: Atemnot, Erkältung, Husten, Infekt, Schnarchen, Atemaussetzer.
+* Atemnot-Bezug: Bei Belastung, im Liegen, beim Anziehen, Ruhedyspnoe.
+* Brustschmerz:
+  - Qualität (drückend, stechend, brennend).
+  - Ausstrahlung (Arm, Kiefer, Rücken).
+  - Auslöser (Stress, Kälte, Belastung).
+  - Besserung durch Ruhe oder Nitrospray?
+  - Begleitsymptome (Luftnot, Schweiß, Übelkeit).
+
+**C) Magen-Darm**
+* Art: Erbrechen, Bauchschmerz, Blähungen, Durchfall, Koliken, Reflux, Verstopfung.
+* Erbrechen: Häufigkeit, Übelkeit, Inhalt (Blut, Galle, Nahrung).
+* Bauchschmerz: Ort (Oberbauch, Unterbauch), Charakter (Kolik?).
+* Stuhlgang: Durchfall, Verstopfung.
+* Durchfall-Details: Frequenz, nächtliches Aufwachen, Blut/Schleim im Stuhl, Reiseanamnese?
+* Koliken: Ort, Ausstrahlung (Rücken/Schulter), Begleitsymptome (gelbe Augen, dunkler Urin).
+* Verstopfung: Stuhlfrequenz, Schmerzen, Blutauflagerung.
+
+**D) Haut**
+* Art: Ausschlag, Ekzem, Juckreiz, Wunden.
+* Dauer: <3 Wochen bis Jahre.
+
+**E) Herz-Kreislauf**
+* Bluthochdruck, Herzstolpern, niedriger Blutdruck, Ohnmacht/Schwindel.
+
+**F) Stoffwechsel/Hormone**
+* Gewichtsschwankungen, Appetitstörungen, Hitzewallungen, Wechseljahre.
+
+**G) Bewegungsapparat**
+* Wo? Gelenke, Muskeln, Wirbelsäule.
+* Gelenke: Schmerz, Schwellung, Steifigkeit, Überwärmung. Schmerzskala (0-10).
+* Muskeln: Kraftverlust, Krämpfe, Schwund.
+* Wirbelsäule: Bewegungsschmerz, Osteoporose, Taubheit, Inkontinenz (Notfall?).
+
+**H) Neurologie**
+* Art: Kopfschmerz, Gefühlsstörung, Lähmung, Schwindel, Konzentration.
+* Kopfschmerz: Art (Pochen, Drücken), Begleitsymptome (Lichtscheu, Erbrechen), Skala (0-10).
+* Gefühlsstörung: Taubheit, Kribbeln, Überempfindlichkeit.
+* Schwindel: Art (Dreh-, Schwank-, Lift-), Auslöser (Lage, Licht), Dauer.
+
+**I) Urologie / Gynäkologie**
+* Allgemein: Brennen, blutiger Urin, Inkontinenz, Nierenkolik.
+* Mann: Erektionsstörung, Hodenbeschwerden, Prostatabeschwerden.
+* Frau: Zyklusstörungen, Ausfluss, Schmerzen beim Verkehr, starke Blutung.
+  - Zyklus: Letzte Regel, Menarchealter, Blutungsstärke.
+  - Schwangerschaft (aktuell/früher): Anzahl, Komplikationen (Blutung, Schmerzen).
+
+**J) Augen & HNO**
+* Augen: Rötung, Doppelbilder, Sehverlust, Blitze, Schmerzen.
+* HNO: Hörsturz, Tinnitus, Nasenbluten, Schluckbeschwerden, Heiserkeit.
+
+**K) Psyche (Screening)**
+* Fühlen Sie sich niedergeschlagen/hoffnungslos?
+* Weniger Freude an Aktivitäten?
+* Ängste, Panikattacken, Schlafstörungen?
+* Konzentrationsstörungen?
+* Alkohol-/Drogenkonsum?
+* Suizidgedanken?
+
+---
+
+## 4. Körpermaße & Lebensstil
+* Größe (cm) und Gewicht (kg).
+* Rauchen: Jemals geraucht? (Ja/Nein). Wenn Ja: Wie viele/Tag? Wie viele Jahre? Wann aufgehört?
+* Alkohol: Konsumfrequenz.
+* Drogen: Konsumfrequenz.
+* Bewegung: Minuten pro Woche.
+* Schlafqualität: (gut bis starke Störung).
+* Stressbelastung: (kein bis stark).
+* Berufliche Situation: (Vollzeit, Rente, arbeitslos etc.).
+
+## 5. Vorerkrankungen & Familie
+* Familienanamnese: Herzinfarkt, Schlaganfall, Diabetes, Krebs, Demenz in der Familie?
+* Eigener Diabetes? (Typ 1/2, Therapieform: Tabletten/Insulin, Komplikationen: Auge/Niere/Fuß).
+* Körperliche Beeinträchtigungen? (Pflegegrad, GdB, Rollstuhl, Amputation, Seh-/Hörverlust).
+* Implantate? (Schrittmacher, Kunstklappe, Gelenkprothese).
+* Blutverdünner? (Marcumar, ASS, Eliquis, etc.).
+* Allergien? (Antibiotika, Pollen, Nahrungsmittel, Kontrastmittel).
+* Bekannte Diagnosen: Bluthochdruck, Asthma/COPD, Herzschwäche, Rheuma, Schilddrüse, Niereninsuffizienz, Depression, Epilepsie.
+* Frühere Ereignisse: Aneurysma, Thrombose, Herzinfarkt, Schlaganfall, Krebs, Organtransplantation, Infektionen (HIV/Hepatitis).
+
+## 6. Vorsorge & Impfungen
+* Impfstatus: Tetanus, Grippe, COVID, Masern, Gürtelrose, Pneumokokken.
+* Vorsorge erfolgt? Check-up 35, Krebsvorsorge, Hautscreening, Darmspiegelung.
+* Frau >50: Mammographie?
+* Mann >45: Prostata?
+* Mann >65: Bauchaorten-Screening?
+
+## 7. Medikamente
+* Welche Medikamente nehmen Sie? (Auswahlliste: Blutdrucksenker, Statine, Schmerzmittel etc. oder "Keine").
+
+## 8. Pädiatrie (nur für Kinder < 16)
+* Geburt: Modus (Spontan/Kaiserschnitt), Maße, Komplikationen.
+* Ernährung 1. Jahr: Stillen/Flasche.
+* Entwicklung: Sprache, Motorik, Wachstum, Pubertät.
+* Impfstatus (STIKO).
+* Infekte & Erkrankungen: Häufige Infekte, Asthma, Neurodermitis.
+* Soziales: Kita/Schule, Mediennutzung, Familie.
+
+## 9. Termin & Abschluss
+* Versicherung: Gesetzlich / Privat.
+* Terminwunsch: Datum / Tageszeit / Wochentage.
+* Anlass: Beschwerden, Kontrolle, Vorsorge, Unfall, Zweitmeinung.
+* Kontaktdaten: PLZ, Ort, Straße, E-Mail (Pflicht), Mobilnummer.
+* Zustimmung zur Datenübermittlung.
+* Zufriedenheit mit dem Fragebogen (Sterne-Bewertung).
