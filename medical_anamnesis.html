@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Medizinische Anamnese | Medical History</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700&family=Merriweather:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+:root{--c-primary:#0066CC;--c-primary-dark:#004C99;--c-primary-light:#E6F0FA;--c-secondary:#00A86B;--c-error:#DC2626;--c-success:#10B981;--c-white:#FFF;--c-g50:#F9FAFB;--c-g100:#F3F4F6;--c-g200:#E5E7EB;--c-g400:#9CA3AF;--c-g500:#6B7280;--c-g600:#4B5563;--c-g700:#374151;--c-g800:#1F2937;--c-g900:#111827;--font-main:'Source Sans 3',system-ui,sans-serif;--font-head:'Merriweather',Georgia,serif;--sp-xs:4px;--sp-sm:8px;--sp-md:16px;--sp-lg:24px;--sp-xl:32px;--sp-2xl:48px;--rad-md:8px;--rad-lg:12px;--rad-xl:16px;--rad-full:9999px;--shadow-lg:0 10px 15px -3px rgba(0,0,0,0.1);--shadow-xl:0 20px 25px -5px rgba(0,0,0,0.1);--trans:250ms ease}
+[dir="rtl"]{direction:rtl;text-align:right}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{font-size:16px;scroll-behavior:smooth}
+body{font-family:var(--font-main);font-size:1rem;line-height:1.6;color:var(--c-g800);background:linear-gradient(135deg,#0066CC 0%,#004C99 50%,#003366 100%);min-height:100vh;padding:var(--sp-lg)}
+.container{max-width:1400px;margin:0 auto}
+.header{background:var(--c-white);padding:var(--sp-xl) var(--sp-2xl);border-radius:var(--rad-xl);margin-bottom:var(--sp-lg);box-shadow:var(--shadow-xl);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:var(--sp-md)}
+.header h1{font-family:var(--font-head);font-size:1.75rem;color:var(--c-g900);display:flex;align-items:center;gap:var(--sp-sm)}
+.header h1::before{content:"🏥";font-size:1.5rem}
+.header p{color:var(--c-g500);font-size:.9rem}
+.lang-sel{display:flex;align-items:center;gap:var(--sp-sm)}
+.lang-sel label{font-size:.875rem;color:var(--c-g600);font-weight:500}
+.lang-sel select{padding:var(--sp-sm) var(--sp-md);border:2px solid var(--c-g200);border-radius:var(--rad-md);font-size:.9rem;font-family:inherit;background:var(--c-white);cursor:pointer;min-width:180px}
+.main-grid{display:grid;grid-template-columns:1fr 380px;gap:var(--sp-lg)}
+@media(max-width:1100px){.main-grid{grid-template-columns:1fr}}
+.card{background:var(--c-white);padding:var(--sp-xl);border-radius:var(--rad-xl);box-shadow:var(--shadow-xl)}
+.card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--sp-lg);padding-bottom:var(--sp-md);border-bottom:2px solid var(--c-g100)}
+.card-header h2{font-family:var(--font-head);font-size:1.35rem;color:var(--c-g900)}
+.flow-intro{color:var(--c-g600);margin-bottom:var(--sp-lg);font-size:.95rem}
+.flow-grid{display:grid;gap:var(--sp-md)}
+.flow-card{padding:var(--sp-lg);border:2px solid var(--c-g200);border-radius:var(--rad-lg);cursor:pointer;transition:all var(--trans);background:var(--c-white);position:relative;overflow:hidden}
+.flow-card::before{content:"";position:absolute;top:0;left:0;width:4px;height:100%;background:var(--c-primary);transform:scaleY(0);transition:transform var(--trans)}
+.flow-card:hover{border-color:var(--c-primary);transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+.flow-card:hover::before{transform:scaleY(1)}
+.flow-card h3{font-size:1.1rem;color:var(--c-g900);margin-bottom:var(--sp-sm);font-weight:600}
+.flow-card p{font-size:.875rem;color:var(--c-g600);line-height:1.5}
+.flow-card .icon{font-size:1.5rem;margin-bottom:var(--sp-sm)}
+.progress-container{margin-bottom:var(--sp-xl)}
+.progress-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--sp-sm)}
+.progress-label{font-size:.875rem;color:var(--c-g600);font-weight:500}
+.progress-value{font-size:.875rem;color:var(--c-primary);font-weight:600}
+.progress-bar{width:100%;height:10px;background:var(--c-g100);border-radius:var(--rad-full);overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--c-primary),var(--c-secondary));border-radius:var(--rad-full);transition:width .3s ease}
+.section-nav{display:flex;flex-wrap:wrap;gap:var(--sp-sm);margin-bottom:var(--sp-lg);padding:var(--sp-md);background:var(--c-g50);border-radius:var(--rad-lg)}
+.section-tab{padding:var(--sp-sm) var(--sp-md);border:1px solid var(--c-g200);background:var(--c-white);border-radius:var(--rad-md);font-size:.8rem;font-weight:500;color:var(--c-g600);cursor:pointer;transition:all 150ms ease}
+.section-tab:hover{background:var(--c-primary-light);color:var(--c-primary);border-color:var(--c-primary)}
+.section-tab.active{background:var(--c-primary);color:var(--c-white);border-color:var(--c-primary)}
+.section-tab.completed{background:var(--c-success);color:var(--c-white);border-color:var(--c-success)}
+.section-tab.completed::after{content:" ✓"}
+.question-box{animation:fadeIn var(--trans)}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.q-meta{display:flex;gap:var(--sp-sm);margin-bottom:var(--sp-md);flex-wrap:wrap}
+.badge{display:inline-flex;align-items:center;padding:var(--sp-xs) var(--sp-sm);border-radius:var(--rad-full);font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.badge-section{background:var(--c-g100);color:var(--c-g600)}
+.badge-required{background:#FEF2F2;color:var(--c-error)}
+.badge-optional{background:#F0FDF4;color:var(--c-success)}
+.q-title{font-size:1.25rem;font-weight:600;color:var(--c-g900);margin-bottom:var(--sp-sm);line-height:1.4}
+.q-help{font-size:.9rem;color:var(--c-g500);margin-bottom:var(--sp-lg);line-height:1.6;padding:var(--sp-md);background:var(--c-g50);border-radius:var(--rad-md);border-left:3px solid var(--c-primary)}
+input[type="text"],input[type="email"],input[type="tel"],input[type="number"],textarea,select{width:100%;padding:var(--sp-md);border:2px solid var(--c-g200);border-radius:var(--rad-md);font-size:1rem;font-family:inherit;transition:all 150ms ease;background:var(--c-white)}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--c-primary);box-shadow:0 0 0 3px rgba(0,102,204,0.1)}
+textarea{min-height:120px;resize:vertical}
+.date-group{display:grid;grid-template-columns:1fr 1.5fr 1fr;gap:var(--sp-sm)}
+@media(max-width:500px){.date-group{grid-template-columns:1fr}}
+.options-list{display:flex;flex-direction:column;gap:var(--sp-sm)}
+.option-item{padding:var(--sp-md);border:2px solid var(--c-g200);border-radius:var(--rad-md);cursor:pointer;transition:all 150ms ease;display:flex;align-items:center;gap:var(--sp-md);background:var(--c-white)}
+.option-item:hover{border-color:var(--c-primary);background:var(--c-primary-light)}
+.option-item.selected{border-color:var(--c-primary);background:var(--c-primary-light)}
+.option-item input[type="radio"],.option-item input[type="checkbox"]{width:20px;height:20px;cursor:pointer;accent-color:var(--c-primary);flex-shrink:0}
+.option-item label{flex:1;cursor:pointer;font-size:.95rem;line-height:1.4}
+.checkbox-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:var(--sp-sm)}
+.error-msg{margin-top:var(--sp-md);padding:var(--sp-md);background:#FEF2F2;border:1px solid #FECACA;border-radius:var(--rad-md);color:var(--c-error);font-size:.9rem;display:none}
+.error-msg.show{display:flex;align-items:center;gap:var(--sp-sm)}
+.navigation{display:flex;justify-content:space-between;align-items:center;margin-top:var(--sp-xl);padding-top:var(--sp-lg);border-top:2px solid var(--c-g100);flex-wrap:wrap;gap:var(--sp-md)}
+.btn-group{display:flex;gap:var(--sp-sm);flex-wrap:wrap}
+.btn{padding:var(--sp-md) var(--sp-xl);border:none;border-radius:var(--rad-md);font-size:.95rem;font-weight:600;cursor:pointer;transition:all 150ms ease;display:inline-flex;align-items:center;gap:var(--sp-sm);font-family:inherit}
+.btn-primary{background:var(--c-primary);color:var(--c-white)}
+.btn-primary:hover:not(:disabled){background:var(--c-primary-dark);transform:translateY(-1px);box-shadow:var(--shadow-lg)}
+.btn-secondary{background:var(--c-g100);color:var(--c-g700)}
+.btn-secondary:hover:not(:disabled){background:var(--c-g200)}
+.btn-success{background:var(--c-success);color:var(--c-white)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.summary-panel{position:sticky;top:var(--sp-lg)}
+.summary-empty{text-align:center;padding:var(--sp-2xl) var(--sp-md);color:var(--c-g400)}
+.summary-empty-icon{font-size:3rem;margin-bottom:var(--sp-md)}
+.summary-section{margin-bottom:var(--sp-lg)}
+.summary-section-title{font-size:.75rem;font-weight:600;color:var(--c-g500);text-transform:uppercase;letter-spacing:.5px;margin-bottom:var(--sp-sm);padding-bottom:var(--sp-xs);border-bottom:1px solid var(--c-g200)}
+.summary-item{padding:var(--sp-sm) var(--sp-md);background:var(--c-g50);border-radius:var(--rad-md);margin-bottom:var(--sp-sm)}
+.summary-item-label{font-size:.75rem;color:var(--c-g500);margin-bottom:var(--sp-xs)}
+.summary-item-value{font-size:.9rem;color:var(--c-g800);font-weight:500}
+.export-section{margin-top:var(--sp-lg);padding-top:var(--sp-lg);border-top:2px solid var(--c-g100)}
+.export-section .btn{width:100%;justify-content:center;margin-bottom:var(--sp-sm)}
+.completion-screen{text-align:center;padding:var(--sp-2xl)}
+.completion-icon{width:100px;height:100px;background:linear-gradient(135deg,var(--c-success),#059669);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto var(--sp-xl);font-size:3rem;color:var(--c-white)}
+.completion-screen h3{font-family:var(--font-head);font-size:1.75rem;color:var(--c-g900);margin-bottom:var(--sp-md)}
+.completion-screen p{font-size:1rem;color:var(--c-g600);margin-bottom:var(--sp-lg)}
+.privacy-notice{background:var(--c-g50);padding:var(--sp-md);border-radius:var(--rad-md);margin-top:var(--sp-lg);font-size:.8rem;color:var(--c-g600);display:flex;align-items:flex-start;gap:var(--sp-sm)}
+.privacy-notice::before{content:"🔒";font-size:1rem}
+.hidden{display:none!important}
+@media(max-width:768px){body{padding:var(--sp-md)}.header{padding:var(--sp-lg);flex-direction:column;align-items:flex-start}.card{padding:var(--sp-lg)}.checkbox-grid{grid-template-columns:1fr}.date-group{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div>
+        <h1 id="appTitle">Medizinische Anamnese</h1>
+        <p id="appSubtitle">Digitaler Patientenfragebogen</p>
+      </div>
+      <div class="lang-sel">
+        <label for="langSelect" id="langLabel">Sprache:</label>
+        <select id="langSelect">
+          <option value="de">🇩🇪 Deutsch</option>
+          <option value="en">🇬🇧 English</option>
+          <option value="tr">🇹🇷 Türkçe</option>
+          <option value="ru">🇷🇺 Русский</option>
+          <option value="ar">🇸🇦 العربية</option>
+          <option value="pl">🇵🇱 Polski</option>
+          <option value="ro">🇷🇴 Română</option>
+          <option value="it">🇮🇹 Italiano</option>
+          <option value="uk">🇺🇦 Українська</option>
+          <option value="fa">🇮🇷 فارسی</option>
+        </select>
+      </div>
+    </header>
+    <div class="main-grid">
+      <main class="card">
+        <div class="card-header">
+          <h2 id="questionnaireTitle">Fragebogen</h2>
+          <button class="btn btn-secondary hidden" id="btnReset">← Zurück</button>
+        </div>
+        <div id="flowSelection">
+          <p class="flow-intro" id="flowIntro">Bitte wählen Sie den Anamnese-Bereich:</p>
+          <div class="flow-grid" id="flowButtons"></div>
+        </div>
+        <div id="questionSection" class="hidden">
+          <nav class="section-nav" id="sectionNav"></nav>
+          <div class="progress-container">
+            <div class="progress-header">
+              <span class="progress-label" id="progressLabel">Fortschritt</span>
+              <span class="progress-value" id="progressValue">0%</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+          </div>
+          <div id="questionContent"></div>
+          <div class="navigation">
+            <button class="btn btn-secondary" id="btnBack" disabled><span>←</span><span id="btnBackText">Zurück</span></button>
+            <div class="btn-group">
+              <button class="btn btn-secondary hidden" id="btnSkip"><span id="btnSkipText">Überspringen</span></button>
+              <button class="btn btn-primary" id="btnNext" disabled><span id="btnNextText">Weiter</span><span>→</span></button>
+            </div>
+          </div>
+        </div>
+        <div class="privacy-notice" id="privacyNotice">Ihre Daten bleiben lokal auf Ihrem Gerät.</div>
+      </main>
+      <aside class="card summary-panel">
+        <h2 id="summaryTitle">Zusammenfassung</h2>
+        <div id="summaryContent">
+          <div class="summary-empty">
+            <div class="summary-empty-icon">📋</div>
+            <p id="summaryEmpty">Noch keine Antworten</p>
+          </div>
+        </div>
+        <div class="export-section hidden" id="exportSection">
+          <button class="btn btn-success" id="btnExport">📥 <span id="btnExportText">JSON Export</span></button>
+          <button class="btn btn-primary" id="btnEmail">📧 <span id="btnEmailText">E-Mail</span></button>
+        </div>
+      </aside>
+    </div>
+  </div>
+<script>
+var LABELS = {
+  de: {
+    app: { title: "Medizinische Anamnese", subtitle: "Digitaler Patientenfragebogen – Alle Daten bleiben lokal", language: "Sprache:" },
+    questionnaire: { title: "Fragebogen" },
+    flow: {
+      intro: "Bitte wählen Sie den gewünschten Anamnese-Bereich:",
+      complete: { name: "Vollständige Anamnese", desc: "Umfassende medizinische Anamnese mit allen Bereichen", icon: "📋" },
+      hausarzt: { name: "Hausarzt – Kurzanamnese", desc: "Verkürzte Anamnese für Routineuntersuchungen", icon: "🏠" },
+      ortho: { name: "Orthopädie", desc: "Spezifische Anamnese bei Bewegungsapparat-Beschwerden", icon: "🦴" },
+      paed: { name: "Pädiatrie", desc: "Anamnese für Kinder und Jugendliche unter 16", icon: "👶" },
+      geriatrie: { name: "Geriatrie", desc: "Erweiterte Anamnese für Patienten ab 65", icon: "👴" }
+    },
+    buttons: { back: "Zurück", next: "Weiter", skip: "Überspringen", export: "JSON Export", sendEmail: "E-Mail senden", backToSelection: "← Zurück zur Auswahl" },
+    progress: { label: "Fortschritt" },
+    summary: { title: "Zusammenfassung", empty: "Noch keine Antworten erfasst" },
+    privacy: { notice: "Ihre Daten werden lokal auf Ihrem Gerät gespeichert." },
+    completion: { title: "Anamnese abgeschlossen", message: "Vielen Dank! Sie haben alle Fragen beantwortet." },
+    validation: { required: "Pflichtfeld", invalidEmail: "Ungültige E-Mail-Adresse", invalidPLZ: "Ungültige PLZ (5 Ziffern)" },
+    sections: { basisdaten: "Basisdaten", beschwerden: "Beschwerden", termin: "Termin", kontakt: "Kontakt", lifestyle: "Lifestyle", diabetes: "Diabetes", einschraenkungen: "Einschränkungen", vorerkrankungen: "Vorerkrankungen", operationen: "OPs", medikamente: "Medikamente", abschluss: "Abschluss" },
+    q: {
+      q0001: { text: "Wie lautet Ihr Vorname?", help: "Bitte wie im Ausweis", placeholder: "Vorname" },
+      q0002: { text: "Wie lautet Ihr Nachname?", placeholder: "Nachname" },
+      q0003: { text: "Welches Geschlecht wurde Ihnen bei der Geburt zugewiesen?", options: { male: "Männlich", female: "Weiblich", diverse: "Divers" } },
+      q0004: { text: "Wann wurden Sie geboren?", day: "Tag", month: "Monat", year: "Jahr", months: ["Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"] },
+      q1000: { text: "Haben Sie aktuell gesundheitliche Beschwerden?", options: { yes: "Ja, ich habe Beschwerden", no: "Nein, keine Beschwerden" } },
+      q1001: { text: "Seit wann bestehen Ihre Beschwerden?", options: { hours: "Wenige Stunden", days: "Wenige Tage", weeks: "Einige Wochen", months: "Mehrere Monate", years: "Mehrere Jahre" } },
+      q1007: { text: "Bitte beschreiben Sie Ihre Hauptbeschwerde:", placeholder: "Beschreiben Sie..." },
+      q2000: { text: "Wie sind Sie krankenversichert?", options: { statutory: "Gesetzlich", private: "Privat", selfPay: "Selbstzahler" } },
+      q2005: { text: "Waren Sie schon einmal in unserer Praxis?", options: { yes: "Ja (Bestandspatient)", no: "Nein (Neupatient)" } },
+      q3000: { text: "Wie lautet Ihre Postleitzahl?", placeholder: "z.B. 10115" },
+      q3001: { text: "In welchem Ort wohnen Sie?", placeholder: "Ort/Stadt" },
+      q3002: { text: "Straße und Hausnummer?", placeholder: "Straße Nr." },
+      q3003: { text: "Ihre E-Mail-Adresse?", placeholder: "email@beispiel.de" },
+      q3004: { text: "Ihre Telefonnummer?", placeholder: "0170 1234567" },
+      q4000: { text: "Wie groß sind Sie (cm)?", placeholder: "z.B. 175" },
+      q4001: { text: "Wie viel wiegen Sie (kg)?", placeholder: "z.B. 70" },
+      q4002: { text: "Rauchen Sie?", options: { never: "Nie geraucht", current: "Ja, aktuell", former: "Früher, aufgehört" } },
+      q7000: { text: "Haben Sie chronische Erkrankungen?", options: { hypertension: "Bluthochdruck", coronaryHeart: "KHK", heartFailure: "Herzschwäche", asthma: "Asthma", copd: "COPD", diabetes: "Diabetes", depression: "Depression", none: "Keine" } },
+      q8900: { text: "Nehmen Sie regelmäßig Medikamente?", options: { no: "Nein", yes: "Ja" } },
+      q8902: { text: "Bitte listen Sie alle Medikamente auf:", placeholder: "z.B. Metoprolol 47,5mg..." },
+      q9900: { text: "Wie zufrieden waren Sie mit diesem Fragebogen?", options: { star1: "★ Schlecht", star2: "★★ Ausreichend", star3: "★★★ Befriedigend", star4: "★★★★ Gut", star5: "★★★★★ Sehr gut" } }
+    }
+  },
+  en: {
+    app: { title: "Medical History", subtitle: "Digital patient questionnaire – All data stays local", language: "Language:" },
+    questionnaire: { title: "Questionnaire" },
+    flow: {
+      intro: "Please select the medical history section:",
+      complete: { name: "Complete History", desc: "Comprehensive medical history", icon: "📋" },
+      hausarzt: { name: "General Practice", desc: "Short form for routine exams", icon: "🏠" },
+      ortho: { name: "Orthopedics", desc: "Musculoskeletal complaints", icon: "🦴" },
+      paed: { name: "Pediatrics", desc: "For children under 16", icon: "👶" },
+      geriatrie: { name: "Geriatrics", desc: "Extended for patients 65+", icon: "👴" }
+    },
+    buttons: { back: "Back", next: "Next", skip: "Skip", export: "JSON Export", sendEmail: "Send Email", backToSelection: "← Back to Selection" },
+    progress: { label: "Progress" },
+    summary: { title: "Summary", empty: "No answers yet" },
+    privacy: { notice: "Your data is stored locally on your device." },
+    completion: { title: "Completed", message: "Thank you! You have answered all questions." },
+    validation: { required: "Required", invalidEmail: "Invalid email", invalidPLZ: "Invalid postal code" },
+    sections: { basisdaten: "Basic Data", beschwerden: "Complaints", termin: "Appointment", kontakt: "Contact", lifestyle: "Lifestyle", diabetes: "Diabetes", einschraenkungen: "Limitations", vorerkrankungen: "Pre-existing", operationen: "Surgeries", medikamente: "Medications", abschluss: "Completion" },
+    q: {
+      q0001: { text: "What is your first name?", placeholder: "First name" },
+      q0002: { text: "What is your last name?", placeholder: "Last name" },
+      q0003: { text: "What sex were you assigned at birth?", options: { male: "Male", female: "Female", diverse: "Diverse" } },
+      q0004: { text: "When were you born?", day: "Day", month: "Month", year: "Year", months: ["January","February","March","April","May","June","July","August","September","October","November","December"] },
+      q1000: { text: "Do you have health complaints?", options: { yes: "Yes, I have complaints", no: "No complaints" } },
+      q1001: { text: "How long have you had complaints?", options: { hours: "Few hours", days: "Few days", weeks: "Several weeks", months: "Several months", years: "Several years" } },
+      q1007: { text: "Describe your main complaint:", placeholder: "Describe..." },
+      q2000: { text: "Health insurance type?", options: { statutory: "Statutory", private: "Private", selfPay: "Self-pay" } },
+      q2005: { text: "Have you visited before?", options: { yes: "Yes (existing)", no: "No (new patient)" } },
+      q3000: { text: "Postal code?", placeholder: "e.g. 10115" },
+      q3001: { text: "City?", placeholder: "City" },
+      q3002: { text: "Street address?", placeholder: "Street No." },
+      q3003: { text: "Email address?", placeholder: "email@example.com" },
+      q3004: { text: "Phone number?", placeholder: "+49 170 1234567" },
+      q4000: { text: "Height (cm)?", placeholder: "e.g. 175" },
+      q4001: { text: "Weight (kg)?", placeholder: "e.g. 70" },
+      q4002: { text: "Do you smoke?", options: { never: "Never", current: "Currently", former: "Former smoker" } },
+      q7000: { text: "Chronic diseases?", options: { hypertension: "Hypertension", coronaryHeart: "CHD", heartFailure: "Heart failure", asthma: "Asthma", copd: "COPD", diabetes: "Diabetes", depression: "Depression", none: "None" } },
+      q8900: { text: "Regular medications?", options: { no: "No", yes: "Yes" } },
+      q8902: { text: "List all medications:", placeholder: "e.g. Metoprolol 47.5mg..." },
+      q9900: { text: "How satisfied were you?", options: { star1: "★ Poor", star2: "★★ Fair", star3: "★★★ OK", star4: "★★★★ Good", star5: "★★★★★ Excellent" } }
+    }
+  },
+  tr: { app: { title: "Tıbbi Anamnez", subtitle: "Dijital hasta anketi", language: "Dil:" }, questionnaire: { title: "Anket" }, flow: { intro: "Bölüm seçin:", complete: { name: "Tam Anamnez", desc: "Kapsamlı tıbbi geçmiş", icon: "📋" }, hausarzt: { name: "Aile Hekimi", desc: "Kısa form", icon: "🏠" }, ortho: { name: "Ortopedi", desc: "Kas-iskelet", icon: "🦴" }, paed: { name: "Pediatri", desc: "16 yaş altı", icon: "👶" }, geriatrie: { name: "Geriatri", desc: "65+ yaş", icon: "👴" } }, buttons: { back: "Geri", next: "İleri", skip: "Atla", export: "JSON", sendEmail: "E-posta", backToSelection: "← Geri" }, progress: { label: "İlerleme" }, summary: { title: "Özet", empty: "Henüz yanıt yok" }, validation: { required: "Zorunlu" }, sections: { basisdaten: "Temel", beschwerden: "Şikayetler", kontakt: "İletişim", abschluss: "Tamamla" }, q: { q0001: { text: "Adınız?", placeholder: "Ad" }, q0002: { text: "Soyadınız?", placeholder: "Soyad" }, q0003: { text: "Cinsiyetiniz?", options: { male: "Erkek", female: "Kadın", diverse: "Diğer" } }, q0004: { text: "Doğum tarihi?", day: "Gün", month: "Ay", year: "Yıl", months: ["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"] }, q1000: { text: "Şikayetiniz var mı?", options: { yes: "Evet", no: "Hayır" } } } },
+  ru: { app: { title: "Медицинский анамнез", subtitle: "Анкета пациента", language: "Язык:" }, questionnaire: { title: "Анкета" }, flow: { intro: "Выберите раздел:", complete: { name: "Полный анамнез", desc: "Комплексный анамнез", icon: "📋" }, hausarzt: { name: "Семейный врач", desc: "Краткая форма", icon: "🏠" }, ortho: { name: "Ортопедия", desc: "Опорно-двигательный", icon: "🦴" }, paed: { name: "Педиатрия", desc: "До 16 лет", icon: "👶" }, geriatrie: { name: "Гериатрия", desc: "65+ лет", icon: "👴" } }, buttons: { back: "Назад", next: "Далее", skip: "Пропустить", export: "JSON", sendEmail: "E-mail", backToSelection: "← Назад" }, progress: { label: "Прогресс" }, summary: { title: "Сводка", empty: "Ответов нет" }, validation: { required: "Обязательно" }, sections: { basisdaten: "Данные", beschwerden: "Жалобы", kontakt: "Контакты", abschluss: "Завершение" }, q: { q0001: { text: "Ваше имя?", placeholder: "Имя" }, q0002: { text: "Фамилия?", placeholder: "Фамилия" }, q0003: { text: "Пол?", options: { male: "Мужской", female: "Женский", diverse: "Другое" } }, q0004: { text: "Дата рождения?", day: "День", month: "Месяц", year: "Год", months: ["Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"] }, q1000: { text: "Есть жалобы?", options: { yes: "Да", no: "Нет" } } } },
+  ar: { app: { title: "التاريخ الطبي", subtitle: "استبيان المريض", language: "اللغة:" }, questionnaire: { title: "الاستبيان" }, flow: { intro: "اختر القسم:", complete: { name: "كامل", desc: "تاريخ طبي شامل", icon: "📋" }, hausarzt: { name: "طب الأسرة", desc: "نموذج مختصر", icon: "🏠" }, ortho: { name: "العظام", desc: "الجهاز الحركي", icon: "🦴" }, paed: { name: "الأطفال", desc: "دون 16", icon: "👶" }, geriatrie: { name: "الشيخوخة", desc: "65+", icon: "👴" } }, buttons: { back: "رجوع", next: "التالي", skip: "تخطي", export: "JSON", sendEmail: "بريد", backToSelection: "← العودة" }, progress: { label: "التقدم" }, summary: { title: "الملخص", empty: "لا توجد إجابات" }, validation: { required: "مطلوب" }, sections: { basisdaten: "البيانات", beschwerden: "الشكاوى", kontakt: "الاتصال", abschluss: "الإتمام" }, q: { q0001: { text: "الاسم الأول؟", placeholder: "الاسم" }, q0002: { text: "اسم العائلة؟", placeholder: "العائلة" }, q0003: { text: "الجنس؟", options: { male: "ذكر", female: "أنثى", diverse: "آخر" } }, q0004: { text: "تاريخ الميلاد؟", day: "اليوم", month: "الشهر", year: "السنة", months: ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"] }, q1000: { text: "هل لديك شكاوى؟", options: { yes: "نعم", no: "لا" } } } },
+  pl: { app: { title: "Wywiad medyczny", subtitle: "Kwestionariusz pacjenta", language: "Język:" }, questionnaire: { title: "Kwestionariusz" }, flow: { intro: "Wybierz sekcję:", complete: { name: "Pełny wywiad", desc: "Kompleksowy wywiad", icon: "📋" }, hausarzt: { name: "Lekarz rodzinny", desc: "Krótka forma", icon: "🏠" }, ortho: { name: "Ortopedia", desc: "Układ ruchu", icon: "🦴" }, paed: { name: "Pediatria", desc: "Do 16 lat", icon: "👶" }, geriatrie: { name: "Geriatria", desc: "65+ lat", icon: "👴" } }, buttons: { back: "Wstecz", next: "Dalej", skip: "Pomiń", export: "JSON", sendEmail: "E-mail", backToSelection: "← Powrót" }, progress: { label: "Postęp" }, summary: { title: "Podsumowanie", empty: "Brak odpowiedzi" }, validation: { required: "Wymagane" }, sections: { basisdaten: "Dane", beschwerden: "Dolegliwości", kontakt: "Kontakt", abschluss: "Zakończenie" }, q: { q0001: { text: "Imię?", placeholder: "Imię" }, q0002: { text: "Nazwisko?", placeholder: "Nazwisko" }, q0003: { text: "Płeć?", options: { male: "Mężczyzna", female: "Kobieta", diverse: "Inna" } }, q0004: { text: "Data urodzenia?", day: "Dzień", month: "Miesiąc", year: "Rok", months: ["Styczeń","Luty","Marzec","Kwiecień","Maj","Czerwiec","Lipiec","Sierpień","Wrzesień","Październik","Listopad","Grudzień"] }, q1000: { text: "Masz dolegliwości?", options: { yes: "Tak", no: "Nie" } } } },
+  ro: { app: { title: "Istoric medical", subtitle: "Chestionar pacient", language: "Limbă:" }, questionnaire: { title: "Chestionar" }, flow: { intro: "Selectați:", complete: { name: "Complet", desc: "Istoric complet", icon: "📋" }, hausarzt: { name: "Familie", desc: "Formular scurt", icon: "🏠" }, ortho: { name: "Ortopedie", desc: "Musculo-scheletic", icon: "🦴" }, paed: { name: "Pediatrie", desc: "Sub 16 ani", icon: "👶" }, geriatrie: { name: "Geriatrie", desc: "65+ ani", icon: "👴" } }, buttons: { back: "Înapoi", next: "Înainte", skip: "Sari", export: "JSON", sendEmail: "E-mail", backToSelection: "← Înapoi" }, progress: { label: "Progres" }, summary: { title: "Rezumat", empty: "Fără răspunsuri" }, validation: { required: "Obligatoriu" }, sections: { basisdaten: "Date", beschwerden: "Plângeri", kontakt: "Contact", abschluss: "Finalizare" }, q: { q0001: { text: "Prenume?", placeholder: "Prenume" }, q0002: { text: "Nume?", placeholder: "Nume" }, q0003: { text: "Sex?", options: { male: "Masculin", female: "Feminin", diverse: "Altul" } }, q0004: { text: "Data nașterii?", day: "Zi", month: "Lună", year: "An", months: ["Ianuarie","Februarie","Martie","Aprilie","Mai","Iunie","Iulie","August","Septembrie","Octombrie","Noiembrie","Decembrie"] }, q1000: { text: "Aveți plângeri?", options: { yes: "Da", no: "Nu" } } } },
+  it: { app: { title: "Anamnesi medica", subtitle: "Questionario paziente", language: "Lingua:" }, questionnaire: { title: "Questionario" }, flow: { intro: "Seleziona:", complete: { name: "Completa", desc: "Anamnesi completa", icon: "📋" }, hausarzt: { name: "Medicina generale", desc: "Modulo breve", icon: "🏠" }, ortho: { name: "Ortopedia", desc: "Locomotore", icon: "🦴" }, paed: { name: "Pediatria", desc: "Sotto 16", icon: "👶" }, geriatrie: { name: "Geriatria", desc: "65+", icon: "👴" } }, buttons: { back: "Indietro", next: "Avanti", skip: "Salta", export: "JSON", sendEmail: "E-mail", backToSelection: "← Torna" }, progress: { label: "Progresso" }, summary: { title: "Riepilogo", empty: "Nessuna risposta" }, validation: { required: "Obbligatorio" }, sections: { basisdaten: "Dati", beschwerden: "Disturbi", kontakt: "Contatto", abschluss: "Completamento" }, q: { q0001: { text: "Nome?", placeholder: "Nome" }, q0002: { text: "Cognome?", placeholder: "Cognome" }, q0003: { text: "Sesso?", options: { male: "Maschile", female: "Femminile", diverse: "Altro" } }, q0004: { text: "Data di nascita?", day: "Giorno", month: "Mese", year: "Anno", months: ["Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno","Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"] }, q1000: { text: "Hai disturbi?", options: { yes: "Sì", no: "No" } } } },
+  uk: { app: { title: "Медичний анамнез", subtitle: "Анкета пацієнта", language: "Мова:" }, questionnaire: { title: "Анкета" }, flow: { intro: "Виберіть:", complete: { name: "Повний", desc: "Комплексний анамнез", icon: "📋" }, hausarzt: { name: "Сімейний лікар", desc: "Коротка форма", icon: "🏠" }, ortho: { name: "Ортопедія", desc: "Опорно-руховий", icon: "🦴" }, paed: { name: "Педіатрія", desc: "До 16", icon: "👶" }, geriatrie: { name: "Геріатрія", desc: "65+", icon: "👴" } }, buttons: { back: "Назад", next: "Далі", skip: "Пропустити", export: "JSON", sendEmail: "E-mail", backToSelection: "← Назад" }, progress: { label: "Прогрес" }, summary: { title: "Підсумок", empty: "Відповідей немає" }, validation: { required: "Обов'язково" }, sections: { basisdaten: "Дані", beschwerden: "Скарги", kontakt: "Контакти", abschluss: "Завершення" }, q: { q0001: { text: "Ім'я?", placeholder: "Ім'я" }, q0002: { text: "Прізвище?", placeholder: "Прізвище" }, q0003: { text: "Стать?", options: { male: "Чоловіча", female: "Жіноча", diverse: "Інша" } }, q0004: { text: "Дата народження?", day: "День", month: "Місяць", year: "Рік", months: ["Січень","Лютий","Березень","Квітень","Травень","Червень","Липень","Серпень","Вересень","Жовтень","Листопад","Грудень"] }, q1000: { text: "Є скарги?", options: { yes: "Так", no: "Ні" } } } },
+  fa: { app: { title: "تاریخچه پزشکی", subtitle: "پرسشنامه بیمار", language: "زبان:" }, questionnaire: { title: "پرسشنامه" }, flow: { intro: "انتخاب کنید:", complete: { name: "کامل", desc: "تاریخچه کامل", icon: "📋" }, hausarzt: { name: "خانواده", desc: "فرم کوتاه", icon: "🏠" }, ortho: { name: "ارتوپدی", desc: "اسکلتی-عضلانی", icon: "🦴" }, paed: { name: "اطفال", desc: "زیر 16", icon: "👶" }, geriatrie: { name: "سالمندی", desc: "65+", icon: "👴" } }, buttons: { back: "قبلی", next: "بعدی", skip: "رد", export: "JSON", sendEmail: "ایمیل", backToSelection: "← بازگشت" }, progress: { label: "پیشرفت" }, summary: { title: "خلاصه", empty: "پاسخی نیست" }, validation: { required: "الزامی" }, sections: { basisdaten: "اطلاعات", beschwerden: "شکایات", kontakt: "تماس", abschluss: "تکمیل" }, q: { q0001: { text: "نام؟", placeholder: "نام" }, q0002: { text: "نام خانوادگی؟", placeholder: "نام خانوادگی" }, q0003: { text: "جنسیت؟", options: { male: "مرد", female: "زن", diverse: "دیگر" } }, q0004: { text: "تاریخ تولد؟", day: "روز", month: "ماه", year: "سال", months: ["ژانویه","فوریه","مارس","آوریل","مه","ژوئن","ژوئیه","اوت","سپتامبر","اکتبر","نوامبر","دسامبر"] }, q1000: { text: "شکایت دارید؟", options: { yes: "بله", no: "خیر" } } } }
+};
+
+var QUESTIONS = {
+  q0001: { id: "q0001", section: "basisdaten", type: "text", required: true, next: "q0002" },
+  q0002: { id: "q0002", section: "basisdaten", type: "text", required: true, next: "q0003" },
+  q0003: { id: "q0003", section: "basisdaten", type: "radio", required: true, options: ["male", "female", "diverse"], next: "q0004" },
+  q0004: { id: "q0004", section: "basisdaten", type: "date", required: true, next: "q1000" },
+  q1000: { id: "q1000", section: "beschwerden", type: "radio", required: true, options: ["yes", "no"], branch: { yes: "q1001", no: "q2000" } },
+  q1001: { id: "q1001", section: "beschwerden", type: "radio", required: true, options: ["hours", "days", "weeks", "months", "years"], next: "q1007" },
+  q1007: { id: "q1007", section: "beschwerden", type: "textarea", required: true, next: "q2000" },
+  q2000: { id: "q2000", section: "termin", type: "radio", required: true, options: ["statutory", "private", "selfPay"], next: "q2005" },
+  q2005: { id: "q2005", section: "termin", type: "radio", required: true, options: ["yes", "no"], next: "q3000" },
+  q3000: { id: "q3000", section: "kontakt", type: "text", required: true, validation: "plz", next: "q3001" },
+  q3001: { id: "q3001", section: "kontakt", type: "text", required: true, next: "q3002" },
+  q3002: { id: "q3002", section: "kontakt", type: "text", required: true, next: "q3003" },
+  q3003: { id: "q3003", section: "kontakt", type: "email", required: true, next: "q3004" },
+  q3004: { id: "q3004", section: "kontakt", type: "tel", required: false, next: "q4000" },
+  q4000: { id: "q4000", section: "lifestyle", type: "number", required: false, next: "q4001" },
+  q4001: { id: "q4001", section: "lifestyle", type: "number", required: false, next: "q4002" },
+  q4002: { id: "q4002", section: "lifestyle", type: "radio", required: true, options: ["never", "current", "former"], next: "q7000" },
+  q7000: { id: "q7000", section: "vorerkrankungen", type: "checkbox", required: false, options: ["hypertension", "coronaryHeart", "heartFailure", "asthma", "copd", "diabetes", "depression", "none"], next: "q8900" },
+  q8900: { id: "q8900", section: "medikamente", type: "radio", required: true, options: ["no", "yes"], branch: { yes: "q8902", no: "q9900" } },
+  q8902: { id: "q8902", section: "medikamente", type: "textarea", required: true, next: "q9900" },
+  q9900: { id: "q9900", section: "abschluss", type: "radio", required: false, options: ["star1", "star2", "star3", "star4", "star5"], next: null }
+};
+
+var FLOWS = {
+  complete: { id: "complete", start: "q0001", sections: ["basisdaten", "beschwerden", "termin", "kontakt", "lifestyle", "vorerkrankungen", "medikamente", "abschluss"] },
+  hausarzt: { id: "hausarzt", start: "q0001", sections: ["basisdaten", "beschwerden", "kontakt", "vorerkrankungen", "medikamente", "abschluss"] },
+  ortho: { id: "ortho", start: "q0001", sections: ["basisdaten", "beschwerden", "kontakt", "abschluss"] },
+  paed: { id: "paed", start: "q0001", sections: ["basisdaten", "beschwerden", "kontakt", "abschluss"] },
+  geriatrie: { id: "geriatrie", start: "q0001", sections: ["basisdaten", "beschwerden", "kontakt", "lifestyle", "vorerkrankungen", "medikamente", "abschluss"] }
+};
+
+var state = { lang: "de", flow: null, currentQ: null, answers: {}, history: [] };
+
+function $(id) { return document.getElementById(id); }
+
+function L(path, fallback) {
+  if (fallback === undefined) fallback = "";
+  var keys = path.split(".");
+  var val = LABELS[state.lang];
+  for (var i = 0; i < keys.length; i++) {
+    if (val && val[keys[i]] !== undefined) { val = val[keys[i]]; }
+    else {
+      val = LABELS.de;
+      for (var j = 0; j < keys.length; j++) {
+        if (val && val[keys[j]] !== undefined) { val = val[keys[j]]; }
+        else { return fallback; }
+      }
+      return val || fallback;
+    }
+  }
+  return val || fallback;
+}
+
+function isRTL() { return state.lang === "ar" || state.lang === "fa"; }
+
+function updateDirection() {
+  document.documentElement.dir = isRTL() ? "rtl" : "ltr";
+  document.documentElement.lang = state.lang;
+}
+
+function updateUI() {
+  updateDirection();
+  $("appTitle").textContent = L("app.title");
+  $("appSubtitle").textContent = L("app.subtitle");
+  $("langLabel").textContent = L("app.language");
+  $("questionnaireTitle").textContent = L("questionnaire.title");
+  $("flowIntro").textContent = L("flow.intro");
+  $("btnBackText").textContent = L("buttons.back");
+  $("btnNextText").textContent = L("buttons.next");
+  $("btnSkipText").textContent = L("buttons.skip");
+  $("btnReset").textContent = L("buttons.backToSelection");
+  $("progressLabel").textContent = L("progress.label");
+  $("summaryTitle").textContent = L("summary.title");
+  var se = $("summaryEmpty"); if (se) se.textContent = L("summary.empty");
+  $("btnExportText").textContent = L("buttons.export");
+  $("btnEmailText").textContent = L("buttons.sendEmail");
+  $("privacyNotice").textContent = L("privacy.notice");
+  renderFlowButtons();
+}
+
+function renderFlowButtons() {
+  var container = $("flowButtons");
+  if (!container) return;
+  container.innerHTML = "";
+  var keys = Object.keys(FLOWS);
+  for (var i = 0; i < keys.length; i++) {
+    var key = keys[i];
+    var card = document.createElement("div");
+    card.className = "flow-card";
+    card.innerHTML = '<div class="icon">' + L("flow." + key + ".icon", "📋") + '</div><h3>' + L("flow." + key + ".name") + '</h3><p>' + L("flow." + key + ".desc") + '</p>';
+    card.setAttribute("data-flow", key);
+    card.onclick = function() { startFlow(this.getAttribute("data-flow")); };
+    container.appendChild(card);
+  }
+}
+
+function startFlow(flowId) {
+  state.flow = flowId;
+  state.currentQ = FLOWS[flowId].start;
+  state.answers = {};
+  state.history = [];
+  $("flowSelection").classList.add("hidden");
+  $("questionSection").classList.remove("hidden");
+  $("btnReset").classList.remove("hidden");
+  renderQuestion();
+  updateProgress();
+  updateSummary();
+}
+
+function renderQuestion() {
+  var q = QUESTIONS[state.currentQ];
+  if (!q) { showCompletion(); return; }
+  var qLabel = L("q." + q.id, {});
+  var content = $("questionContent");
+  var inputHTML = "";
+  var existing = state.answers[q.id];
+  
+  if (q.type === "text" || q.type === "email" || q.type === "tel" || q.type === "number") {
+    inputHTML = '<input type="' + q.type + '" id="answer" value="' + (existing || "") + '" placeholder="' + (qLabel.placeholder || "") + '">';
+  } else if (q.type === "textarea") {
+    inputHTML = '<textarea id="answer" placeholder="' + (qLabel.placeholder || "") + '">' + (existing || "") + '</textarea>';
+  } else if (q.type === "date") {
+    inputHTML = renderDateInput(qLabel, existing);
+  } else if (q.type === "radio") {
+    inputHTML = renderRadioOptions(q, qLabel, existing);
+  } else if (q.type === "checkbox") {
+    inputHTML = renderCheckboxOptions(q, qLabel, existing);
+  }
+  
+  var sectionLabel = L("sections." + q.section, q.section);
+  var reqLabel = q.required ? '<span class="badge badge-required">' + L("validation.required") + '</span>' : '<span class="badge badge-optional">Optional</span>';
+  
+  content.innerHTML = '<div class="question-box"><div class="q-meta"><span class="badge badge-section">' + sectionLabel + '</span>' + reqLabel + '</div><h3 class="q-title">' + (qLabel.text || q.id) + '</h3>' + (qLabel.help ? '<div class="q-help">' + qLabel.help + '</div>' : '') + '<div class="input-area">' + inputHTML + '</div><div class="error-msg" id="errorMsg"></div></div>';
+  
+  setupInputListeners(q);
+  $("btnBack").disabled = state.history.length === 0;
+  $("btnSkip").classList.toggle("hidden", q.required);
+  validateAndUpdateNext();
+  renderSectionNav();
+}
+
+function renderDateInput(qLabel, existing) {
+  var parts = existing ? existing.split("-") : ["", "", ""];
+  var months = qLabel.months || LABELS.de.q.q0004.months;
+  var dayOpts = '<option value="">--</option>';
+  for (var i = 1; i <= 31; i++) { dayOpts += '<option value="' + i + '"' + (parts[2] == i ? ' selected' : '') + '>' + i + '</option>'; }
+  var monthOpts = '<option value="">--</option>';
+  for (var i = 0; i < months.length; i++) { monthOpts += '<option value="' + (i+1) + '"' + (parts[1] == (i+1) ? ' selected' : '') + '>' + months[i] + '</option>'; }
+  var yearOpts = '<option value="">--</option>';
+  var cy = new Date().getFullYear();
+  for (var i = 0; i <= 100; i++) { var y = cy - i; yearOpts += '<option value="' + y + '"' + (parts[0] == y ? ' selected' : '') + '>' + y + '</option>'; }
+  return '<div class="date-group"><div class="input-group"><label class="input-label">' + (qLabel.day || "Tag") + '</label><select id="answerDay">' + dayOpts + '</select></div><div class="input-group"><label class="input-label">' + (qLabel.month || "Monat") + '</label><select id="answerMonth">' + monthOpts + '</select></div><div class="input-group"><label class="input-label">' + (qLabel.year || "Jahr") + '</label><select id="answerYear">' + yearOpts + '</select></div></div>';
+}
+
+function renderRadioOptions(q, qLabel, existing) {
+  var options = qLabel.options || {};
+  var html = '<div class="options-list">';
+  for (var i = 0; i < q.options.length; i++) {
+    var opt = q.options[i];
+    var sel = existing === opt ? " selected" : "";
+    var chk = existing === opt ? " checked" : "";
+    html += '<div class="option-item' + sel + '"><input type="radio" name="answer" id="opt' + i + '" value="' + opt + '"' + chk + '><label for="opt' + i + '">' + (options[opt] || opt) + '</label></div>';
+  }
+  return html + '</div>';
+}
+
+function renderCheckboxOptions(q, qLabel, existing) {
+  var options = qLabel.options || {};
+  var selected = Array.isArray(existing) ? existing : [];
+  var html = '<div class="checkbox-grid">';
+  for (var i = 0; i < q.options.length; i++) {
+    var opt = q.options[i];
+    var sel = selected.indexOf(opt) >= 0 ? " selected" : "";
+    var chk = selected.indexOf(opt) >= 0 ? " checked" : "";
+    html += '<div class="option-item' + sel + '"><input type="checkbox" id="opt' + i + '" value="' + opt + '"' + chk + '><label for="opt' + i + '">' + (options[opt] || opt) + '</label></div>';
+  }
+  return html + '</div>';
+}
+
+function setupInputListeners(q) {
+  if (q.type === "date") {
+    var ids = ["answerDay", "answerMonth", "answerYear"];
+    for (var i = 0; i < ids.length; i++) { var el = $(ids[i]); if (el) el.onchange = validateAndUpdateNext; }
+  } else if (q.type === "radio") {
+    var radios = document.querySelectorAll('input[name="answer"]');
+    for (var i = 0; i < radios.length; i++) {
+      radios[i].onchange = function() {
+        var items = document.querySelectorAll(".option-item");
+        for (var j = 0; j < items.length; j++) { items[j].classList.remove("selected"); }
+        this.closest(".option-item").classList.add("selected");
+        validateAndUpdateNext();
+      };
+    }
+  } else if (q.type === "checkbox") {
+    var checks = document.querySelectorAll('input[type="checkbox"]');
+    for (var i = 0; i < checks.length; i++) {
+      checks[i].onchange = function() {
+        this.closest(".option-item").classList.toggle("selected", this.checked);
+        validateAndUpdateNext();
+      };
+    }
+  } else {
+    var inp = $("answer");
+    if (inp) inp.oninput = validateAndUpdateNext;
+  }
+}
+
+function validateAndUpdateNext() {
+  var q = QUESTIONS[state.currentQ];
+  if (!q) return;
+  var val = getValue(q);
+  var isValid = validate(q, val) === null;
+  $("btnNext").disabled = !isValid;
+}
+
+function getValue(q) {
+  if (q.type === "date") {
+    var d = $("answerDay") ? $("answerDay").value : "";
+    var m = $("answerMonth") ? $("answerMonth").value : "";
+    var y = $("answerYear") ? $("answerYear").value : "";
+    if (d && m && y) return y + "-" + String(m).padStart(2, "0") + "-" + String(d).padStart(2, "0");
+    return null;
+  } else if (q.type === "radio") {
+    var checked = document.querySelector('input[name="answer"]:checked');
+    return checked ? checked.value : null;
+  } else if (q.type === "checkbox") {
+    var checked = document.querySelectorAll('input[type="checkbox"]:checked');
+    var vals = [];
+    for (var i = 0; i < checked.length; i++) { vals.push(checked[i].value); }
+    return vals;
+  } else {
+    var inp = $("answer");
+    return inp ? inp.value.trim() : null;
+  }
+}
+
+function validate(q, val) {
+  if (q.required && (!val || (Array.isArray(val) && val.length === 0))) return L("validation.required", "Required");
+  if (val && q.validation === "plz" && !/^\d{5}$/.test(val)) return L("validation.invalidPLZ", "Invalid PLZ");
+  if (val && q.type === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) return L("validation.invalidEmail", "Invalid email");
+  return null;
+}
+
+function renderSectionNav() {
+  var nav = $("sectionNav");
+  if (!state.flow || !nav) return;
+  var sections = FLOWS[state.flow].sections;
+  nav.innerHTML = "";
+  for (var i = 0; i < sections.length; i++) {
+    var sec = sections[i];
+    var btn = document.createElement("button");
+    btn.className = "section-tab";
+    if (QUESTIONS[state.currentQ] && QUESTIONS[state.currentQ].section === sec) btn.classList.add("active");
+    btn.textContent = L("sections." + sec, sec);
+    nav.appendChild(btn);
+  }
+}
+
+function updateProgress() {
+  var flow = FLOWS[state.flow];
+  if (!flow) return;
+  var answered = Object.keys(state.answers).length;
+  var total = Object.keys(QUESTIONS).filter(function(k) { return flow.sections.indexOf(QUESTIONS[k].section) >= 0; }).length;
+  var pct = total > 0 ? Math.round((answered / total) * 100) : 0;
+  $("progressValue").textContent = pct + "%";
+  $("progressFill").style.width = pct + "%";
+}
+
+function goNext() {
+  var q = QUESTIONS[state.currentQ];
+  var val = getValue(q);
+  var err = validate(q, val);
+  if (err) { var errEl = $("errorMsg"); errEl.textContent = err; errEl.classList.add("show"); return; }
+  $("errorMsg").classList.remove("show");
+  state.answers[q.id] = val;
+  state.history.push(q.id);
+  var nextId = q.branch && val ? (q.branch[val] || q.next) : q.next;
+  while (nextId && !shouldShowQuestion(nextId)) {
+    var nextQ = QUESTIONS[nextId];
+    nextId = nextQ ? nextQ.next : null;
+  }
+  state.currentQ = nextId;
+  if (!nextId) { showCompletion(); } else { renderQuestion(); updateProgress(); updateSummary(); }
+}
+
+function goBack() {
+  if (state.history.length === 0) return;
+  state.currentQ = state.history.pop();
+  renderQuestion();
+  updateProgress();
+}
+
+function skip() {
+  var q = QUESTIONS[state.currentQ];
+  if (q.required) return;
+  state.history.push(q.id);
+  var nextId = q.next;
+  while (nextId && !shouldShowQuestion(nextId)) { var nextQ = QUESTIONS[nextId]; nextId = nextQ ? nextQ.next : null; }
+  state.currentQ = nextId;
+  if (!nextId) { showCompletion(); } else { renderQuestion(); updateProgress(); }
+}
+
+function shouldShowQuestion(qId) {
+  var q = QUESTIONS[qId];
+  if (!q) return false;
+  var flow = FLOWS[state.flow];
+  return flow && flow.sections.indexOf(q.section) >= 0;
+}
+
+function resetToMenu() {
+  if (!confirm(L("buttons.backToSelection") + "?")) return;
+  state.flow = null; state.currentQ = null; state.answers = {}; state.history = [];
+  $("flowSelection").classList.remove("hidden");
+  $("questionSection").classList.add("hidden");
+  $("btnReset").classList.add("hidden");
+  $("exportSection").classList.add("hidden");
+  $("btnNext").style.display = "";
+  renderFlowButtons();
+  updateSummary();
+}
+
+function showCompletion() {
+  $("questionContent").innerHTML = '<div class="completion-screen"><div class="completion-icon">✓</div><h3>' + L("completion.title") + '</h3><p>' + L("completion.message") + '</p></div>';
+  $("btnBack").disabled = false;
+  $("btnNext").style.display = "none";
+  $("btnSkip").classList.add("hidden");
+  $("exportSection").classList.remove("hidden");
+  updateSummary();
+  updateProgress();
+}
+
+function updateSummary() {
+  var container = $("summaryContent");
+  var answered = Object.keys(state.answers);
+  if (answered.length === 0) { container.innerHTML = '<div class="summary-empty"><div class="summary-empty-icon">📋</div><p id="summaryEmpty">' + L("summary.empty") + '</p></div>'; return; }
+  var sections = {};
+  for (var i = 0; i < answered.length; i++) {
+    var qid = answered[i];
+    var q = QUESTIONS[qid];
+    if (!q) continue;
+    if (!sections[q.section]) sections[q.section] = [];
+    sections[q.section].push(qid);
+  }
+  var html = "";
+  var secKeys = Object.keys(sections);
+  for (var i = 0; i < secKeys.length; i++) {
+    var sec = secKeys[i];
+    var qids = sections[sec];
+    html += '<div class="summary-section"><div class="summary-section-title">' + L("sections." + sec, sec) + '</div>';
+    for (var j = 0; j < qids.length; j++) {
+      var qid = qids[j];
+      var q = QUESTIONS[qid];
+      var val = state.answers[qid];
+      var qLabel = L("q." + qid, {});
+      var displayVal = val;
+      if (Array.isArray(val) && qLabel.options) { displayVal = val.map(function(v) { return qLabel.options[v] || v; }).join(", "); }
+      else if (q.type === "radio" && qLabel.options) { displayVal = qLabel.options[val] || val; }
+      html += '<div class="summary-item"><div class="summary-item-label">' + (qLabel.text || qid) + '</div><div class="summary-item-value">' + displayVal + '</div></div>';
+    }
+    html += '</div>';
+  }
+  container.innerHTML = html;
+}
+
+function exportData() {
+  var data = { meta: { flow: state.flow, language: state.lang, timestamp: new Date().toISOString() }, answers: state.answers };
+  var json = JSON.stringify(data, null, 2);
+  var blob = new Blob([json], { type: "application/json" });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href = url;
+  a.download = "anamnese_" + (state.answers.q0001 || "patient") + "_" + new Date().toISOString().split("T")[0] + ".json";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function sendEmail() {
+  var body = "MEDIZINISCHE ANAMNESE\n\n";
+  var keys = Object.keys(state.answers);
+  for (var i = 0; i < keys.length; i++) {
+    var qid = keys[i];
+    var val = state.answers[qid];
+    var qLabel = L("q." + qid, {});
+    body += (qLabel.text || qid) + ": " + (Array.isArray(val) ? val.join(", ") : val) + "\n";
+  }
+  var subject = encodeURIComponent("Anamnese: " + (state.answers.q0001 || "") + " " + (state.answers.q0002 || ""));
+  window.location.href = "mailto:?subject=" + subject + "&body=" + encodeURIComponent(body);
+}
+
+function init() {
+  var browserLang = navigator.language ? navigator.language.split("-")[0] : "de";
+  if (LABELS[browserLang]) { state.lang = browserLang; $("langSelect").value = browserLang; }
+  $("langSelect").onchange = function() {
+    state.lang = this.value;
+    updateUI();
+    if (state.currentQ) { renderQuestion(); updateSummary(); }
+  };
+  $("btnBack").onclick = goBack;
+  $("btnNext").onclick = goNext;
+  $("btnSkip").onclick = skip;
+  $("btnReset").onclick = resetToMenu;
+  $("btnExport").onclick = exportData;
+  $("btnEmail").onclick = sendEmail;
+  document.onkeydown = function(e) {
+    if (e.key === "Enter" && !e.shiftKey && state.currentQ) {
+      var q = QUESTIONS[state.currentQ];
+      if (q && q.type !== "textarea" && !$("btnNext").disabled) { e.preventDefault(); goNext(); }
+    }
+  };
+  updateUI();
+}
+
+document.addEventListener("DOMContentLoaded", init);
+</script>
+</body>
+</html>
