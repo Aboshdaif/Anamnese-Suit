@@ -1172,7 +1172,7 @@ LICENSE: Proprietary - DiggAi GmbH - All rights reserved
               errorMessage = t('validation.nameMin3');
               isValid = false;
             }
-            // Check only letters (including international characters)
+            // Check only letters (including international characters, spaces, hyphens, apostrophes)
             else if (!/^[\p{L}\s\-']+$/u.test(value)) {
               errorMessage = t('validation.nameLettersOnly');
               isValid = false;
@@ -1291,8 +1291,12 @@ LICENSE: Proprietary - DiggAi GmbH - All rights reserved
         }
         const baseData = JSON.parse(saved);
         
-        // Merge base data into current form data
-        Object.assign(state.formData, baseData);
+        // Merge base data into current form data (only base data fields q0000-q0003)
+        // This explicitly only overwrites base data fields, preserving other form data
+        if (baseData.q0000) state.formData['q0000'] = baseData.q0000;
+        if (baseData.q0001) state.formData['q0001'] = baseData.q0001;
+        if (baseData.q0002) state.formData['q0002'] = baseData.q0002;
+        if (baseData.q0003) state.formData['q0003'] = baseData.q0003;
         
         buildSections();
         showSection(0);
@@ -1385,6 +1389,7 @@ LICENSE: Proprietary - DiggAi GmbH - All rights reserved
       } catch (e) {
         console.error('Speech start error:', e);
         hideVoiceStatus();
+        alert(t('voice.unavailable') || 'Spracherkennung konnte nicht gestartet werden');
       }
     }
 
@@ -1442,8 +1447,11 @@ LICENSE: Proprietary - DiggAi GmbH - All rights reserved
           
           // If the match has a qcode, it's a symptom that can be auto-assigned
           if (match.qcode) {
-            // Handle checkbox fields
-            const currentValues = state.formData[match.qcode] || [];
+            // Handle checkbox fields - ensure currentValues is always an array
+            let currentValues = state.formData[match.qcode];
+            if (!Array.isArray(currentValues)) {
+              currentValues = currentValues ? [currentValues] : [];
+            }
             if (!currentValues.includes(match.value)) {
               currentValues.push(match.value);
               state.formData[match.qcode] = currentValues;
