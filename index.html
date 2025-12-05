@@ -1,0 +1,1780 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Anamnese Suite - Offline Medical History Form</title>
+  <meta name="description" content="FHIR R5 compliant offline medical anamnesis form with 15 language support and NFC export">
+  <style>
+    :root {
+      --primary: #1a73e8;
+      --primary-dark: #1557b0;
+      --success: #34a853;
+      --warning: #fbbc04;
+      --danger: #ea4335;
+      --bg: #f8f9fa;
+      --card-bg: #ffffff;
+      --text: #202124;
+      --text-secondary: #5f6368;
+      --border: #dadce0;
+      --shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    header {
+      background: var(--primary);
+      color: white;
+      padding: 20px;
+      text-align: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: var(--shadow);
+    }
+    header h1 { font-size: 1.5rem; margin-bottom: 10px; }
+    .language-selector {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 5px;
+      margin-top: 10px;
+    }
+    .lang-btn {
+      background: rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: white;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: all 0.2s;
+    }
+    .lang-btn:hover, .lang-btn.active {
+      background: white;
+      color: var(--primary);
+    }
+    .progress-bar {
+      background: rgba(255,255,255,0.3);
+      height: 8px;
+      border-radius: 4px;
+      margin-top: 15px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      background: var(--success);
+      height: 100%;
+      width: 0%;
+      transition: width 0.3s;
+    }
+    .progress-text {
+      font-size: 0.85rem;
+      margin-top: 5px;
+    }
+    .card {
+      background: var(--card-bg);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 25px;
+      margin-bottom: 20px;
+    }
+    .card-title {
+      font-size: 1.25rem;
+      color: var(--primary);
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--primary);
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-group label {
+      display: block;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+    .form-group label.required::after {
+      content: " *";
+      color: var(--danger);
+    }
+    input[type="text"], input[type="date"], input[type="email"], input[type="tel"],
+    select, textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 1rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(26,115,232,0.2);
+    }
+    .checkbox-group, .radio-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .checkbox-item, .radio-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      background: var(--bg);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .checkbox-item:hover, .radio-item:hover {
+      background: #e8f0fe;
+    }
+    .checkbox-item input, .radio-item input {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-success {
+      background: var(--success);
+      color: white;
+    }
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+    }
+    .btn-outline {
+      background: transparent;
+      border: 2px solid var(--primary);
+      color: var(--primary);
+    }
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+    .section { display: none; }
+    .section.active { display: block; }
+    .nav-buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+    .alert {
+      padding: 15px 20px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .alert-warning {
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      color: #856404;
+    }
+    .alert-danger {
+      background: #f8d7da;
+      border: 1px solid #f5c6cb;
+      color: #721c24;
+    }
+    .alert-info {
+      background: #d1ecf1;
+      border: 1px solid #bee5eb;
+      color: #0c5460;
+    }
+    .hidden { display: none !important; }
+    .consent-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+    .consent-content {
+      background: white;
+      border-radius: 12px;
+      max-width: 600px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 30px;
+    }
+    .consent-content h2 {
+      color: var(--primary);
+      margin-bottom: 20px;
+    }
+    .consent-content ul {
+      margin: 15px 0;
+      padding-left: 25px;
+    }
+    .consent-content li {
+      margin-bottom: 8px;
+    }
+    .timeout-warning {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--warning);
+      color: #000;
+      padding: 15px 25px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      z-index: 999;
+    }
+    .red-flag {
+      background: #ffebee;
+      border-left: 4px solid var(--danger);
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 0 6px 6px 0;
+    }
+    .red-flag-title {
+      color: var(--danger);
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+    .export-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+    .export-content {
+      background: white;
+      border-radius: 12px;
+      max-width: 500px;
+      padding: 30px;
+      text-align: center;
+    }
+    .export-content h2 {
+      color: var(--primary);
+      margin-bottom: 20px;
+    }
+    .export-options {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      margin: 25px 0;
+    }
+    .nfc-status {
+      padding: 20px;
+      background: var(--bg);
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+    .nfc-icon {
+      font-size: 3rem;
+      margin-bottom: 10px;
+    }
+    @media (max-width: 600px) {
+      .container { padding: 10px; }
+      .card { padding: 15px; }
+      header h1 { font-size: 1.2rem; }
+      .btn { padding: 10px 16px; font-size: 0.9rem; }
+    }
+    /* RTL Support for Arabic, Farsi, Kurdish */
+    [dir="rtl"] {
+      text-align: right;
+    }
+    [dir="rtl"] .checkbox-item, [dir="rtl"] .radio-item {
+      flex-direction: row-reverse;
+    }
+    [dir="rtl"] .alert {
+      flex-direction: row-reverse;
+    }
+    [dir="rtl"] .red-flag {
+      border-left: none;
+      border-right: 4px solid var(--danger);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Consent Modal -->
+  <div id="consentModal" class="consent-modal">
+    <div class="consent-content">
+      <h2 data-i18n="consent.title">Datenschutzhinweis & Einwilligung</h2>
+      <p data-i18n="consent.intro">Bevor Sie mit der Anamnese beginnen, lesen Sie bitte die folgenden Hinweise:</p>
+      <h3 data-i18n="consent.purpose">Zweck der Datenerhebung</h3>
+      <p data-i18n="consent.purposeText">Diese Anamnese dient ausschließlich der medizinischen Versorgung in dieser Praxis.</p>
+      <h3 data-i18n="consent.dataHandling">Datenverarbeitung</h3>
+      <ul>
+        <li data-i18n="consent.noStorage">Ihre Daten werden nur im Arbeitsspeicher verarbeitet, nicht dauerhaft gespeichert</li>
+        <li data-i18n="consent.noTracking">Kein Tracking, keine Cookies, keine externe Datenübertragung</li>
+        <li data-i18n="consent.autoDelete">Nach dem Export werden alle Daten automatisch gelöscht</li>
+        <li data-i18n="consent.nfcTransfer">Die Übertragung erfolgt per NFC direkt an das Praxisgerät</li>
+      </ul>
+      <h3 data-i18n="consent.rights">Ihre Rechte (DSGVO)</h3>
+      <ul>
+        <li data-i18n="consent.rightAccess">Recht auf Auskunft (Art. 15 DSGVO)</li>
+        <li data-i18n="consent.rightRectification">Recht auf Berichtigung (Art. 16 DSGVO)</li>
+        <li data-i18n="consent.rightErasure">Recht auf Löschung (Art. 17 DSGVO)</li>
+        <li data-i18n="consent.rightWithdraw">Recht auf Widerruf der Einwilligung</li>
+      </ul>
+      <p data-i18n="consent.contact">Verantwortliche Stelle: [Praxisname eintragen]</p>
+      <div class="btn-group" style="justify-content: center; margin-top: 25px;">
+        <button class="btn btn-primary" onclick="acceptConsent()" data-i18n="consent.accept">Ich stimme zu und möchte fortfahren</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Timeout Warning -->
+  <div id="timeoutWarning" class="timeout-warning hidden">
+    <span data-i18n="timeout.warning">Inaktivität erkannt! Daten werden in <span id="timeoutCounter">60</span> Sekunden gelöscht.</span>
+    <button class="btn btn-primary" onclick="resetTimeout()" style="margin-left: 15px;" data-i18n="timeout.continue">Fortfahren</button>
+  </div>
+
+  <!-- Header -->
+  <header>
+    <h1 data-i18n="app.title">Anamnese Suite</h1>
+    <p data-i18n="app.subtitle">Medizinische Anamnese - Offline & Datenschutzkonform</p>
+    
+    <div class="language-selector">
+      <button class="lang-btn active" data-lang="de">DE</button>
+      <button class="lang-btn" data-lang="en">EN</button>
+      <button class="lang-btn" data-lang="tr">TR</button>
+      <button class="lang-btn" data-lang="ru">RU</button>
+      <button class="lang-btn" data-lang="ar">AR</button>
+      <button class="lang-btn" data-lang="ku">KU</button>
+      <button class="lang-btn" data-lang="pl">PL</button>
+      <button class="lang-btn" data-lang="ro">RO</button>
+      <button class="lang-btn" data-lang="it">IT</button>
+      <button class="lang-btn" data-lang="fr">FR</button>
+      <button class="lang-btn" data-lang="es">ES</button>
+      <button class="lang-btn" data-lang="bg">BG</button>
+      <button class="lang-btn" data-lang="nl">NL</button>
+      <button class="lang-btn" data-lang="fa">FA</button>
+      <button class="lang-btn" data-lang="uk">UK</button>
+    </div>
+    
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <div class="progress-text"><span id="progressText">0</span>% <span data-i18n="progress.complete">abgeschlossen</span></div>
+  </header>
+
+  <div class="container" id="mainContainer" style="display: none;">
+    
+    <!-- Section 1: Basic Data -->
+    <section class="section active" data-section="1">
+      <div class="card">
+        <h2 class="card-title" data-i18n="section1.title">1. Basisdaten</h2>
+        
+        <div class="form-group">
+          <label class="required" data-i18n="field.lastName">Nachname</label>
+          <input type="text" id="lastName" data-linkid="1.1" required aria-required="true">
+        </div>
+        
+        <div class="form-group">
+          <label class="required" data-i18n="field.firstName">Vorname</label>
+          <input type="text" id="firstName" data-linkid="1.2" required aria-required="true">
+        </div>
+        
+        <div class="form-group">
+          <label class="required" data-i18n="field.birthDate">Geburtsdatum</label>
+          <input type="date" id="birthDate" data-linkid="1.3" required aria-required="true" onchange="checkAge()">
+        </div>
+        
+        <div class="form-group">
+          <label class="required" data-i18n="field.gender">Geschlecht</label>
+          <div class="radio-group">
+            <label class="radio-item">
+              <input type="radio" name="gender" value="m" data-linkid="1.4">
+              <span data-i18n="gender.male">männlich</span>
+            </label>
+            <label class="radio-item">
+              <input type="radio" name="gender" value="w" data-linkid="1.4">
+              <span data-i18n="gender.female">weiblich</span>
+            </label>
+            <label class="radio-item">
+              <input type="radio" name="gender" value="d" data-linkid="1.4">
+              <span data-i18n="gender.diverse">divers</span>
+            </label>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label data-i18n="field.insurance">Versicherung</label>
+          <select id="insurance" data-linkid="1.5">
+            <option value="" data-i18n="select.placeholder">Bitte wählen...</option>
+            <option value="gkv" data-i18n="insurance.public">Gesetzlich versichert</option>
+            <option value="pkv" data-i18n="insurance.private">Privat versichert</option>
+            <option value="selbst" data-i18n="insurance.self">Selbstzahler</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label data-i18n="field.height">Körpergröße (cm)</label>
+          <input type="text" id="height" data-linkid="1.6" placeholder="z.B. 175">
+        </div>
+        
+        <div class="form-group">
+          <label data-i18n="field.weight">Gewicht (kg)</label>
+          <input type="text" id="weight" data-linkid="1.7" placeholder="z.B. 70">
+        </div>
+
+        <div class="nav-buttons">
+          <div></div>
+          <button class="btn btn-primary" onclick="nextSection()" data-i18n="nav.next">Weiter</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 2: Current Complaints -->
+    <section class="section" data-section="2">
+      <div class="card">
+        <h2 class="card-title" data-i18n="section2.title">2. Aktuelle Beschwerden</h2>
+        
+        <div class="form-group">
+          <label class="required" data-i18n="field.hasComplaints">Haben Sie aktuell Beschwerden?</label>
+          <div class="radio-group">
+            <label class="radio-item">
+              <input type="radio" name="hasComplaints" value="yes" data-linkid="2.1" onchange="toggleComplaintsDetails()">
+              <span data-i18n="yes">Ja</span>
+            </label>
+            <label class="radio-item">
+              <input type="radio" name="hasComplaints" value="no" data-linkid="2.1" onchange="toggleComplaintsDetails()">
+              <span data-i18n="no">Nein</span>
+            </label>
+          </div>
+        </div>
+        
+        <div id="complaintsDetails" class="hidden">
+          <div class="form-group">
+            <label data-i18n="field.complaintsDuration">Seit wann bestehen die Beschwerden?</label>
+            <select id="complaintsDuration" data-linkid="2.2">
+              <option value="" data-i18n="select.placeholder">Bitte wählen...</option>
+              <option value="days" data-i18n="duration.days">Wenige Tage</option>
+              <option value="weeks" data-i18n="duration.weeks">Wochen</option>
+              <option value="months" data-i18n="duration.months">Monate</option>
+              <option value="years" data-i18n="duration.years">Jahre</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label data-i18n="field.mainComplaint">Hauptbeschwerde (in eigenen Worten)</label>
+            <textarea id="mainComplaint" data-linkid="2.3" rows="3" placeholder="Beschreiben Sie Ihre Hauptbeschwerde..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label data-i18n="field.painScale">Schmerzstärke (0 = kein Schmerz, 10 = stärkster Schmerz)</label>
+            <select id="painScale" data-linkid="2.4">
+              <option value="" data-i18n="select.placeholder">Bitte wählen...</option>
+              <option value="0">0 - Kein Schmerz</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5 - Mittlerer Schmerz</option>
+              <option value="6">6</option>
+              <option value="7">7</option>
+              <option value="8">8</option>
+              <option value="9">9</option>
+              <option value="10">10 - Stärkster Schmerz</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="nav-buttons">
+          <button class="btn btn-outline" onclick="prevSection()" data-i18n="nav.back">Zurück</button>
+          <button class="btn btn-primary" onclick="nextSection()" data-i18n="nav.next">Weiter</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 3: General Symptoms -->
+    <section class="section" data-section="3">
+      <div class="card">
+        <h2 class="card-title" data-i18n="section3.title">3. Allgemeinsymptome</h2>
+        
+        <div class="form-group">
+          <label data-i18n="field.generalSymptoms">Haben Sie eines der folgenden Symptome?</label>
+          <div class="checkbox-group">
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="3.1.1" data-symptom="fever" onchange="toggleSymptomDetails('fever')">
+              <span data-i18n="symptom.fever">Fieber</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="3.1.2" data-symptom="nightSweats">
+              <span data-i18n="symptom.nightSweats">Nachtschweiß</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="3.1.3" data-symptom="weightLoss" onchange="toggleSymptomDetails('weightLoss')">
+              <span data-i18n="symptom.weightLoss">Ungewollter Gewichtsverlust</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="3.1.4" data-symptom="fatigue" onchange="toggleSymptomDetails('fatigue')">
+              <span data-i18n="symptom.fatigue">Müdigkeit/Abgeschlagenheit</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="3.1.5" data-symptom="weakness">
+              <span data-i18n="symptom.weakness">Kraftlosigkeit</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="3.1.6">
+              <span data-i18n="symptom.appetiteLoss">Appetitlosigkeit</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Fever Details -->
+        <div id="feverDetails" class="hidden" style="margin-left: 20px; padding: 15px; background: #f0f7ff; border-radius: 8px;">
+          <div class="form-group">
+            <label data-i18n="field.feverHeight">Wie hoch ist/war das Fieber?</label>
+            <select id="feverHeight" data-linkid="3.2.1">
+              <option value="" data-i18n="select.placeholder">Bitte wählen...</option>
+              <option value="low">37,5 - 38,0 °C (erhöhte Temperatur)</option>
+              <option value="moderate">38,1 - 39,0 °C (Fieber)</option>
+              <option value="high">39,1 - 40,0 °C (hohes Fieber)</option>
+              <option value="veryHigh">> 40 °C (sehr hohes Fieber)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label data-i18n="field.feverDuration">Seit wann haben Sie Fieber?</label>
+            <input type="text" id="feverDuration" data-linkid="3.2.2" placeholder="z.B. seit 2 Tagen">
+          </div>
+        </div>
+
+        <!-- Weight Loss Details -->
+        <div id="weightLossDetails" class="hidden" style="margin-left: 20px; padding: 15px; background: #f0f7ff; border-radius: 8px;">
+          <div class="form-group">
+            <label data-i18n="field.weightLossAmount">Wie viel Gewicht haben Sie verloren?</label>
+            <input type="text" id="weightLossAmount" data-linkid="3.3.1" placeholder="z.B. 5 kg">
+          </div>
+          <div class="form-group">
+            <label data-i18n="field.weightLossDuration">In welchem Zeitraum?</label>
+            <input type="text" id="weightLossDuration" data-linkid="3.3.2" placeholder="z.B. in 3 Monaten">
+          </div>
+          <div class="red-flag" id="weightLossWarning" class="hidden">
+            <div class="red-flag-title" data-i18n="warning.title">⚠️ Hinweis</div>
+            <p data-i18n="warning.weightLoss">Ein ungewollter Gewichtsverlust von mehr als 10% in 6 Monaten sollte ärztlich abgeklärt werden.</p>
+          </div>
+        </div>
+
+        <!-- Fatigue Details -->
+        <div id="fatigueDetails" class="hidden" style="margin-left: 20px; padding: 15px; background: #f0f7ff; border-radius: 8px;">
+          <div class="form-group">
+            <label data-i18n="field.fatigueSeverity">Wie stark beeinträchtigt Sie die Müdigkeit?</label>
+            <select id="fatigueSeverity" data-linkid="3.4.1">
+              <option value="" data-i18n="select.placeholder">Bitte wählen...</option>
+              <option value="mild" data-i18n="severity.mild">Leicht - kann Alltag normal bewältigen</option>
+              <option value="moderate" data-i18n="severity.moderate">Mäßig - brauche mehr Pausen</option>
+              <option value="severe" data-i18n="severity.severe">Schwer - kann kaum aufstehen</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="nav-buttons">
+          <button class="btn btn-outline" onclick="prevSection()" data-i18n="nav.back">Zurück</button>
+          <button class="btn btn-primary" onclick="nextSection()" data-i18n="nav.next">Weiter</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 4: System-specific symptoms -->
+    <section class="section" data-section="4">
+      <div class="card">
+        <h2 class="card-title" data-i18n="section4.title">4. Organbezogene Beschwerden</h2>
+        
+        <div class="form-group">
+          <label data-i18n="field.systemSymptoms">In welchen Bereichen haben Sie Beschwerden?</label>
+          <div class="checkbox-group">
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.1" data-system="cardiovascular" onchange="toggleSystemDetails('cardiovascular')">
+              <span data-i18n="system.cardiovascular">A - Herz-Kreislauf</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.2" data-system="respiratory" onchange="toggleSystemDetails('respiratory')">
+              <span data-i18n="system.respiratory">B - Atemwege/Lunge</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.3" data-system="gastrointestinal" onchange="toggleSystemDetails('gastrointestinal')">
+              <span data-i18n="system.gastrointestinal">C - Magen-Darm</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.4" data-system="urogenital" onchange="toggleSystemDetails('urogenital')">
+              <span data-i18n="system.urogenital">D - Harnwege/Genital</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.5" data-system="musculoskeletal" onchange="toggleSystemDetails('musculoskeletal')">
+              <span data-i18n="system.musculoskeletal">E - Bewegungsapparat</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.6" data-system="neurological" onchange="toggleSystemDetails('neurological')">
+              <span data-i18n="system.neurological">F - Nervensystem</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.7" data-system="skin" onchange="toggleSystemDetails('skin')">
+              <span data-i18n="system.skin">G - Haut</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.8" data-system="ent" onchange="toggleSystemDetails('ent')">
+              <span data-i18n="system.ent">H - HNO (Hals-Nasen-Ohren)</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.9" data-system="eyes" onchange="toggleSystemDetails('eyes')">
+              <span data-i18n="system.eyes">I - Augen</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.10" data-system="mental" onchange="toggleSystemDetails('mental')">
+              <span data-i18n="system.mental">J - Psyche/Stimmung</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.11" data-system="endocrine" onchange="toggleSystemDetails('endocrine')">
+              <span data-i18n="system.endocrine">K - Stoffwechsel/Hormone</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Cardiovascular Details -->
+        <div id="cardiovascularDetails" class="hidden" style="margin-top: 20px; padding: 20px; background: #fff8f8; border-radius: 8px; border-left: 4px solid #e74c3c;">
+          <h4 data-i18n="system.cardiovascular.detail">Herz-Kreislauf-Beschwerden</h4>
+          <div class="checkbox-group" style="margin-top: 15px;">
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.1.1" data-redflag="chestPain" onchange="checkRedFlags('chestPain')">
+              <span data-i18n="cv.chestPain">Brustschmerzen</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.1.2">
+              <span data-i18n="cv.palpitations">Herzrasen/Herzstolpern</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.1.3" data-redflag="dyspnea">
+              <span data-i18n="cv.dyspnea">Atemnot bei Belastung</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.1.4">
+              <span data-i18n="cv.legSwelling">Beinschwellungen</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.1.5">
+              <span data-i18n="cv.dizziness">Schwindel</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.1.6" data-redflag="syncope">
+              <span data-i18n="cv.syncope">Ohnmacht/Bewusstlosigkeit</span>
+            </label>
+          </div>
+          <div id="chestPainWarning" class="red-flag hidden">
+            <div class="red-flag-title">⚠️ <span data-i18n="warning.urgent">Wichtiger Hinweis</span></div>
+            <p data-i18n="warning.chestPain">Bei Brustschmerzen mit Ausstrahlung in Arm/Kiefer, Luftnot, Übelkeit oder Schweißausbruch: Sofort Notarzt rufen (112)!</p>
+          </div>
+        </div>
+
+        <!-- Respiratory Details -->
+        <div id="respiratoryDetails" class="hidden" style="margin-top: 20px; padding: 20px; background: #f0f7ff; border-radius: 8px; border-left: 4px solid #3498db;">
+          <h4 data-i18n="system.respiratory.detail">Atemwegsbeschwerden</h4>
+          <div class="checkbox-group" style="margin-top: 15px;">
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.2.1">
+              <span data-i18n="resp.cough">Husten</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.2.2">
+              <span data-i18n="resp.sputum">Auswurf</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.2.3" data-redflag="hemoptysis">
+              <span data-i18n="resp.hemoptysis">Bluthusten</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.2.4">
+              <span data-i18n="resp.wheezing">Pfeifende Atmung</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.2.5" data-redflag="dyspneaRest">
+              <span data-i18n="resp.dyspneaRest">Atemnot in Ruhe</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Gastrointestinal Details -->
+        <div id="gastrointestinalDetails" class="hidden" style="margin-top: 20px; padding: 20px; background: #f5f0ff; border-radius: 8px; border-left: 4px solid #9b59b6;">
+          <h4 data-i18n="system.gastrointestinal.detail">Magen-Darm-Beschwerden</h4>
+          <div class="checkbox-group" style="margin-top: 15px;">
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.3.1">
+              <span data-i18n="gi.nausea">Übelkeit</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.3.2">
+              <span data-i18n="gi.vomiting">Erbrechen</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.3.3">
+              <span data-i18n="gi.abdominalPain">Bauchschmerzen</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.3.4">
+              <span data-i18n="gi.diarrhea">Durchfall</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.3.5">
+              <span data-i18n="gi.constipation">Verstopfung</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.3.6" data-redflag="bloodStool">
+              <span data-i18n="gi.bloodStool">Blut im Stuhl</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.3.7">
+              <span data-i18n="gi.heartburn">Sodbrennen</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.3.8">
+              <span data-i18n="gi.swallowing">Schluckbeschwerden</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Urogenital Details -->
+        <div id="urogenitalDetails" class="hidden" style="margin-top: 20px; padding: 20px; background: #fff5e6; border-radius: 8px; border-left: 4px solid #e67e22;">
+          <h4 data-i18n="system.urogenital.detail">Harnwegs-/Genitalbeschwerden</h4>
+          <div class="checkbox-group" style="margin-top: 15px;">
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.4.1">
+              <span data-i18n="uro.dysuria">Brennen beim Wasserlassen</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.4.2">
+              <span data-i18n="uro.frequency">Häufiger Harndrang</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.4.3" data-redflag="hematuria">
+              <span data-i18n="uro.hematuria">Blut im Urin</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.4.4">
+              <span data-i18n="uro.incontinence">Inkontinenz</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.4.5">
+              <span data-i18n="uro.flankPain">Flankenschmerzen</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Musculoskeletal Details -->
+        <div id="musculoskeletalDetails" class="hidden" style="margin-top: 20px; padding: 20px; background: #e8f5e9; border-radius: 8px; border-left: 4px solid #27ae60;">
+          <h4 data-i18n="system.musculoskeletal.detail">Bewegungsapparat</h4>
+          <div class="checkbox-group" style="margin-top: 15px;">
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.5.1">
+              <span data-i18n="msk.backPain">Rückenschmerzen</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.5.2">
+              <span data-i18n="msk.jointPain">Gelenkschmerzen</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.5.3">
+              <span data-i18n="msk.jointSwelling">Gelenkschwellung</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.5.4">
+              <span data-i18n="msk.stiffness">Morgensteifigkeit</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.5.5">
+              <span data-i18n="msk.musclePain">Muskelschmerzen</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Neurological Details -->
+        <div id="neurologicalDetails" class="hidden" style="margin-top: 20px; padding: 20px; background: #fce4ec; border-radius: 8px; border-left: 4px solid #e91e63;">
+          <h4 data-i18n="system.neurological.detail">Neurologische Beschwerden</h4>
+          <div class="checkbox-group" style="margin-top: 15px;">
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.6.1">
+              <span data-i18n="neuro.headache">Kopfschmerzen</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.6.2">
+              <span data-i18n="neuro.numbness">Taubheitsgefühl</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.6.3">
+              <span data-i18n="neuro.tingling">Kribbeln</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.6.4" data-redflag="paresis">
+              <span data-i18n="neuro.paresis">Lähmungen</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.6.5">
+              <span data-i18n="neuro.tremor">Zittern</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.6.6" data-redflag="seizure">
+              <span data-i18n="neuro.seizure">Krampfanfälle</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.6.7">
+              <span data-i18n="neuro.memoryLoss">Gedächtnisstörungen</span>
+            </label>
+          </div>
+          <div id="strokeWarning" class="red-flag hidden">
+            <div class="red-flag-title">⚠️ <span data-i18n="warning.stroke">FAST-Test bei Verdacht auf Schlaganfall</span></div>
+            <p data-i18n="warning.strokeText">Face (Gesicht hängt), Arms (Arme heben), Speech (Sprache), Time (Zeit = 112 rufen!)</p>
+          </div>
+        </div>
+
+        <!-- Skin Details -->
+        <div id="skinDetails" class="hidden" style="margin-top: 20px; padding: 20px; background: #fff3e0; border-radius: 8px; border-left: 4px solid #ff9800;">
+          <h4 data-i18n="system.skin.detail">Hautbeschwerden</h4>
+          <div class="checkbox-group" style="margin-top: 15px;">
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.7.1">
+              <span data-i18n="skin.rash">Hautausschlag</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.7.2">
+              <span data-i18n="skin.itching">Juckreiz</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.7.3">
+              <span data-i18n="skin.dryness">Trockene Haut</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.7.4">
+              <span data-i18n="skin.moleChanges">Veränderung von Muttermalen</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.7.5">
+              <span data-i18n="skin.wounds">Schlecht heilende Wunden</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- ENT Details -->
+        <div id="entDetails" class="hidden" style="margin-top: 20px; padding: 20px; background: #e3f2fd; border-radius: 8px; border-left: 4px solid #2196f3;">
+          <h4 data-i18n="system.ent.detail">HNO-Beschwerden</h4>
+          <div class="checkbox-group" style="margin-top: 15px;">
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.8.1">
+              <span data-i18n="ent.soreThroat">Halsschmerzen</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.8.2">
+              <span data-i18n="ent.earPain">Ohrenschmerzen</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.8.3">
+              <span data-i18n="ent.hearingLoss">Hörverlust</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.8.4">
+              <span data-i18n="ent.tinnitus">Ohrgeräusche (Tinnitus)</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.8.5">
+              <span data-i18n="ent.nasalCongestion">Verstopfte Nase</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.8.6">
+              <span data-i18n="ent.nosebleed">Nasenbluten</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Eyes Details -->
+        <div id="eyesDetails" class="hidden" style="margin-top: 20px; padding: 20px; background: #e0f2f1; border-radius: 8px; border-left: 4px solid #009688;">
+          <h4 data-i18n="system.eyes.detail">Augenbeschwerden</h4>
+          <div class="checkbox-group" style="margin-top: 15px;">
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.9.1">
+              <span data-i18n="eyes.visionLoss">Sehverschlechterung</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.9.2" data-redflag="suddenVisionLoss">
+              <span data-i18n="eyes.suddenVisionLoss">Plötzlicher Sehverlust</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.9.3">
+              <span data-i18n="eyes.doubleVision">Doppelbilder</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.9.4">
+              <span data-i18n="eyes.redEyes">Rote Augen</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.9.5">
+              <span data-i18n="eyes.dryEyes">Trockene Augen</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Mental Health Details -->
+        <div id="mentalDetails" class="hidden" style="margin-top: 20px; padding: 20px; background: #f3e5f5; border-radius: 8px; border-left: 4px solid #9c27b0;">
+          <h4 data-i18n="system.mental.detail">Psychische Beschwerden</h4>
+          <div class="checkbox-group" style="margin-top: 15px;">
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.10.1">
+              <span data-i18n="mental.anxiety">Ängste</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.10.2">
+              <span data-i18n="mental.depression">Niedergeschlagenheit</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.10.3">
+              <span data-i18n="mental.sleepProblems">Schlafstörungen</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.10.4">
+              <span data-i18n="mental.stress">Stress/Überforderung</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.10.5">
+              <span data-i18n="mental.concentration">Konzentrationsstörungen</span>
+            </label>
+          </div>
+          <div class="alert alert-info" style="margin-top: 15px;">
+            <span>ℹ️</span>
+            <span data-i18n="mental.helpNote">Bei akuten Krisen: Telefonseelsorge 0800 111 0 111 (kostenlos, 24/7)</span>
+          </div>
+        </div>
+
+        <!-- Endocrine Details -->
+        <div id="endocrineDetails" class="hidden" style="margin-top: 20px; padding: 20px; background: #fff8e1; border-radius: 8px; border-left: 4px solid #ffc107;">
+          <h4 data-i18n="system.endocrine.detail">Stoffwechsel/Hormonstörungen</h4>
+          <div class="checkbox-group" style="margin-top: 15px;">
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.11.1">
+              <span data-i18n="endo.thirst">Vermehrter Durst</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.11.2">
+              <span data-i18n="endo.urination">Häufiges Wasserlassen</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.11.3">
+              <span data-i18n="endo.heatIntolerance">Wärme-/Kälteintoleranz</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.11.4">
+              <span data-i18n="endo.sweating">Vermehrtes Schwitzen</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="4.11.5">
+              <span data-i18n="endo.hairLoss">Haarausfall</span>
+            </label>
+          </div>
+        </div>
+        
+        <div class="nav-buttons">
+          <button class="btn btn-outline" onclick="prevSection()" data-i18n="nav.back">Zurück</button>
+          <button class="btn btn-primary" onclick="nextSection()" data-i18n="nav.next">Weiter</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 5: Medical History -->
+    <section class="section" data-section="5">
+      <div class="card">
+        <h2 class="card-title" data-i18n="section5.title">5. Vorerkrankungen</h2>
+        
+        <div class="form-group">
+          <label data-i18n="field.preExisting">Haben Sie eine der folgenden Erkrankungen?</label>
+          <div class="checkbox-group">
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="5.1.1">
+              <span data-i18n="disease.diabetes">Diabetes mellitus (Zuckerkrankheit)</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="5.1.2">
+              <span data-i18n="disease.hypertension">Bluthochdruck</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="5.1.3">
+              <span data-i18n="disease.heartDisease">Herzerkrankung</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="5.1.4">
+              <span data-i18n="disease.stroke">Schlaganfall</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="5.1.5">
+              <span data-i18n="disease.cancer">Krebserkrankung</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="5.1.6">
+              <span data-i18n="disease.asthma">Asthma/COPD</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="5.1.7">
+              <span data-i18n="disease.thyroid">Schilddrüsenerkrankung</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="5.1.8">
+              <span data-i18n="disease.kidney">Nierenerkrankung</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="5.1.9">
+              <span data-i18n="disease.liver">Lebererkrankung</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="5.1.10">
+              <span data-i18n="disease.rheumatic">Rheuma/Autoimmunerkrankung</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="5.1.11">
+              <span data-i18n="disease.mental">Psychische Erkrankung</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="5.1.12">
+              <span data-i18n="disease.infectious">Infektionskrankheit (HIV, Hepatitis)</span>
+            </label>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label data-i18n="field.otherDiseases">Weitere Vorerkrankungen</label>
+          <textarea id="otherDiseases" data-linkid="5.2" rows="2" placeholder="z.B. Operationen, andere Erkrankungen..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label data-i18n="field.surgeries">Frühere Operationen</label>
+          <textarea id="surgeries" data-linkid="5.3" rows="2" placeholder="z.B. Blinddarm-OP 2015, Knie-OP 2020..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label data-i18n="field.hospitalizations">Krankenhausaufenthalte</label>
+          <textarea id="hospitalizations" data-linkid="5.4" rows="2" placeholder="Wann und warum?"></textarea>
+        </div>
+        
+        <div class="nav-buttons">
+          <button class="btn btn-outline" onclick="prevSection()" data-i18n="nav.back">Zurück</button>
+          <button class="btn btn-primary" onclick="nextSection()" data-i18n="nav.next">Weiter</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 6: Medications & Allergies -->
+    <section class="section" data-section="6">
+      <div class="card">
+        <h2 class="card-title" data-i18n="section6.title">6. Medikamente & Allergien</h2>
+        
+        <div class="form-group">
+          <label data-i18n="field.currentMeds">Welche Medikamente nehmen Sie regelmäßig ein?</label>
+          <textarea id="currentMeds" data-linkid="6.1" rows="3" placeholder="Name, Dosis, wie oft? z.B. Metoprolol 50mg, 1x morgens"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label data-i18n="field.supplements">Nahrungsergänzungsmittel / pflanzliche Präparate?</label>
+          <textarea id="supplements" data-linkid="6.2" rows="2" placeholder="z.B. Vitamin D, Johanniskraut..."></textarea>
+        </div>
+        
+        <div class="form-group">
+          <label data-i18n="field.hasAllergies">Haben Sie Allergien oder Unverträglichkeiten?</label>
+          <div class="radio-group">
+            <label class="radio-item">
+              <input type="radio" name="hasAllergies" value="yes" data-linkid="6.3" onchange="toggleAllergiesDetails()">
+              <span data-i18n="yes">Ja</span>
+            </label>
+            <label class="radio-item">
+              <input type="radio" name="hasAllergies" value="no" data-linkid="6.3" onchange="toggleAllergiesDetails()">
+              <span data-i18n="no">Nein</span>
+            </label>
+            <label class="radio-item">
+              <input type="radio" name="hasAllergies" value="unknown" data-linkid="6.3" onchange="toggleAllergiesDetails()">
+              <span data-i18n="unknown">Nicht bekannt</span>
+            </label>
+          </div>
+        </div>
+
+        <div id="allergiesDetails" class="hidden">
+          <div class="form-group">
+            <label data-i18n="field.allergyTypes">Art der Allergie/Unverträglichkeit</label>
+            <div class="checkbox-group">
+              <label class="checkbox-item">
+                <input type="checkbox" data-linkid="6.4.1">
+                <span data-i18n="allergy.medication">Medikamente (z.B. Penicillin, Ibuprofen)</span>
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox" data-linkid="6.4.2">
+                <span data-i18n="allergy.food">Nahrungsmittel (z.B. Nüsse, Milch)</span>
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox" data-linkid="6.4.3">
+                <span data-i18n="allergy.pollen">Pollen/Heuschnupfen</span>
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox" data-linkid="6.4.4">
+                <span data-i18n="allergy.insects">Insektengift</span>
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox" data-linkid="6.4.5">
+                <span data-i18n="allergy.latex">Latex</span>
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox" data-linkid="6.4.6">
+                <span data-i18n="allergy.contrast">Kontrastmittel</span>
+              </label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label data-i18n="field.allergyDetails">Bitte beschreiben Sie Ihre Allergien genauer</label>
+            <textarea id="allergyDetails" data-linkid="6.5" rows="2" placeholder="Welche Reaktionen hatten Sie?"></textarea>
+          </div>
+        </div>
+        
+        <div class="nav-buttons">
+          <button class="btn btn-outline" onclick="prevSection()" data-i18n="nav.back">Zurück</button>
+          <button class="btn btn-primary" onclick="nextSection()" data-i18n="nav.next">Weiter</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 7: Family History -->
+    <section class="section" data-section="7">
+      <div class="card">
+        <h2 class="card-title" data-i18n="section7.title">7. Familienanamnese</h2>
+        
+        <p data-i18n="family.intro" style="margin-bottom: 20px; color: var(--text-secondary);">Gibt es in Ihrer Familie (Eltern, Großeltern, Geschwister) folgende Erkrankungen?</p>
+        
+        <div class="form-group">
+          <div class="checkbox-group">
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="7.1.1">
+              <span data-i18n="family.heartDisease">Herzerkrankungen / Herzinfarkt</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="7.1.2">
+              <span data-i18n="family.stroke">Schlaganfall</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="7.1.3">
+              <span data-i18n="family.diabetes">Diabetes mellitus</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="7.1.4">
+              <span data-i18n="family.cancer">Krebserkrankungen</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="7.1.5">
+              <span data-i18n="family.hypertension">Bluthochdruck</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="7.1.6">
+              <span data-i18n="family.mentalIllness">Psychische Erkrankungen</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="7.1.7">
+              <span data-i18n="family.autoimmune">Autoimmunerkrankungen</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="7.1.8">
+              <span data-i18n="family.thrombosis">Thrombose/Lungenembolie</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label data-i18n="field.familyOther">Weitere relevante Familienerkrankungen</label>
+          <textarea id="familyOther" data-linkid="7.2" rows="2" placeholder="z.B. Mutter Brustkrebs mit 55..."></textarea>
+        </div>
+        
+        <div class="nav-buttons">
+          <button class="btn btn-outline" onclick="prevSection()" data-i18n="nav.back">Zurück</button>
+          <button class="btn btn-primary" onclick="nextSection()" data-i18n="nav.next">Weiter</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 8: Lifestyle -->
+    <section class="section" data-section="8">
+      <div class="card">
+        <h2 class="card-title" data-i18n="section8.title">8. Lebensstil</h2>
+        
+        <div class="form-group">
+          <label data-i18n="field.smoking">Rauchen Sie?</label>
+          <div class="radio-group">
+            <label class="radio-item">
+              <input type="radio" name="smoking" value="never" data-linkid="8.1">
+              <span data-i18n="smoking.never">Nie geraucht</span>
+            </label>
+            <label class="radio-item">
+              <input type="radio" name="smoking" value="former" data-linkid="8.1">
+              <span data-i18n="smoking.former">Ehemaliger Raucher</span>
+            </label>
+            <label class="radio-item">
+              <input type="radio" name="smoking" value="current" data-linkid="8.1" onchange="toggleSmokingDetails()">
+              <span data-i18n="smoking.current">Ja, aktuell</span>
+            </label>
+          </div>
+        </div>
+
+        <div id="smokingDetails" class="hidden">
+          <div class="form-group">
+            <label data-i18n="field.smokingAmount">Wie viele Zigaretten pro Tag?</label>
+            <input type="text" id="smokingAmount" data-linkid="8.1.1" placeholder="z.B. 10">
+          </div>
+          <div class="form-group">
+            <label data-i18n="field.smokingYears">Seit wie vielen Jahren?</label>
+            <input type="text" id="smokingYears" data-linkid="8.1.2" placeholder="z.B. 15">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label data-i18n="field.alcohol">Alkoholkonsum?</label>
+          <div class="radio-group">
+            <label class="radio-item">
+              <input type="radio" name="alcohol" value="never" data-linkid="8.2">
+              <span data-i18n="alcohol.never">Kein Alkohol</span>
+            </label>
+            <label class="radio-item">
+              <input type="radio" name="alcohol" value="occasional" data-linkid="8.2">
+              <span data-i18n="alcohol.occasional">Gelegentlich</span>
+            </label>
+            <label class="radio-item">
+              <input type="radio" name="alcohol" value="regular" data-linkid="8.2">
+              <span data-i18n="alcohol.regular">Regelmäßig</span>
+            </label>
+            <label class="radio-item">
+              <input type="radio" name="alcohol" value="daily" data-linkid="8.2">
+              <span data-i18n="alcohol.daily">Täglich</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label data-i18n="field.exercise">Körperliche Aktivität?</label>
+          <div class="radio-group">
+            <label class="radio-item">
+              <input type="radio" name="exercise" value="none" data-linkid="8.3">
+              <span data-i18n="exercise.none">Kaum/keine</span>
+            </label>
+            <label class="radio-item">
+              <input type="radio" name="exercise" value="light" data-linkid="8.3">
+              <span data-i18n="exercise.light">Leicht (Spazieren)</span>
+            </label>
+            <label class="radio-item">
+              <input type="radio" name="exercise" value="moderate" data-linkid="8.3">
+              <span data-i18n="exercise.moderate">Mäßig (1-2x/Woche Sport)</span>
+            </label>
+            <label class="radio-item">
+              <input type="radio" name="exercise" value="active" data-linkid="8.3">
+              <span data-i18n="exercise.active">Aktiv (3x+/Woche Sport)</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label data-i18n="field.diet">Besondere Ernährungsweise?</label>
+          <div class="checkbox-group">
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="8.4.1">
+              <span data-i18n="diet.vegetarian">Vegetarisch</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="8.4.2">
+              <span data-i18n="diet.vegan">Vegan</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="8.4.3">
+              <span data-i18n="diet.glutenFree">Glutenfrei</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" data-linkid="8.4.4">
+              <span data-i18n="diet.lactoseFree">Laktosefrei</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label data-i18n="field.occupation">Beruf/Tätigkeit</label>
+          <input type="text" id="occupation" data-linkid="8.5" placeholder="z.B. Bürokaufmann, Rentner...">
+        </div>
+        
+        <div class="nav-buttons">
+          <button class="btn btn-outline" onclick="prevSection()" data-i18n="nav.back">Zurück</button>
+          <button class="btn btn-primary" onclick="nextSection()" data-i18n="nav.next">Weiter</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 9: Women's Health (conditional) -->
+    <section class="section" data-section="9" id="womensHealthSection">
+      <div class="card">
+        <h2 class="card-title" data-i18n="section9.title">9. Frauengesundheit</h2>
+        <div class="form-group">
+          <label data-i18n="field.pregnant">Sind Sie schwanger oder könnte eine Schwangerschaft bestehen?</label>
+          <div class="radio-group">
+            <label class="radio-item"><input type="radio" name="pregnant" value="yes" data-linkid="9.1"><span data-i18n="yes">Ja</span></label>
+            <label class="radio-item"><input type="radio" name="pregnant" value="no" data-linkid="9.1"><span data-i18n="no">Nein</span></label>
+            <label class="radio-item"><input type="radio" name="pregnant" value="unknown" data-linkid="9.1"><span data-i18n="unknown">Nicht bekannt</span></label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label data-i18n="field.lastPeriod">Letzte Regelblutung</label>
+          <input type="date" id="lastPeriod" data-linkid="9.2">
+        </div>
+        <div class="form-group">
+          <label data-i18n="field.contraception">Verhütungsmethode</label>
+          <input type="text" id="contraception" data-linkid="9.3" placeholder="z.B. Pille, Spirale...">
+        </div>
+        <div class="nav-buttons">
+          <button class="btn btn-outline" onclick="prevSection()" data-i18n="nav.back">Zurück</button>
+          <button class="btn btn-primary" onclick="nextSection()" data-i18n="nav.next">Weiter</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 10: Pediatrics (conditional, age < 16) -->
+    <section class="section" data-section="10" id="pediatricsSection">
+      <div class="card">
+        <h2 class="card-title" data-i18n="section10.title">10. Pädiatrie (Kinder)</h2>
+        <div class="form-group">
+          <label data-i18n="field.birthComplications">Gab es Komplikationen bei der Geburt?</label>
+          <div class="radio-group">
+            <label class="radio-item"><input type="radio" name="birthComplications" value="yes" data-linkid="10.1"><span data-i18n="yes">Ja</span></label>
+            <label class="radio-item"><input type="radio" name="birthComplications" value="no" data-linkid="10.1"><span data-i18n="no">Nein</span></label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label data-i18n="field.vaccinations">Sind alle Impfungen aktuell?</label>
+          <div class="radio-group">
+            <label class="radio-item"><input type="radio" name="vaccinations" value="yes" data-linkid="10.2"><span data-i18n="yes">Ja</span></label>
+            <label class="radio-item"><input type="radio" name="vaccinations" value="no" data-linkid="10.2"><span data-i18n="no">Nein</span></label>
+            <label class="radio-item"><input type="radio" name="vaccinations" value="partial" data-linkid="10.2"><span data-i18n="partial">Teilweise</span></label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label data-i18n="field.development">Entwicklung altersgerecht?</label>
+          <div class="radio-group">
+            <label class="radio-item"><input type="radio" name="development" value="yes" data-linkid="10.3"><span data-i18n="yes">Ja</span></label>
+            <label class="radio-item"><input type="radio" name="development" value="no" data-linkid="10.3"><span data-i18n="no">Nein</span></label>
+            <label class="radio-item"><input type="radio" name="development" value="unknown" data-linkid="10.3"><span data-i18n="unknown">Nicht bekannt</span></label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label data-i18n="field.childInfections">Häufige Infekte?</label>
+          <textarea id="childInfections" data-linkid="10.4" rows="2" placeholder="z.B. häufige Mittelohrentzündungen..."></textarea>
+        </div>
+        <div class="nav-buttons">
+          <button class="btn btn-outline" onclick="prevSection()" data-i18n="nav.back">Zurück</button>
+          <button class="btn btn-primary" onclick="nextSection()" data-i18n="nav.next">Weiter</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 11: Final -->
+    <section class="section" data-section="11">
+      <div class="card">
+        <h2 class="card-title" data-i18n="section11.title">11. Abschluss</h2>
+        <div class="form-group">
+          <label data-i18n="field.additionalInfo">Gibt es noch etwas, das Sie uns mitteilen möchten?</label>
+          <textarea id="additionalInfo" data-linkid="11.1" rows="4" placeholder="Weitere Informationen..."></textarea>
+        </div>
+        <div class="form-group">
+          <label data-i18n="field.visitReason">Hauptgrund Ihres heutigen Besuchs (Zusammenfassung)</label>
+          <textarea id="visitReason" data-linkid="11.2" rows="2" placeholder="In einem Satz..."></textarea>
+        </div>
+        <div class="alert alert-info">
+          <span>ℹ️</span>
+          <span data-i18n="final.dataNote">Ihre Daten werden nach dem Export automatisch gelöscht.</span>
+        </div>
+        <div class="nav-buttons">
+          <button class="btn btn-outline" onclick="prevSection()" data-i18n="nav.back">Zurück</button>
+          <button class="btn btn-success" onclick="showExportModal()" data-i18n="nav.export">Daten exportieren</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Export Modal -->
+  <div id="exportModal" class="export-modal hidden">
+    <div class="export-content">
+      <h2 data-i18n="export.title">Daten übertragen</h2>
+      <p data-i18n="export.instruction">Wählen Sie eine Übertragungsmethode:</p>
+      <div class="nfc-status" id="nfcStatus">
+        <div class="nfc-icon">📡</div>
+        <p id="nfcStatusText" data-i18n="nfc.ready">Bereit für NFC-Übertragung</p>
+      </div>
+      <div class="export-options">
+        <button class="btn btn-primary" onclick="exportNFC()" id="nfcButton" data-i18n="export.nfc">Per NFC übertragen</button>
+        <button class="btn btn-outline" onclick="exportQR()" data-i18n="export.qr">Als QR-Code anzeigen</button>
+        <button class="btn btn-outline" onclick="downloadJSON()" data-i18n="export.download">JSON herunterladen</button>
+      </div>
+      <button class="btn btn-danger" onclick="cancelExport()" style="margin-top: 20px;" data-i18n="export.cancel">Abbrechen</button>
+    </div>
+  </div>
+
+  <script>
+    // ===== TRANSLATIONS (15 Languages) =====
+    const translations = {
+      de: {
+        "app.title": "Anamnese Suite",
+        "app.subtitle": "Medizinische Anamnese - Offline & Datenschutzkonform",
+        "consent.title": "Datenschutzhinweis & Einwilligung",
+        "consent.intro": "Bevor Sie mit der Anamnese beginnen, lesen Sie bitte die folgenden Hinweise:",
+        "consent.purpose": "Zweck der Datenerhebung",
+        "consent.purposeText": "Diese Anamnese dient ausschließlich der medizinischen Versorgung in dieser Praxis.",
+        "consent.dataHandling": "Datenverarbeitung",
+        "consent.noStorage": "Ihre Daten werden nur im Arbeitsspeicher verarbeitet, nicht dauerhaft gespeichert",
+        "consent.noTracking": "Kein Tracking, keine Cookies, keine externe Datenübertragung",
+        "consent.autoDelete": "Nach dem Export werden alle Daten automatisch gelöscht",
+        "consent.nfcTransfer": "Die Übertragung erfolgt per NFC direkt an das Praxisgerät",
+        "consent.rights": "Ihre Rechte (DSGVO)",
+        "consent.rightAccess": "Recht auf Auskunft (Art. 15 DSGVO)",
+        "consent.rightRectification": "Recht auf Berichtigung (Art. 16 DSGVO)",
+        "consent.rightErasure": "Recht auf Löschung (Art. 17 DSGVO)",
+        "consent.rightWithdraw": "Recht auf Widerruf der Einwilligung",
+        "consent.contact": "Verantwortliche Stelle: [Praxisname eintragen]",
+        "consent.accept": "Ich stimme zu und möchte fortfahren",
+        "progress.complete": "abgeschlossen",
+        "section1.title": "1. Basisdaten",
+        "field.lastName": "Nachname",
+        "field.firstName": "Vorname",
+        "field.birthDate": "Geburtsdatum",
+        "field.gender": "Geschlecht",
+        "gender.male": "männlich",
+        "gender.female": "weiblich",
+        "gender.diverse": "divers",
+        "nav.next": "Weiter",
+        "nav.back": "Zurück",
+        "nav.export": "Daten exportieren",
+        "yes": "Ja",
+        "no": "Nein",
+        "unknown": "Nicht bekannt",
+        "select.placeholder": "Bitte wählen...",
+        "timeout.warning": "Inaktivität erkannt! Daten werden gelöscht in",
+        "timeout.continue": "Fortfahren",
+        "export.title": "Daten übertragen",
+        "export.nfc": "Per NFC übertragen",
+        "export.qr": "Als QR-Code anzeigen",
+        "export.download": "JSON herunterladen",
+        "nfc.ready": "Bereit für NFC-Übertragung",
+        "nfc.success": "Übertragung erfolgreich!",
+        "nfc.error": "NFC nicht verfügbar"
+      },
+      en: {
+        "app.title": "Medical History Suite",
+        "app.subtitle": "Medical Anamnesis - Offline & Privacy Compliant",
+        "consent.title": "Privacy Notice & Consent",
+        "consent.accept": "I agree and want to continue",
+        "section1.title": "1. Basic Information",
+        "field.lastName": "Last Name",
+        "field.firstName": "First Name",
+        "field.birthDate": "Date of Birth",
+        "field.gender": "Gender",
+        "gender.male": "male",
+        "gender.female": "female",
+        "gender.diverse": "diverse",
+        "nav.next": "Next",
+        "nav.back": "Back",
+        "nav.export": "Export Data",
+        "yes": "Yes",
+        "no": "No"
+      },
+      tr: {"app.title": "Tıbbi Geçmiş", "nav.next": "İleri", "nav.back": "Geri", "yes": "Evet", "no": "Hayır"},
+      ru: {"app.title": "Медицинская история", "nav.next": "Далее", "nav.back": "Назад", "yes": "Да", "no": "Нет"},
+      ar: {"app.title": "التاريخ الطبي", "nav.next": "التالي", "nav.back": "رجوع", "yes": "نعم", "no": "لا"},
+      ku: {"app.title": "Dîroka Bijîşkî", "nav.next": "Pêş", "nav.back": "Paş", "yes": "Erê", "no": "Na"},
+      pl: {"app.title": "Historia medyczna", "nav.next": "Dalej", "nav.back": "Wstecz", "yes": "Tak", "no": "Nie"},
+      ro: {"app.title": "Istoric medical", "nav.next": "Înainte", "nav.back": "Înapoi", "yes": "Da", "no": "Nu"},
+      it: {"app.title": "Anamnesi medica", "nav.next": "Avanti", "nav.back": "Indietro", "yes": "Sì", "no": "No"},
+      fr: {"app.title": "Antécédents médicaux", "nav.next": "Suivant", "nav.back": "Retour", "yes": "Oui", "no": "Non"},
+      es: {"app.title": "Historia clínica", "nav.next": "Siguiente", "nav.back": "Atrás", "yes": "Sí", "no": "No"},
+      bg: {"app.title": "Медицинска история", "nav.next": "Напред", "nav.back": "Назад", "yes": "Да", "no": "Не"},
+      nl: {"app.title": "Medische voorgeschiedenis", "nav.next": "Volgende", "nav.back": "Terug", "yes": "Ja", "no": "Nee"},
+      fa: {"app.title": "سابقه پزشکی", "nav.next": "بعدی", "nav.back": "قبلی", "yes": "بله", "no": "خیر"},
+      uk: {"app.title": "Медична історія", "nav.next": "Далі", "nav.back": "Назад", "yes": "Так", "no": "Ні"}
+    };
+
+    // ===== STATE MANAGEMENT (RAM only) =====
+    let state = { currentSection: 1, totalSections: 11, language: 'de', formData: {}, isPediatric: false, isConsentGiven: false };
+    let inactivityTimer, countdownTimer, countdownValue = 60;
+    const TIMEOUT_MS = 600000; // 10 minutes
+
+    // ===== FHIR R5 QUESTIONNAIRE DEFINITION =====
+    const fhirQuestionnaire = {
+      resourceType: "Questionnaire",
+      id: "anamnese-suite-v1",
+      url: "https://anamnese-suite.local/fhir/Questionnaire/anamnese-suite",
+      version: "1.0.0",
+      status: "active",
+      language: "de",
+      title: "Anamnese Suite",
+      date: new Date().toISOString().split('T')[0]
+    };
+
+    // ===== INITIALIZATION =====
+    document.addEventListener('DOMContentLoaded', () => {
+      setupLanguageButtons();
+      setupInactivityTimer();
+      applyTranslations('de');
+    });
+
+    function acceptConsent() {
+      state.isConsentGiven = true;
+      document.getElementById('consentModal').classList.add('hidden');
+      document.getElementById('mainContainer').style.display = 'block';
+      updateProgress();
+    }
+
+    // ===== LANGUAGE HANDLING =====
+    function setupLanguageButtons() {
+      document.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const lang = btn.dataset.lang;
+          state.language = lang;
+          applyTranslations(lang);
+          document.documentElement.lang = lang;
+          document.body.dir = ['ar', 'fa', 'ku'].includes(lang) ? 'rtl' : 'ltr';
+        });
+      });
+    }
+
+    function applyTranslations(lang) {
+      const t = translations[lang] || translations.de;
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.dataset.i18n;
+        if (t[key]) el.textContent = t[key];
+        else if (translations.de[key]) el.textContent = translations.de[key];
+      });
+    }
+
+    // ===== NAVIGATION =====
+    function nextSection() {
+      collectFormData();
+      let next = state.currentSection + 1;
+      // Skip women's health for males
+      if (next === 9 && document.querySelector('input[name="gender"]:checked')?.value === 'm') next++;
+      // Skip pediatrics for adults
+      if (next === 10 && !state.isPediatric) next++;
+      if (next <= state.totalSections) {
+        showSection(next);
+      }
+    }
+
+    function prevSection() {
+      let prev = state.currentSection - 1;
+      if (prev === 10 && !state.isPediatric) prev--;
+      if (prev === 9 && document.querySelector('input[name="gender"]:checked')?.value === 'm') prev--;
+      if (prev >= 1) showSection(prev);
+    }
+
+    function showSection(num) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.querySelector(`[data-section="${num}"]`)?.classList.add('active');
+      state.currentSection = num;
+      updateProgress();
+      window.scrollTo(0, 0);
+      resetTimeout();
+    }
+
+    function updateProgress() {
+      const pct = Math.round((state.currentSection / state.totalSections) * 100);
+      document.getElementById('progressFill').style.width = pct + '%';
+      document.getElementById('progressText').textContent = pct;
+    }
+
+    // ===== AGE CHECK FOR PEDIATRICS =====
+    function checkAge() {
+      const bd = document.getElementById('birthDate').value;
+      if (!bd) return;
+      const age = Math.floor((new Date() - new Date(bd)) / 31557600000);
+      state.isPediatric = age < 16;
+    }
+
+    // ===== CONDITIONAL DISPLAY =====
+    function toggleComplaintsDetails() {
+      const val = document.querySelector('input[name="hasComplaints"]:checked')?.value;
+      document.getElementById('complaintsDetails').classList.toggle('hidden', val !== 'yes');
+    }
+    function toggleSymptomDetails(symptom) {
+      const cb = document.querySelector(`[data-symptom="${symptom}"]`);
+      const details = document.getElementById(symptom + 'Details');
+      if (details) details.classList.toggle('hidden', !cb?.checked);
+    }
+    function toggleSystemDetails(system) {
+      const cb = document.querySelector(`[data-system="${system}"]`);
+      const details = document.getElementById(system + 'Details');
+      if (details) details.classList.toggle('hidden', !cb?.checked);
+    }
+    function toggleAllergiesDetails() {
+      const val = document.querySelector('input[name="hasAllergies"]:checked')?.value;
+      document.getElementById('allergiesDetails').classList.toggle('hidden', val !== 'yes');
+    }
+    function toggleSmokingDetails() {
+      const val = document.querySelector('input[name="smoking"]:checked')?.value;
+      document.getElementById('smokingDetails')?.classList.toggle('hidden', val !== 'current');
+    }
+    function checkRedFlags(flag) {
+      const el = document.getElementById(flag + 'Warning');
+      if (el) el.classList.remove('hidden');
+    }
+
+    // ===== DATA COLLECTION =====
+    function collectFormData() {
+      document.querySelectorAll('input, select, textarea').forEach(el => {
+        const linkId = el.dataset.linkid;
+        if (!linkId) return;
+        if (el.type === 'checkbox') {
+          state.formData[linkId] = el.checked;
+        } else if (el.type === 'radio') {
+          if (el.checked) state.formData[linkId] = el.value;
+        } else {
+          if (el.value) state.formData[linkId] = el.value;
+        }
+      });
+    }
+
+    // ===== FHIR R5 QuestionnaireResponse GENERATION =====
+    function generateFHIRResponse() {
+      collectFormData();
+      return {
+        resourceType: "QuestionnaireResponse",
+        questionnaire: fhirQuestionnaire.url + "|" + fhirQuestionnaire.version,
+        status: "completed",
+        authored: new Date().toISOString(),
+        item: Object.entries(state.formData).map(([linkId, value]) => ({
+          linkId,
+          answer: [typeof value === 'boolean' ? { valueBoolean: value } : 
+                   typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) ? { valueDate: value } :
+                   { valueString: String(value) }]
+        }))
+      };
+    }
+
+    // ===== EXPORT FUNCTIONS =====
+    function showExportModal() {
+      collectFormData();
+      document.getElementById('exportModal').classList.remove('hidden');
+      if (!('NDEFReader' in window)) {
+        document.getElementById('nfcButton').disabled = true;
+        document.getElementById('nfcStatusText').textContent = 'NFC nicht verfügbar auf diesem Gerät';
+      }
+    }
+
+    function cancelExport() {
+      document.getElementById('exportModal').classList.add('hidden');
+    }
+
+    async function exportNFC() {
+      const response = generateFHIRResponse();
+      const json = JSON.stringify(response);
+      const size = new Blob([json]).size;
+      
+      if (size > 4000) {
+        alert('Daten zu groß für NFC (' + size + ' Bytes). Bitte QR-Code oder Download nutzen.');
+        return;
+      }
+      
+      try {
+        if ('NDEFReader' in window) {
+          const ndef = new NDEFReader();
+          await ndef.write({ records: [{ recordType: "mime", mediaType: "application/json", data: json }] });
+          document.getElementById('nfcStatusText').textContent = '✓ Übertragung erfolgreich!';
+          setTimeout(wipeData, 2000);
+        }
+      } catch (e) {
+        document.getElementById('nfcStatusText').textContent = 'Fehler: ' + e.message;
+      }
+    }
+
+    function exportQR() {
+      const response = generateFHIRResponse();
+      const json = JSON.stringify(response);
+      alert('QR-Code Funktion: Daten bereit (' + json.length + ' Zeichen)\n\nIn Produktion würde hier ein QR-Code generiert.');
+    }
+
+    function downloadJSON() {
+      const response = generateFHIRResponse();
+      const blob = new Blob([JSON.stringify(response, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'anamnese-' + new Date().toISOString().slice(0,10) + '.json';
+      a.click();
+      URL.revokeObjectURL(url);
+      setTimeout(wipeData, 1000);
+    }
+
+    // ===== SECURITY: TIMEOUT & WIPE =====
+    function setupInactivityTimer() {
+      ['mousedown', 'keydown', 'touchstart', 'scroll'].forEach(e => document.addEventListener(e, resetTimeout));
+      resetTimeout();
+    }
+
+    function resetTimeout() {
+      clearTimeout(inactivityTimer);
+      clearInterval(countdownTimer);
+      document.getElementById('timeoutWarning').classList.add('hidden');
+      countdownValue = 60;
+      inactivityTimer = setTimeout(showTimeoutWarning, TIMEOUT_MS);
+    }
+
+    function showTimeoutWarning() {
+      document.getElementById('timeoutWarning').classList.remove('hidden');
+      countdownTimer = setInterval(() => {
+        countdownValue--;
+        document.getElementById('timeoutCounter').textContent = countdownValue;
+        if (countdownValue <= 0) wipeData();
+      }, 1000);
+    }
+
+    function wipeData() {
+      state = { currentSection: 1, totalSections: 11, language: 'de', formData: {}, isPediatric: false, isConsentGiven: false };
+      document.querySelectorAll('input, select, textarea').forEach(el => {
+        if (el.type === 'checkbox' || el.type === 'radio') el.checked = false;
+        else el.value = '';
+      });
+      document.getElementById('exportModal').classList.add('hidden');
+      document.getElementById('mainContainer').style.display = 'none';
+      document.getElementById('consentModal').classList.remove('hidden');
+      showSection(1);
+      alert('Daten wurden aus Sicherheitsgründen gelöscht.');
+    }
+  </script>
+</body>
+</html>
