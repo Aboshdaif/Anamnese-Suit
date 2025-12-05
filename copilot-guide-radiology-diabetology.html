@@ -17,7 +17,130 @@
   --border: #dee2e6;
   --radius: 8px;
   --shadow: 0 2px 8px rgba(0,0,0,0.1);
+  --prompt-red: #c0392b;
 }
+/* Prompt Generator Styles */
+.prompt-generator {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border: 3px solid var(--warning);
+  border-radius: var(--radius);
+  padding: 25px;
+  margin-bottom: 20px;
+}
+.prompt-generator h2 { color: #ffc107; border-bottom: 2px solid #ffc107; }
+.prompt-input-area {
+  width: 100%;
+  min-height: 120px;
+  padding: 15px;
+  border-radius: var(--radius);
+  border: 2px solid var(--border);
+  font-size: 1rem;
+  margin: 15px 0;
+  resize: vertical;
+}
+.generate-btn {
+  background: linear-gradient(135deg, #28a745, #20c997);
+  color: white;
+  border: none;
+  padding: 15px 30px;
+  font-size: 1.1rem;
+  border-radius: 25px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s;
+  display: block;
+  margin: 15px auto;
+}
+.generate-btn:hover { transform: scale(1.05); box-shadow: 0 5px 20px rgba(40, 167, 69, 0.4); }
+.prompt-output-box {
+  background: #2d0a0a;
+  border: 3px solid var(--prompt-red);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin: 20px 0;
+  position: relative;
+  display: none;
+}
+.prompt-output-box::before, .prompt-output-box::after {
+  content: "★ ★ ★ ★ ★";
+  display: block;
+  text-align: center;
+  color: #ffc107;
+  font-size: 1.2rem;
+  letter-spacing: 5px;
+  padding: 10px 0;
+}
+.prompt-output-text {
+  color: #fff;
+  font-family: "Consolas", "Monaco", monospace;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.6;
+  padding: 15px;
+  background: #1a0505;
+  border-radius: 5px;
+  margin: 10px 0;
+}
+.copy-prompt-btn {
+  position: sticky;
+  top: 80px;
+  background: var(--secondary);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: 600;
+  margin: 10px 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.copy-prompt-btn:hover { background: #218838; }
+.timestamp { font-size: 0.8rem; opacity: 0.8; }
+.ai-recommendation {
+  background: linear-gradient(135deg, #e7f3ff, #f0f8ff);
+  border: 2px solid var(--primary);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin: 15px 0;
+}
+.ai-card {
+  display: inline-block;
+  background: white;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  padding: 15px;
+  margin: 5px;
+  text-align: center;
+  min-width: 120px;
+}
+.ai-card.recommended {
+  border-color: var(--secondary);
+  background: #d4edda;
+}
+.ai-card h5 { margin: 0 0 5px; color: var(--primary-dark); }
+.ai-card p { margin: 0; font-size: 0.85rem; color: var(--gray); }
+.quick-links-box {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin: 20px 0;
+}
+.quick-links-box h3 { color: white; margin-bottom: 15px; text-align: center; }
+.quick-link {
+  display: inline-block;
+  background: white;
+  color: var(--primary-dark);
+  padding: 12px 20px;
+  margin: 5px;
+  border-radius: 25px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+.quick-link:hover { transform: scale(1.05); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+.quick-link .icon { margin-right: 8px; }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
@@ -233,11 +356,187 @@ footer a { color: #a0d2ff; }
   </div>
 </div>
 
+<!-- PROMPT GENERATOR - Hauptfunktion -->
+<section class="card prompt-generator" id="prompt-generator">
+  <h2 class="de">🎯 KI-Prompt Generator – Ihr persönlicher Assistent</h2>
+  <h2 class="en">🎯 AI Prompt Generator – Your Personal Assistant</h2>
+  
+  <div class="de">
+    <div class="info-box" style="background: rgba(255,255,255,0.1); border-color: #ffc107; color: white;">
+      <strong>💡 So funktioniert es:</strong><br>
+      1. Beschreiben Sie Ihr Anliegen in Ihren eigenen Worten<br>
+      2. Klicken Sie auf "Prompt erstellen"<br>
+      3. Kopieren Sie den optimierten Prompt und fügen Sie ihn in die empfohlene KI ein
+    </div>
+    
+    <div style="background: rgba(255,255,255,0.95); border-radius: 8px; padding: 20px; margin: 15px 0;">
+      <h4 style="color: #1a1a2e; margin-bottom: 15px;">🩺 Was ist Ihr Anliegen? (So detailliert wie möglich!)</h4>
+      <textarea id="user-concern-de" class="prompt-input-area" placeholder="Beispiel: Ich brauche eine Checkliste für die CT-Abdomen Befundung. Sie soll alle wichtigen Organe abdecken, offline funktionieren und als druckbare HTML-Seite vorliegen. Die Sprache soll einfach und für Assistenzärzte verständlich sein...
+
+Je mehr Details Sie angeben, desto besser wird das Ergebnis!"></textarea>
+      
+      <div style="margin: 15px 0;">
+        <label style="color: #1a1a2e;"><strong>Art des Anliegens:</strong></label><br>
+        <select id="concern-type-de" style="padding: 10px; border-radius: 5px; width: 100%; max-width: 400px; margin-top: 5px;">
+          <option value="documentation">📋 Dokumentation/Checklisten</option>
+          <option value="patient-info">👥 Patienteninformationen</option>
+          <option value="calculation">🔢 Berechnungen/Formeln</option>
+          <option value="research">🔬 Recherche/Leitlinien</option>
+          <option value="coding">💻 Programmierung/Tools</option>
+          <option value="writing">✍️ Texterstellung/Briefe</option>
+          <option value="analysis">📊 Datenanalyse</option>
+          <option value="other">❓ Sonstiges</option>
+        </select>
+      </div>
+      
+      <button class="generate-btn" onclick="generatePrompt('de')">✨ Optimierten Prompt erstellen</button>
+    </div>
+    
+    <!-- Output Box -->
+    <div id="prompt-output-de" class="prompt-output-box">
+      <button class="copy-prompt-btn" onclick="copyGeneratedPrompt('de')">
+        📋 Prompt kopieren <span class="timestamp" id="timestamp-de"></span>
+      </button>
+      
+      <div class="ai-recommendation" id="ai-recommendation-de">
+        <h4 style="margin: 0 0 10px;">🤖 Empfohlene KI für Ihr Anliegen:</h4>
+        <div id="ai-cards-de"></div>
+        <p style="margin-top: 10px; font-size: 0.9rem; color: var(--gray);" id="ai-explanation-de"></p>
+      </div>
+      
+      <div class="prompt-output-text" id="generated-prompt-de"></div>
+      
+      <button class="copy-prompt-btn" onclick="copyGeneratedPrompt('de')" style="margin-top: 15px;">
+        📋 Prompt kopieren <span class="timestamp" id="timestamp-de-bottom"></span>
+      </button>
+    </div>
+    
+    <!-- Wichtige Erklärung über KI -->
+    <div class="warning-box" style="margin-top: 20px;">
+      <strong>🧠 Wichtig zu verstehen: KI ist KEIN Mensch!</strong>
+      <p style="margin-top: 10px;">Eine KI ist eine Reihe von <strong>Arbeitsanweisungen</strong> (ein Algorithmus) – kein denkendes Wesen!</p>
+      <p style="margin-top: 10px;"><strong>Beispiel:</strong> Wenn Sie und ich beide die Augen schließen und uns einen "Wald" vorstellen, dann malen, haben wir völlig unterschiedliche Bilder! Jeder Mensch hat andere Vorstellungen. Bei KI ist es ähnlich – sie braucht <strong>präzise Anweisungen</strong>, um das zu liefern, was SIE wollen.</p>
+      <p style="margin-top: 10px;"><strong>Darum gilt:</strong> Je mehr Informationen und Kontext Sie geben, desto besser das Ergebnis!</p>
+    </div>
+    
+    <!-- Warum verschiedene KIs? -->
+    <div class="info-box" style="margin-top: 15px;">
+      <strong>❓ Warum verschiedene KIs und Modelle?</strong>
+      <ul style="margin-top: 10px;">
+        <li><strong>ChatGPT (GPT-4/4o):</strong> Sehr gut für Texterstellung, komplexe Erklärungen, kreative Aufgaben</li>
+        <li><strong>GitHub Copilot:</strong> Spezialisiert auf Code und technische Aufgaben, direkt in GitHub integriert</li>
+        <li><strong>Gemini (Google):</strong> Gut für Recherche, aktuelle Informationen, multimodale Aufgaben</li>
+        <li><strong>Claude:</strong> Stark bei langen Dokumenten, Analysen, wissenschaftlichem Schreiben</li>
+        <li><strong>Grok:</strong> Schnelle Antworten, aktuellste Informationen, direkter Stil</li>
+      </ul>
+      <p style="margin-top: 10px;"><strong>Fazit:</strong> Wie bei Werkzeugen – ein Hammer ist gut für Nägel, ein Schraubenzieher für Schrauben. Die richtige KI für die richtige Aufgabe!</p>
+    </div>
+  </div>
+  
+  <div class="en">
+    <div class="info-box" style="background: rgba(255,255,255,0.1); border-color: #ffc107; color: white;">
+      <strong>💡 How it works:</strong><br>
+      1. Describe your concern in your own words<br>
+      2. Click "Generate Prompt"<br>
+      3. Copy the optimized prompt and paste it into the recommended AI
+    </div>
+    
+    <div style="background: rgba(255,255,255,0.95); border-radius: 8px; padding: 20px; margin: 15px 0;">
+      <h4 style="color: #1a1a2e; margin-bottom: 15px;">🩺 What is your concern? (As detailed as possible!)</h4>
+      <textarea id="user-concern-en" class="prompt-input-area" placeholder="Example: I need a checklist for CT abdomen reporting. It should cover all important organs, work offline, and be available as a printable HTML page. The language should be simple and understandable for resident physicians...
+
+The more details you provide, the better the result!"></textarea>
+      
+      <div style="margin: 15px 0;">
+        <label style="color: #1a1a2e;"><strong>Type of concern:</strong></label><br>
+        <select id="concern-type-en" style="padding: 10px; border-radius: 5px; width: 100%; max-width: 400px; margin-top: 5px;">
+          <option value="documentation">📋 Documentation/Checklists</option>
+          <option value="patient-info">👥 Patient Information</option>
+          <option value="calculation">🔢 Calculations/Formulas</option>
+          <option value="research">🔬 Research/Guidelines</option>
+          <option value="coding">💻 Programming/Tools</option>
+          <option value="writing">✍️ Text Creation/Letters</option>
+          <option value="analysis">📊 Data Analysis</option>
+          <option value="other">❓ Other</option>
+        </select>
+      </div>
+      
+      <button class="generate-btn" onclick="generatePrompt('en')">✨ Generate Optimized Prompt</button>
+    </div>
+    
+    <!-- Output Box -->
+    <div id="prompt-output-en" class="prompt-output-box">
+      <button class="copy-prompt-btn" onclick="copyGeneratedPrompt('en')">
+        📋 Copy Prompt <span class="timestamp" id="timestamp-en"></span>
+      </button>
+      
+      <div class="ai-recommendation" id="ai-recommendation-en">
+        <h4 style="margin: 0 0 10px;">🤖 Recommended AI for your concern:</h4>
+        <div id="ai-cards-en"></div>
+        <p style="margin-top: 10px; font-size: 0.9rem; color: var(--gray);" id="ai-explanation-en"></p>
+      </div>
+      
+      <div class="prompt-output-text" id="generated-prompt-en"></div>
+      
+      <button class="copy-prompt-btn" onclick="copyGeneratedPrompt('en')" style="margin-top: 15px;">
+        📋 Copy Prompt <span class="timestamp" id="timestamp-en-bottom"></span>
+      </button>
+    </div>
+    
+    <!-- Important explanation about AI -->
+    <div class="warning-box" style="margin-top: 20px;">
+      <strong>🧠 Important to understand: AI is NOT a human!</strong>
+      <p style="margin-top: 10px;">An AI is a series of <strong>work instructions</strong> (an algorithm) – not a thinking being!</p>
+      <p style="margin-top: 10px;"><strong>Example:</strong> If you and I both close our eyes and imagine a "forest", then paint it, we'll have completely different pictures! Everyone has different ideas. It's similar with AI – it needs <strong>precise instructions</strong> to deliver what YOU want.</p>
+      <p style="margin-top: 10px;"><strong>Therefore:</strong> The more information and context you provide, the better the result!</p>
+    </div>
+    
+    <!-- Why different AIs? -->
+    <div class="info-box" style="margin-top: 15px;">
+      <strong>❓ Why different AIs and models?</strong>
+      <ul style="margin-top: 10px;">
+        <li><strong>ChatGPT (GPT-4/4o):</strong> Very good for text creation, complex explanations, creative tasks</li>
+        <li><strong>GitHub Copilot:</strong> Specialized in code and technical tasks, directly integrated in GitHub</li>
+        <li><strong>Gemini (Google):</strong> Good for research, current information, multimodal tasks</li>
+        <li><strong>Claude:</strong> Strong with long documents, analyses, scientific writing</li>
+        <li><strong>Grok:</strong> Fast answers, most current information, direct style</li>
+      </ul>
+      <p style="margin-top: 10px;"><strong>Bottom line:</strong> Like tools – a hammer is good for nails, a screwdriver for screws. The right AI for the right task!</p>
+    </div>
+  </div>
+</section>
+
+<!-- QUICK LINKS -->
+<div class="quick-links-box">
+  <h3 class="de">🔗 Schnellzugriff – Direkte Links</h3>
+  <h3 class="en">🔗 Quick Access – Direct Links</h3>
+  <div style="text-align: center;">
+    <a href="https://github.com/features/copilot" target="_blank" class="quick-link de"><span class="icon">💳</span>Abo abschließen</a>
+    <a href="https://github.com/features/copilot" target="_blank" class="quick-link en"><span class="icon">💳</span>Subscribe</a>
+    
+    <a href="https://github.com/settings/billing" target="_blank" class="quick-link de"><span class="icon">❌</span>Abo kündigen</a>
+    <a href="https://github.com/settings/billing" target="_blank" class="quick-link en"><span class="icon">❌</span>Cancel Subscription</a>
+    
+    <a href="https://github.com/copilot" target="_blank" class="quick-link de"><span class="icon">💬</span>Chat Copilot</a>
+    <a href="https://github.com/copilot" target="_blank" class="quick-link en"><span class="icon">💬</span>Chat Copilot</a>
+    
+    <a href="https://github.com/copilot" target="_blank" class="quick-link de"><span class="icon">🤖</span>Task Agent</a>
+    <a href="https://github.com/copilot" target="_blank" class="quick-link en"><span class="icon">🤖</span>Task Agent</a>
+    
+    <a href="https://github.com/new" target="_blank" class="quick-link de"><span class="icon">📁</span>Repository erstellen</a>
+    <a href="https://github.com/new" target="_blank" class="quick-link en"><span class="icon">📁</span>Create Repository</a>
+  </div>
+</div>
+
 <!-- NAVIGATION -->
 <nav class="nav">
   <div class="nav-links">
+    <a href="#prompt-generator" class="de">⭐ Prompt Generator</a>
+    <a href="#prompt-generator" class="en">⭐ Prompt Generator</a>
     <a href="#power" class="de">Macht von Copilot</a>
     <a href="#power" class="en">Power of Copilot</a>
+    <a href="#repositories" class="de">Repositories</a>
+    <a href="#repositories" class="en">Repositories</a>
     <a href="#subscribe" class="de">Abo abschließen</a>
     <a href="#subscribe" class="en">Subscribe</a>
     <a href="#chat" class="de">Chat Copilot</a>
@@ -252,6 +551,88 @@ footer a { color: #a0d2ff; }
     <a href="#templates" class="en">Templates</a>
   </div>
 </nav>
+
+<!-- SECTION: REPOSITORIES EXPLANATION -->
+<section class="card" id="repositories">
+  <h2 class="de">📁 Was sind Repositories? – Ihr digitales Ordnungssystem</h2>
+  <h2 class="en">📁 What are Repositories? – Your Digital Organization System</h2>
+  
+  <div class="de">
+    <div class="info-box">
+      <strong>🗂️ Stellen Sie sich Repositories wie OneDrive/Cloud-Ordner vor!</strong>
+      <p style="margin-top: 10px;">Ein Repository (kurz: "Repo") ist einfach ein <strong>digitaler Ordner</strong>, in dem Sie Ihre Projekte und Dateien organisiert aufbewahren – wie Ordner auf OneDrive, Google Drive oder Ihrem Computer.</p>
+    </div>
+    
+    <div class="grid">
+      <div class="feature-card">
+        <div class="icon">📂</div>
+        <h4>Organisation</h4>
+        <p>Jedes Projekt bekommt sein eigenes Repository. So bleibt alles sauber getrennt und übersichtlich.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">🔄</div>
+        <h4>Versionierung</h4>
+        <p>Jede Änderung wird gespeichert. Sie können jederzeit zu einer älteren Version zurückkehren.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">🤝</div>
+        <h4>Zusammenarbeit</h4>
+        <p>Mehrere Personen können am selben Projekt arbeiten, ohne sich gegenseitig zu stören.</p>
+      </div>
+    </div>
+    
+    <div class="success-box">
+      <strong>🎯 Praktisches Beispiel:</strong><br>
+      • <strong>Repo "CT-Checklisten"</strong> → Alle Ihre CT-Befund-Vorlagen<br>
+      • <strong>Repo "Patienteninfos"</strong> → Aufklärungsbögen und Infomaterial<br>
+      • <strong>Repo "Praxis-Tools"</strong> → Kleine Helfer-Programme für den Alltag
+    </div>
+    
+    <div style="text-align: center; margin-top: 20px;">
+      <a href="https://github.com/new" target="_blank" class="quick-link" style="display: inline-block;">
+        <span class="icon">📁</span> Jetzt Repository erstellen →
+      </a>
+    </div>
+  </div>
+  
+  <div class="en">
+    <div class="info-box">
+      <strong>🗂️ Think of Repositories like OneDrive/Cloud folders!</strong>
+      <p style="margin-top: 10px;">A repository (short: "repo") is simply a <strong>digital folder</strong> where you keep your projects and files organized – like folders on OneDrive, Google Drive, or your computer.</p>
+    </div>
+    
+    <div class="grid">
+      <div class="feature-card">
+        <div class="icon">📂</div>
+        <h4>Organization</h4>
+        <p>Each project gets its own repository. This keeps everything cleanly separated and clear.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">🔄</div>
+        <h4>Versioning</h4>
+        <p>Every change is saved. You can return to an older version at any time.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">🤝</div>
+        <h4>Collaboration</h4>
+        <p>Multiple people can work on the same project without interfering with each other.</p>
+      </div>
+    </div>
+    
+    <div class="success-box">
+      <strong>🎯 Practical example:</strong><br>
+      • <strong>Repo "CT-Checklists"</strong> → All your CT reporting templates<br>
+      • <strong>Repo "Patient-Info"</strong> → Consent forms and information material<br>
+      • <strong>Repo "Practice-Tools"</strong> → Small helper programs for daily use
+    </div>
+    
+    <div style="text-align: center; margin-top: 20px;">
+      <a href="https://github.com/new" target="_blank" class="quick-link" style="display: inline-block;">
+        <span class="icon">📁</span> Create Repository Now →
+      </a>
+    </div>
+  </div>
+</section>
 
 <!-- SECTION: POWER OF COPILOT -->
 <section class="card" id="power">
@@ -965,7 +1346,7 @@ Provide final HTML code (one file) with embedded CSS/JS.
   <p class="de">📄 Offline-Informationsseite für Radiolog*innen & Diabetolog*innen | Keine Patientendaten eingeben!</p>
   <p class="en">📄 Offline information page for Radiologists & Diabetologists | Do not enter patient data!</p>
   <p style="margin-top:10px;opacity:0.8;">
-    © 2025 Onkel Laith Habibi Produktions | <span class="de">Quellen siehe oben</span><span class="en">Sources see above</span>
+    © 2025 Onkel Laith Produktion | <span class="de">Quellen siehe oben</span><span class="en">Sources see above</span>
   </p>
 </footer>
 
@@ -1028,6 +1409,240 @@ function showCopied(elementId) {
       btn.classList.remove('copied');
     }, 2000);
   }
+}
+
+// AI Recommendation Data
+var aiRecommendations = {
+  'documentation': {
+    primary: { name: 'GitHub Copilot', model: 'Copilot Chat', icon: '🤖' },
+    secondary: { name: 'ChatGPT', model: 'GPT-4o', icon: '💬' },
+    reason_de: 'Für strukturierte Dokumentation und Checklisten ist Copilot optimal, da es direkt in GitHub integriert ist.',
+    reason_en: 'For structured documentation and checklists, Copilot is optimal as it\'s directly integrated into GitHub.'
+  },
+  'patient-info': {
+    primary: { name: 'ChatGPT', model: 'GPT-4o', icon: '💬' },
+    secondary: { name: 'Claude', model: 'Claude 3.5', icon: '🧠' },
+    reason_de: 'Für patientenverständliche Texte ist ChatGPT hervorragend, da es natürliche, einfache Sprache optimal beherrscht.',
+    reason_en: 'For patient-friendly texts, ChatGPT excels as it handles natural, simple language optimally.'
+  },
+  'calculation': {
+    primary: { name: 'ChatGPT', model: 'GPT-4o', icon: '💬' },
+    secondary: { name: 'Gemini', model: 'Gemini Pro', icon: '🔮' },
+    reason_de: 'Für Berechnungen und Formeln ist ChatGPT stark, da es mathematische Zusammenhänge gut erklärt.',
+    reason_en: 'For calculations and formulas, ChatGPT is strong as it explains mathematical relationships well.'
+  },
+  'research': {
+    primary: { name: 'Gemini', model: 'Gemini Pro', icon: '🔮' },
+    secondary: { name: 'Grok', model: 'Grok-2', icon: '⚡' },
+    reason_de: 'Für Recherche und aktuelle Leitlinien ist Gemini/Grok ideal, da sie Zugang zu aktuellen Informationen haben.',
+    reason_en: 'For research and current guidelines, Gemini/Grok is ideal as they have access to current information.'
+  },
+  'coding': {
+    primary: { name: 'GitHub Copilot', model: 'Copilot Agent', icon: '🤖' },
+    secondary: { name: 'ChatGPT', model: 'GPT-4o', icon: '💬' },
+    reason_de: 'Für Programmierung ist GitHub Copilot die beste Wahl – speziell dafür entwickelt!',
+    reason_en: 'For programming, GitHub Copilot is the best choice – specifically developed for this!'
+  },
+  'writing': {
+    primary: { name: 'Claude', model: 'Claude 3.5', icon: '🧠' },
+    secondary: { name: 'ChatGPT', model: 'GPT-4o', icon: '💬' },
+    reason_de: 'Für Texterstellung und Briefe ist Claude ausgezeichnet – besonders bei längeren, strukturierten Texten.',
+    reason_en: 'For text creation and letters, Claude excels – especially with longer, structured texts.'
+  },
+  'analysis': {
+    primary: { name: 'ChatGPT', model: 'GPT-4o', icon: '💬' },
+    secondary: { name: 'Claude', model: 'Claude 3.5', icon: '🧠' },
+    reason_de: 'Für Datenanalyse sind ChatGPT und Claude stark – beide verstehen komplexe Zusammenhänge.',
+    reason_en: 'For data analysis, ChatGPT and Claude are strong – both understand complex relationships.'
+  },
+  'other': {
+    primary: { name: 'ChatGPT', model: 'GPT-4o', icon: '💬' },
+    secondary: { name: 'GitHub Copilot', model: 'Copilot Chat', icon: '🤖' },
+    reason_de: 'Für allgemeine Anfragen ist ChatGPT ein guter Allrounder.',
+    reason_en: 'For general requests, ChatGPT is a good all-rounder.'
+  }
+};
+
+function generatePrompt(lang) {
+  var userConcern = document.getElementById('user-concern-' + lang).value.trim();
+  var concernType = document.getElementById('concern-type-' + lang).value;
+  
+  if (!userConcern) {
+    alert(lang === 'de' ? 'Bitte beschreiben Sie Ihr Anliegen!' : 'Please describe your concern!');
+    return;
+  }
+  
+  // Get AI recommendation
+  var recommendation = aiRecommendations[concernType];
+  
+  // Generate timestamp
+  var now = new Date();
+  var timestamp = now.toLocaleString(lang === 'de' ? 'de-DE' : 'en-US');
+  
+  // Build the optimized prompt
+  var prompt;
+  if (lang === 'de') {
+    prompt = `Rolle:
+Du bist ein extrem sorgfältiger, wissenschaftlich arbeitender Assistent mit Fokus auf Evidenz, Normen/Regulatorik und klarer Struktur.
+
+Ziel:
+Bearbeite meine Aufgabe vollständig, nachvollziehbar und auf dem aktuellsten Stand. Vermeide unbelegte Behauptungen.
+
+Muss-Kriterien (Qualität & Korrektheit):
+1) Evidenzbasiert: Jede wesentliche fachliche Aussage muss durch eine vertrauenswürdige Quelle gedeckt sein.
+2) Keine Halluzinationen: Wenn etwas nicht sicher verifizierbar ist, markiere es ausdrücklich als „unklar" oder lasse es weg.
+3) Aktualität: Prüfe bei zeitkritischen Themen den neuesten Stand (z.B. Leitlinien, Gesetze, Normen, Zahlen).
+4) Quellenpflicht: Gib pro relevanter Aussage Quellen an (URL/DOI + Abrufdatum). Bevorzuge Primärquellen.
+5) Transparenz: Trenne strikt zwischen Fakten, Annahmen und Empfehlungen.
+
+Vorgehen (Selbstprüfung in Iterationen):
+- Iteration A – Fachlich: Definitionen, Zahlen, Mechanismen, Plausibilität, Vollständigkeit.
+- Iteration B – Recht/Normen: Relevante Gesetze/Normen/Leitlinien prüfen und korrekt einordnen.
+- Iteration C – Struktur: Logischer Aufbau, klare Überschriften, Schritt-für-Schritt, Checklisten, keine Widersprüche.
+
+Rückfragen-Regel:
+Wenn entscheidende Informationen fehlen oder mehrere Interpretationen möglich sind, stelle zuerst gezielte Rückfragen.
+
+Arbeitsmodus:
+1) Beginne mit: „Was ich verstanden habe" (max. 5–10 Bulletpoints).
+2) Liste danach: „Offene Punkte / Rückfragen" (nur die wirklich notwendigen).
+3) Stoppe dort und warte auf meine Bestätigung/Ergänzungen.
+4) Erst nach meiner Bestätigung lieferst du die vollständige Ausarbeitung.
+
+Ausgabeformat (nach Bestätigung):
+- Strukturierte Kapitel mit kurzen Zusammenfassungen
+- Schritt-für-Schritt-Anleitung, wo sinnvoll
+- Checkliste „Erledigt/Zu prüfen"
+- Abschnitt „Risiken/Red Flags"
+- Abschnitt „Quellen" (vollständig)
+- Wenn hilfreich: Eselsbrücken/kurze Merksätze (ohne Fachfehler)
+
+═══════════════════════════════════════
+MEIN ANLIEGEN:
+═══════════════════════════════════════
+
+${userConcern}
+
+═══════════════════════════════════════`;
+  } else {
+    prompt = `Role:
+You are an extremely thorough, scientifically working assistant with a focus on evidence, norms/regulations, and clear structure.
+
+Goal:
+Complete my task fully, comprehensibly, and with the most current information. Avoid unsubstantiated claims.
+
+Must-Criteria (Quality & Correctness):
+1) Evidence-based: Every significant professional statement must be supported by a trustworthy source.
+2) No hallucinations: If something cannot be verified with certainty, explicitly mark it as "unclear" or omit it.
+3) Currency: For time-critical topics, check the latest status (e.g., guidelines, laws, standards, figures).
+4) Source requirement: Provide sources per relevant statement (URL/DOI + access date). Prefer primary sources.
+5) Transparency: Strictly separate facts, assumptions, and recommendations.
+
+Approach (Self-review in iterations):
+- Iteration A – Technical: Definitions, figures, mechanisms, plausibility, completeness.
+- Iteration B – Law/Standards: Check and correctly classify relevant laws/standards/guidelines.
+- Iteration C – Structure: Logical structure, clear headings, step-by-step, checklists, no contradictions.
+
+Clarification Rule:
+If crucial information is missing or multiple interpretations are possible, ask targeted clarifying questions first.
+
+Work Mode:
+1) Start with: "What I understood" (max. 5-10 bullet points).
+2) Then list: "Open points / Questions" (only the truly necessary ones).
+3) Stop there and wait for my confirmation/additions.
+4) Only after my confirmation do you deliver the complete work.
+
+Output Format (after confirmation):
+- Structured chapters with brief summaries
+- Step-by-step instructions where appropriate
+- Checklist "Completed/To check"
+- Section "Risks/Red Flags"
+- Section "Sources" (complete)
+- If helpful: mnemonics/short memory aids (without technical errors)
+
+═══════════════════════════════════════
+MY CONCERN:
+═══════════════════════════════════════
+
+${userConcern}
+
+═══════════════════════════════════════`;
+  }
+  
+  // Update UI
+  document.getElementById('generated-prompt-' + lang).textContent = prompt;
+  document.getElementById('prompt-output-' + lang).style.display = 'block';
+  
+  // Update timestamps
+  var timestampText = lang === 'de' ? 'Erstellt: ' + timestamp : 'Created: ' + timestamp;
+  document.getElementById('timestamp-' + lang).textContent = timestampText;
+  document.getElementById('timestamp-' + lang + '-bottom').textContent = timestampText;
+  
+  // Update AI recommendation
+  var aiCardsHtml = `
+    <div class="ai-card recommended">
+      <div style="font-size: 2rem;">${recommendation.primary.icon}</div>
+      <h5>${recommendation.primary.name}</h5>
+      <p>${recommendation.primary.model}</p>
+      <span style="background: #28a745; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem;">★ ${lang === 'de' ? 'EMPFOHLEN' : 'RECOMMENDED'}</span>
+    </div>
+    <div class="ai-card">
+      <div style="font-size: 2rem;">${recommendation.secondary.icon}</div>
+      <h5>${recommendation.secondary.name}</h5>
+      <p>${recommendation.secondary.model}</p>
+      <span style="background: var(--gray); color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem;">Alternative</span>
+    </div>
+  `;
+  document.getElementById('ai-cards-' + lang).innerHTML = aiCardsHtml;
+  document.getElementById('ai-explanation-' + lang).textContent = lang === 'de' ? recommendation.reason_de : recommendation.reason_en;
+  
+  // Scroll to output
+  document.getElementById('prompt-output-' + lang).scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function copyGeneratedPrompt(lang) {
+  var promptText = document.getElementById('generated-prompt-' + lang).textContent;
+  var now = new Date();
+  var timestamp = now.toLocaleString(lang === 'de' ? 'de-DE' : 'en-US');
+  
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(promptText).then(function() {
+      showPromptCopied(lang, timestamp);
+    }).catch(function(err) {
+      fallbackCopyPrompt(promptText, lang, timestamp);
+    });
+  } else {
+    fallbackCopyPrompt(promptText, lang, timestamp);
+  }
+}
+
+function fallbackCopyPrompt(text, lang, timestamp) {
+  var textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.style.position = 'fixed';
+  textarea.style.opacity = '0';
+  document.body.appendChild(textarea);
+  textarea.select();
+  try {
+    document.execCommand('copy');
+    showPromptCopied(lang, timestamp);
+  } catch (err) {
+    console.error('Fallback copy failed:', err);
+  }
+  document.body.removeChild(textarea);
+}
+
+function showPromptCopied(lang, timestamp) {
+  var btns = document.querySelectorAll('#prompt-output-' + lang + ' .copy-prompt-btn');
+  btns.forEach(function(btn) {
+    var originalHtml = btn.innerHTML;
+    btn.innerHTML = lang === 'de' ? '✓ Kopiert! (' + timestamp + ')' : '✓ Copied! (' + timestamp + ')';
+    btn.style.background = '#0066cc';
+    setTimeout(function() {
+      btn.innerHTML = originalHtml;
+      btn.style.background = '';
+    }, 3000);
+  });
 }
 </script>
 </body>
