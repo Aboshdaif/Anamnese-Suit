@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GitHub Copilot Guide – Radiologie & Diabetologie (Offline)</title>
+<style>
+:root {
+  --primary: #0066cc;
+  --primary-dark: #004c99;
+  --secondary: #28a745;
+  --warning: #ffc107;
+  --danger: #dc3545;
+  --light: #f8f9fa;
+  --dark: #212529;
+  --gray: #6c757d;
+  --border: #dee2e6;
+  --radius: 8px;
+  --shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  line-height: 1.6;
+  color: var(--dark);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  padding: 20px;
+}
+.container { max-width: 1200px; margin: 0 auto; }
+.card {
+  background: white;
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow);
+}
+.hero {
+  text-align: center;
+  padding: 40px 24px;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  color: white;
+}
+.hero h1 { font-size: 2.2rem; margin-bottom: 10px; }
+.hero .subtitle { font-size: 1.1rem; opacity: 0.9; margin-bottom: 20px; }
+.warning-box {
+  background: #fff3cd;
+  border-left: 4px solid var(--warning);
+  padding: 15px;
+  margin: 15px 0;
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+.info-box {
+  background: #e7f3ff;
+  border-left: 4px solid var(--primary);
+  padding: 15px;
+  margin: 15px 0;
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+.success-box {
+  background: #d4edda;
+  border-left: 4px solid var(--secondary);
+  padding: 15px;
+  margin: 15px 0;
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+.danger-box {
+  background: #f8d7da;
+  border-left: 4px solid var(--danger);
+  padding: 15px;
+  margin: 15px 0;
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+h2 {
+  color: var(--primary-dark);
+  border-bottom: 2px solid var(--primary);
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+}
+h3 { color: var(--dark); margin: 20px 0 10px; font-size: 1.2rem; }
+.lang-toggle {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  justify-content: center;
+}
+.lang-btn {
+  padding: 10px 25px;
+  border: 2px solid var(--primary);
+  background: white;
+  color: var(--primary);
+  border-radius: 25px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+.lang-btn.active, .lang-btn:hover {
+  background: var(--primary);
+  color: white;
+}
+.de, .en { display: none; }
+.show-de .de { display: block; }
+.show-en .en { display: block; }
+.steps { counter-reset: step; }
+.step {
+  position: relative;
+  padding-left: 50px;
+  margin-bottom: 20px;
+}
+.step::before {
+  counter-increment: step;
+  content: counter(step);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 35px;
+  height: 35px;
+  background: var(--primary);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+.copy-box {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  padding: 15px;
+  border-radius: var(--radius);
+  margin: 15px 0;
+  position: relative;
+  font-family: "Consolas", "Monaco", monospace;
+  font-size: 0.9rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.copy-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 5px 15px;
+  background: var(--secondary);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+.copy-btn:hover { background: #218838; }
+.copy-btn.copied { background: var(--primary); }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+.feature-card {
+  background: var(--light);
+  padding: 20px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+.feature-card h4 { color: var(--primary); margin-bottom: 10px; }
+.icon { font-size: 2rem; margin-bottom: 10px; }
+ul, ol { margin-left: 25px; margin-bottom: 15px; }
+li { margin-bottom: 8px; }
+.checklist { list-style: none; margin-left: 0; }
+.checklist li { padding: 8px 0; border-bottom: 1px solid var(--border); }
+.checklist li::before { content: "☐ "; color: var(--gray); }
+table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+th, td { padding: 12px; text-align: left; border: 1px solid var(--border); }
+th { background: var(--light); font-weight: 600; }
+.nav {
+  position: sticky;
+  top: 0;
+  background: white;
+  padding: 15px;
+  border-radius: var(--radius);
+  margin-bottom: 20px;
+  box-shadow: var(--shadow);
+  z-index: 100;
+}
+.nav-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+.nav-links a {
+  color: var(--primary);
+  text-decoration: none;
+  padding: 5px 12px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+.nav-links a:hover { background: var(--light); }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 768px) { .two-col { grid-template-columns: 1fr; } }
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-left: 8px;
+}
+.badge-de { background: #000; color: #fc0; }
+.badge-en { background: #012169; color: white; }
+footer {
+  text-align: center;
+  padding: 20px;
+  color: white;
+  font-size: 0.9rem;
+  margin-top: 20px;
+}
+footer a { color: #a0d2ff; }
+</style>
+</head>
+<body class="show-de">
+<div class="container">
+
+<!-- HERO -->
+<div class="card hero">
+  <h1>🤖 GitHub Copilot Guide</h1>
+  <p class="subtitle de">Für Radiolog*innen & Diabetolog*innen – Einfach erklärt, offline nutzbar</p>
+  <p class="subtitle en">For Radiologists & Diabetologists – Simply explained, works offline</p>
+  <div class="lang-toggle">
+    <button class="lang-btn active" onclick="setLang('de', event)">🇩🇪 Deutsch</button>
+    <button class="lang-btn" onclick="setLang('en', event)">🇬🇧 English</button>
+  </div>
+  <div class="warning-box" style="text-align:left; background:rgba(255,243,205,0.9); color:#856404;">
+    <strong class="de">⚠️ Wichtig:</strong>
+    <strong class="en">⚠️ Important:</strong>
+    <span class="de">Dies ist eine reine Informationsseite. Geben Sie NIEMALS Patientendaten ein!</span>
+    <span class="en">This is an information page only. NEVER enter patient data!</span>
+  </div>
+</div>
+
+<!-- NAVIGATION -->
+<nav class="nav">
+  <div class="nav-links">
+    <a href="#power" class="de">Macht von Copilot</a>
+    <a href="#power" class="en">Power of Copilot</a>
+    <a href="#subscribe" class="de">Abo abschließen</a>
+    <a href="#subscribe" class="en">Subscribe</a>
+    <a href="#chat" class="de">Chat-Funktion</a>
+    <a href="#chat" class="en">Chat Function</a>
+    <a href="#agent" class="de">Agent Mode</a>
+    <a href="#agent" class="en">Agent Mode</a>
+    <a href="#prompts" class="de">Prompts</a>
+    <a href="#prompts" class="en">Prompts</a>
+    <a href="#privacy" class="de">Datenschutz</a>
+    <a href="#privacy" class="en">Privacy</a>
+    <a href="#templates" class="de">Vorlagen</a>
+    <a href="#templates" class="en">Templates</a>
+  </div>
+</nav>
+
+<!-- SECTION: POWER OF COPILOT -->
+<section class="card" id="power">
+  <h2 class="de">🚀 Die Macht von GitHub Copilot</h2>
+  <h2 class="en">🚀 The Power of GitHub Copilot</h2>
+  
+  <div class="de">
+    <p><strong>Stellen Sie sich vor:</strong> Ein super-schlauer Assistent, der Ihnen beim Programmieren hilft – wie ein erfahrener Kollege, der immer da ist!</p>
+    
+    <div class="grid">
+      <div class="feature-card">
+        <div class="icon">✍️</div>
+        <h4>Code-Vervollständigung</h4>
+        <p>Copilot schreibt Code für Sie weiter, während Sie tippen. Wie Autocomplete auf dem Handy – nur viel schlauer!</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">💬</div>
+        <h4>Chat-Funktion</h4>
+        <p>Stellen Sie Fragen in normalem Deutsch! "Wie erstelle ich eine Tabelle?" – und Copilot erklärt es Ihnen.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">🤖</div>
+        <h4>Agent Mode</h4>
+        <p>Der Agent baut komplette Programme für Sie! Beschreiben Sie einfach, was Sie wollen – er macht den Rest.</p>
+      </div>
+    </div>
+    
+    <div class="info-box">
+      <strong>Für Radiologie & Diabetologie besonders nützlich:</strong>
+      <ul style="margin-top:10px;">
+        <li>Befund-Checklisten automatisch erstellen</li>
+        <li>Patienteninformationen in einfacher Sprache generieren</li>
+        <li>Termin-Erinnerungen und Dokumentations-Hilfen</li>
+        <li>Kleine Offline-Tools für den Praxisalltag</li>
+      </ul>
+    </div>
+  </div>
+  
+  <div class="en">
+    <p><strong>Imagine:</strong> A super-smart assistant that helps you with programming – like an experienced colleague who's always there!</p>
+    
+    <div class="grid">
+      <div class="feature-card">
+        <div class="icon">✍️</div>
+        <h4>Code Completion</h4>
+        <p>Copilot continues writing code as you type. Like autocomplete on your phone – only much smarter!</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">💬</div>
+        <h4>Chat Function</h4>
+        <p>Ask questions in plain English! "How do I create a table?" – and Copilot explains it to you.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">🤖</div>
+        <h4>Agent Mode</h4>
+        <p>The agent builds complete programs for you! Just describe what you want – it does the rest.</p>
+      </div>
+    </div>
+    
+    <div class="info-box">
+      <strong>Especially useful for Radiology & Diabetology:</strong>
+      <ul style="margin-top:10px;">
+        <li>Automatically create report checklists</li>
+        <li>Generate patient information in simple language</li>
+        <li>Appointment reminders and documentation aids</li>
+        <li>Small offline tools for daily practice</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION: SUBSCRIBE -->
+<section class="card" id="subscribe">
+  <h2 class="de">📝 Copilot Pro Abo – Schritt für Schritt</h2>
+  <h2 class="en">📝 Copilot Pro Subscription – Step by Step</h2>
+  
+  <div class="de">
+    <div class="success-box">
+      <strong>✓ 1 Monat GRATIS testen!</strong> Sie können jederzeit kündigen – keine Verpflichtung.
+    </div>
+    
+    <div class="steps">
+      <div class="step">
+        <h4>GitHub-Konto erstellen oder anmelden</h4>
+        <p>Gehen Sie zu <code>github.com</code> und klicken Sie auf "Sign up" (Registrieren) oder "Sign in" (Anmelden).</p>
+      </div>
+      <div class="step">
+        <h4>Zu Copilot Pro navigieren</h4>
+        <p>Klicken Sie auf Ihr Profilbild (oben rechts) → "Your Copilot" → "Upgrade to Pro" oder besuchen Sie direkt <code>github.com/features/copilot</code></p>
+      </div>
+      <div class="step">
+        <h4>Kostenlose Testversion starten</h4>
+        <p>Klicken Sie auf "Start free trial" (Kostenlose Testversion starten). Der erste Monat ist GRATIS!</p>
+      </div>
+      <div class="step">
+        <h4>Zahlungsmethode hinterlegen</h4>
+        <p>Kreditkarte oder PayPal eingeben. <strong>Wichtig:</strong> Sie werden erst nach dem Testmonat belastet!</p>
+      </div>
+      <div class="step">
+        <h4>VS Code installieren und einrichten</h4>
+        <p>Laden Sie VS Code herunter (<code>code.visualstudio.com</code>). Installieren Sie die "GitHub Copilot" Erweiterung über das Extensions-Menü (Strg+Shift+X).</p>
+      </div>
+      <div class="step">
+        <h4>In VS Code anmelden</h4>
+        <p>Klicken Sie unten links auf das Kopf-Symbol → "Sign in to GitHub" → Folgen Sie den Anweisungen.</p>
+      </div>
+    </div>
+    
+    <div class="danger-box">
+      <strong>🔴 Kündigung (wichtig!):</strong><br>
+      GitHub Settings → Billing → Subscriptions → Copilot Pro → "Cancel subscription"<br>
+      <em>Kündigen Sie VOR Ablauf des Testmonats, wenn Sie nicht weitermachen möchten!</em>
+    </div>
+  </div>
+  
+  <div class="en">
+    <div class="success-box">
+      <strong>✓ 1 Month FREE trial!</strong> You can cancel anytime – no obligation.
+    </div>
+    
+    <div class="steps">
+      <div class="step">
+        <h4>Create or sign in to GitHub account</h4>
+        <p>Go to <code>github.com</code> and click "Sign up" or "Sign in".</p>
+      </div>
+      <div class="step">
+        <h4>Navigate to Copilot Pro</h4>
+        <p>Click your profile picture (top right) → "Your Copilot" → "Upgrade to Pro" or visit <code>github.com/features/copilot</code> directly</p>
+      </div>
+      <div class="step">
+        <h4>Start free trial</h4>
+        <p>Click "Start free trial". The first month is FREE!</p>
+      </div>
+      <div class="step">
+        <h4>Add payment method</h4>
+        <p>Enter credit card or PayPal. <strong>Important:</strong> You won't be charged until after the trial month!</p>
+      </div>
+      <div class="step">
+        <h4>Install and set up VS Code</h4>
+        <p>Download VS Code (<code>code.visualstudio.com</code>). Install the "GitHub Copilot" extension via Extensions menu (Ctrl+Shift+X).</p>
+      </div>
+      <div class="step">
+        <h4>Sign in to VS Code</h4>
+        <p>Click the person icon at bottom left → "Sign in to GitHub" → Follow the instructions.</p>
+      </div>
+    </div>
+    
+    <div class="danger-box">
+      <strong>🔴 Cancellation (important!):</strong><br>
+      GitHub Settings → Billing → Subscriptions → Copilot Pro → "Cancel subscription"<br>
+      <em>Cancel BEFORE the trial month ends if you don't want to continue!</em>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION: CHAT -->
+<section class="card" id="chat">
+  <h2 class="de">💬 Copilot Chat – Nutzung & Grenzen</h2>
+  <h2 class="en">💬 Copilot Chat – Usage & Limitations</h2>
+  
+  <div class="two-col">
+    <div class="de">
+      <h3>✅ Was Chat kann</h3>
+      <ul>
+        <li>Code erklären und Fragen beantworten</li>
+        <li>Fehler finden und Lösungen vorschlagen</li>
+        <li>Neue Funktionen schreiben</li>
+        <li>Dokumentation erstellen</li>
+        <li>Konzepte einfach erklären</li>
+      </ul>
+      
+      <h3>⚠️ Grenzen & Wichtige Hinweise</h3>
+      <ul>
+        <li><strong>Kann halluzinieren:</strong> Manchmal "erfindet" die KI Dinge, die nicht stimmen</li>
+        <li><strong>Kein Ersatz für Fachwissen:</strong> Ärztliche Entscheidungen IMMER selbst treffen</li>
+        <li><strong>Keine Patientendaten eingeben!</strong> DSGVO & Schweigepflicht beachten</li>
+        <li><strong>Aktualität prüfen:</strong> Wissen kann veraltet sein</li>
+      </ul>
+      
+      <h3>🎯 Best Practices</h3>
+      <ul>
+        <li><strong>Kurz & klar:</strong> Präzise Fragen stellen</li>
+        <li><strong>Kontext geben:</strong> Beschreiben Sie Ihr Ziel</li>
+        <li><strong>Iterieren:</strong> Schritt für Schritt verfeinern</li>
+        <li><strong>Prüfen:</strong> Ergebnisse immer kontrollieren</li>
+      </ul>
+    </div>
+    
+    <div class="en">
+      <h3>✅ What Chat can do</h3>
+      <ul>
+        <li>Explain code and answer questions</li>
+        <li>Find errors and suggest solutions</li>
+        <li>Write new functions</li>
+        <li>Create documentation</li>
+        <li>Explain concepts simply</li>
+      </ul>
+      
+      <h3>⚠️ Limitations & Important Notes</h3>
+      <ul>
+        <li><strong>Can hallucinate:</strong> AI sometimes "invents" things that aren't true</li>
+        <li><strong>No substitute for expertise:</strong> ALWAYS make medical decisions yourself</li>
+        <li><strong>Never enter patient data!</strong> Observe GDPR & confidentiality</li>
+        <li><strong>Check currency:</strong> Knowledge may be outdated</li>
+      </ul>
+      
+      <h3>🎯 Best Practices</h3>
+      <ul>
+        <li><strong>Short & clear:</strong> Ask precise questions</li>
+        <li><strong>Give context:</strong> Describe your goal</li>
+        <li><strong>Iterate:</strong> Refine step by step</li>
+        <li><strong>Verify:</strong> Always check results</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION: AGENT MODE -->
+<section class="card" id="agent">
+  <h2 class="de">🤖 Agent Mode – Apps bauen wie ein Profi</h2>
+  <h2 class="en">🤖 Agent Mode – Build Apps Like a Pro</h2>
+  
+  <div class="de">
+    <div class="info-box">
+      <strong>Was ist Agent Mode?</strong><br>
+      Stellen Sie sich vor: Sie beschreiben einem Assistenten, was Sie wollen, und er baut es für Sie! 
+      Wie wenn Sie einem Handwerker sagen: "Ich brauche ein Regal" – und er baut es.
+    </div>
+    
+    <h3>🎯 So starten Sie (kinderleicht!)</h3>
+    <div class="steps">
+      <div class="step">
+        <h4>VS Code öffnen</h4>
+        <p>Öffnen Sie VS Code und erstellen Sie einen neuen Ordner für Ihr Projekt.</p>
+      </div>
+      <div class="step">
+        <h4>Copilot Chat öffnen</h4>
+        <p>Drücken Sie <code>Strg+Shift+I</code> oder klicken Sie auf das Chat-Symbol.</p>
+      </div>
+      <div class="step">
+        <h4>Agent Mode aktivieren</h4>
+        <p>Wählen Sie im Chat-Dropdown "Agent" oder tippen Sie <code>@workspace</code></p>
+      </div>
+      <div class="step">
+        <h4>Beschreiben Sie Ihr Projekt</h4>
+        <p>Sagen Sie dem Agenten, was Sie bauen wollen – wie einem Freund!</p>
+      </div>
+    </div>
+    
+    <h3>💡 Beispiel-Anfragen für Ihre Arbeit</h3>
+    <div class="grid">
+      <div class="feature-card">
+        <h4>📋 Checklisten-App</h4>
+        <p>"Erstelle eine HTML-Seite mit einer Checkliste für CT-Befundung. Offline, alles in einer Datei."</p>
+      </div>
+      <div class="feature-card">
+        <h4>📅 Termin-Erinnerung</h4>
+        <p>"Baue eine einfache Seite, die an Kontrolltermine erinnert. Mit Eingabefeld für Datum."</p>
+      </div>
+      <div class="feature-card">
+        <h4>📊 Doku-Helfer</h4>
+        <p>"Erstelle ein Formular für Insulin-Dokumentation. Nur lokal, keine Datenübertragung."</p>
+      </div>
+    </div>
+    
+    <div class="success-box">
+      <strong>Tipp:</strong> Starten Sie einfach! Sagen Sie: "Mach erstmal einen einfachen Prototyp" – 
+      dann verfeinern Sie Schritt für Schritt.
+    </div>
+  </div>
+  
+  <div class="en">
+    <div class="info-box">
+      <strong>What is Agent Mode?</strong><br>
+      Imagine: You describe what you want to an assistant, and they build it for you! 
+      Like telling a craftsman: "I need a shelf" – and they build it.
+    </div>
+    
+    <h3>🎯 How to start (super easy!)</h3>
+    <div class="steps">
+      <div class="step">
+        <h4>Open VS Code</h4>
+        <p>Open VS Code and create a new folder for your project.</p>
+      </div>
+      <div class="step">
+        <h4>Open Copilot Chat</h4>
+        <p>Press <code>Ctrl+Shift+I</code> or click the chat icon.</p>
+      </div>
+      <div class="step">
+        <h4>Activate Agent Mode</h4>
+        <p>Select "Agent" in the chat dropdown or type <code>@workspace</code></p>
+      </div>
+      <div class="step">
+        <h4>Describe your project</h4>
+        <p>Tell the agent what you want to build – like talking to a friend!</p>
+      </div>
+    </div>
+    
+    <h3>💡 Example requests for your work</h3>
+    <div class="grid">
+      <div class="feature-card">
+        <h4>📋 Checklist App</h4>
+        <p>"Create an HTML page with a checklist for CT reporting. Offline, all in one file."</p>
+      </div>
+      <div class="feature-card">
+        <h4>📅 Appointment Reminder</h4>
+        <p>"Build a simple page that reminds about follow-up appointments. With date input field."</p>
+      </div>
+      <div class="feature-card">
+        <h4>📊 Documentation Helper</h4>
+        <p>"Create a form for insulin documentation. Local only, no data transfer."</p>
+      </div>
+    </div>
+    
+    <div class="success-box">
+      <strong>Tip:</strong> Start simple! Say: "First make a simple prototype" – 
+      then refine step by step.
+    </div>
+  </div>
+</section>
+
+<!-- SECTION: PROMPTS -->
+<section class="card" id="prompts">
+  <h2 class="de">📝 Ultimative Prompt-Vorlagen</h2>
+  <h2 class="en">📝 Ultimate Prompt Templates</h2>
+  
+  <div class="de">
+    <h3>🔧 Universal-Prompt für lokale HTML-Apps</h3>
+    <div class="copy-box" id="prompt-de-1">Du bist mein Assistenz-Entwickler. 
+Rolle: Senior-Engineer + Datenschutz-Coach.
+Aufgabe: [HIER DEIN ZIEL BESCHREIBEN]
+
+Anforderungen:
+- Alles in einer einzigen HTML-Datei, offline, keine externen CDNs/Fonts/Bilder
+- Klarer, einfacher Text auf Deutsch
+- Modernes, gut lesbares Design mit lokalem CSS
+- Keine echten Online-Aufrufe
+- Datenschutz beachten: Keine Patientendaten speichern/übertragen
+
+Liefere finalen HTML-Code (eine Datei) mit eingebettetem CSS/JS.
+<button class="copy-btn" onclick="copyText('prompt-de-1')">📋 Kopieren</button></div>
+    
+    <h3>🏥 Radiologie-Prompts</h3>
+    <div class="copy-box" id="prompt-radio-de-1">Erstelle eine Checkliste für CT-Abdomen-Befundung:
+- Strukturierte Punkte für alle wichtigen Organe
+- Checkbox für "unauffällig" vs. "Auffälligkeit"
+- Platz für Freitext-Notizen
+- Alles offline in einer HTML-Datei
+- Keine Patientendaten, nur Struktur
+<button class="copy-btn" onclick="copyText('prompt-radio-de-1')">📋 Kopieren</button></div>
+    
+    <div class="copy-box" id="prompt-radio-de-2">Erstelle eine patientenverständliche Erläuterung für MRT-Untersuchungen:
+- Laienverständlich, kurze Sätze
+- Was passiert bei der Untersuchung?
+- Wie lange dauert es?
+- Worauf muss man achten?
+- Als druckbare HTML-Seite
+<button class="copy-btn" onclick="copyText('prompt-radio-de-2')">📋 Kopieren</button></div>
+    
+    <h3>💉 Diabetologie-Prompts</h3>
+    <div class="copy-box" id="prompt-diab-de-1">Erstelle einen Wochenplan für Blutzucker-Dokumentation:
+- Tabelle für 7 Tage
+- Spalten: Datum, Nüchtern, Nach Frühstück, Nach Mittag, Nach Abend, Bemerkungen
+- Nur Struktur, keine echten Werte
+- Druckbar, offline HTML
+<button class="copy-btn" onclick="copyText('prompt-diab-de-1')">📋 Kopieren</button></div>
+    
+    <div class="copy-box" id="prompt-diab-de-2">Erstelle eine Patienteninfo zu Hypoglykämie-Warnzeichen:
+- 6-8 Bulletpoints mit Symptomen
+- Einfache Sprache für Patienten
+- Was tun im Notfall?
+- Als übersichtliche HTML-Seite
+<button class="copy-btn" onclick="copyText('prompt-diab-de-2')">📋 Kopieren</button></div>
+  </div>
+  
+  <div class="en">
+    <h3>🔧 Universal Prompt for Local HTML Apps</h3>
+    <div class="copy-box" id="prompt-en-1">You are my assistant developer.
+Role: Senior engineer + privacy coach.
+Task: [DESCRIBE YOUR GOAL HERE]
+
+Requirements:
+- Everything in a single HTML file, offline, no external CDNs/fonts/images
+- Clear, simple text in English
+- Modern, readable design with local CSS
+- No real online calls
+- Privacy: Don't store/transmit patient data
+
+Provide final HTML code (one file) with embedded CSS/JS.
+<button class="copy-btn" onclick="copyText('prompt-en-1')">📋 Copy</button></div>
+    
+    <h3>🏥 Radiology Prompts</h3>
+    <div class="copy-box" id="prompt-radio-en-1">Create a checklist for abdominal CT reporting:
+- Structured points for all major organs
+- Checkbox for "unremarkable" vs. "finding"
+- Space for free-text notes
+- All offline in one HTML file
+- No patient data, structure only
+<button class="copy-btn" onclick="copyText('prompt-radio-en-1')">📋 Copy</button></div>
+    
+    <div class="copy-box" id="prompt-radio-en-2">Create a patient-friendly explanation for MRI examinations:
+- Plain language, short sentences
+- What happens during the exam?
+- How long does it take?
+- What to pay attention to?
+- As printable HTML page
+<button class="copy-btn" onclick="copyText('prompt-radio-en-2')">📋 Copy</button></div>
+    
+    <h3>💉 Diabetology Prompts</h3>
+    <div class="copy-box" id="prompt-diab-en-1">Create a weekly plan for blood glucose documentation:
+- Table for 7 days
+- Columns: Date, Fasting, After Breakfast, After Lunch, After Dinner, Notes
+- Structure only, no real values
+- Printable, offline HTML
+<button class="copy-btn" onclick="copyText('prompt-diab-en-1')">📋 Copy</button></div>
+    
+    <div class="copy-box" id="prompt-diab-en-2">Create patient info on hypoglycemia warning signs:
+- 6-8 bullet points with symptoms
+- Simple language for patients
+- What to do in emergency?
+- As clear HTML page
+<button class="copy-btn" onclick="copyText('prompt-diab-en-2')">📋 Copy</button></div>
+  </div>
+</section>
+
+<!-- SECTION: PRIVACY -->
+<section class="card" id="privacy">
+  <h2 class="de">🔒 Datenschutz & Compliance</h2>
+  <h2 class="en">🔒 Privacy & Compliance</h2>
+  
+  <div class="de">
+    <div class="danger-box">
+      <strong>🚫 NIEMALS in Copilot/Cloud-Tools eingeben:</strong>
+      <ul style="margin-top:10px;">
+        <li>Patientennamen, Geburtsdaten, Adressen</li>
+        <li>Diagnosen mit Patientenbezug</li>
+        <li>Befunde mit identifizierbaren Daten</li>
+        <li>Jegliche PHI (Protected Health Information)</li>
+      </ul>
+    </div>
+    
+    <h3>📜 Rechtliche Grundlagen</h3>
+    <table>
+      <tr><th>Regelung</th><th>Was bedeutet das?</th></tr>
+      <tr><td>DSGVO (EU 2016/679)</td><td>Personenbezogene Daten dürfen nicht ohne Rechtsgrundlage verarbeitet werden</td></tr>
+      <tr><td>Ärztliche Schweigepflicht (§ 203 StGB)</td><td>Geheimnisse von Patienten sind strafrechtlich geschützt</td></tr>
+      <tr><td>MBO-Ä § 9</td><td>Berufsrechtliche Schweigepflicht der Ärzte</td></tr>
+    </table>
+    
+    <h3>🏥 Medizinprodukt – Schnell-Check</h3>
+    <div class="warning-box">
+      <strong>Wann wird meine App zum Medizinprodukt?</strong>
+      <p style="margin-top:10px;">Laut MDR (EU 2017/745) gilt Software als Medizinprodukt, wenn sie:</p>
+      <ul style="margin-top:10px;">
+        <li>Diagnosen stellt oder unterstützt</li>
+        <li>Therapieentscheidungen trifft</li>
+        <li>Zur Überwachung von Patienten dient</li>
+      </ul>
+      <p style="margin-top:10px;"><strong>→ Reine Dokumentations-Tools ohne Entscheidungsfunktion sind meist KEIN Medizinprodukt</strong></p>
+      <p style="color:#856404;"><em>Dies ist keine Rechtsberatung! Im Zweifel: Fachanwalt konsultieren.</em></p>
+    </div>
+    
+    <h3>✅ Sichere Nutzung</h3>
+    <ul class="checklist">
+      <li>Nur strukturelle Vorlagen erstellen (keine echten Patientendaten)</li>
+      <li>Lokale HTML-Dateien nutzen (keine Cloud)</li>
+      <li>Pseudonymisierte Beispieldaten verwenden</li>
+      <li>Ergebnisse immer fachlich prüfen</li>
+    </ul>
+  </div>
+  
+  <div class="en">
+    <div class="danger-box">
+      <strong>🚫 NEVER enter in Copilot/Cloud tools:</strong>
+      <ul style="margin-top:10px;">
+        <li>Patient names, birth dates, addresses</li>
+        <li>Diagnoses with patient reference</li>
+        <li>Reports with identifiable data</li>
+        <li>Any PHI (Protected Health Information)</li>
+      </ul>
+    </div>
+    
+    <h3>📜 Legal Framework</h3>
+    <table>
+      <tr><th>Regulation</th><th>What does it mean?</th></tr>
+      <tr><td>GDPR (EU 2016/679)</td><td>Personal data may not be processed without legal basis</td></tr>
+      <tr><td>Medical Confidentiality</td><td>Patient secrets are legally protected</td></tr>
+      <tr><td>Professional Ethics</td><td>Professional duty of confidentiality for physicians</td></tr>
+    </table>
+    
+    <h3>🏥 Medical Device – Quick Check</h3>
+    <div class="warning-box">
+      <strong>When does my app become a medical device?</strong>
+      <p style="margin-top:10px;">According to MDR (EU 2017/745), software is a medical device if it:</p>
+      <ul style="margin-top:10px;">
+        <li>Makes or supports diagnoses</li>
+        <li>Makes therapy decisions</li>
+        <li>Serves to monitor patients</li>
+      </ul>
+      <p style="margin-top:10px;"><strong>→ Pure documentation tools without decision function are usually NOT medical devices</strong></p>
+      <p style="color:#856404;"><em>This is not legal advice! When in doubt: consult a specialist lawyer.</em></p>
+    </div>
+    
+    <h3>✅ Safe Usage</h3>
+    <ul class="checklist">
+      <li>Only create structural templates (no real patient data)</li>
+      <li>Use local HTML files (no cloud)</li>
+      <li>Use pseudonymized example data</li>
+      <li>Always verify results professionally</li>
+    </ul>
+  </div>
+</section>
+
+<!-- SECTION: TEMPLATES -->
+<section class="card" id="templates">
+  <h2 class="de">📋 Test- & Validierungs-Vorlagen</h2>
+  <h2 class="en">📋 Test & Validation Templates</h2>
+  
+  <div class="de">
+    <h3>🧪 Funktionstest-Protokoll</h3>
+    <table>
+      <tr><th>Feature</th><th>Erwartetes Ergebnis</th><th>Tatsächliches Ergebnis</th><th>Status</th><th>Datum</th></tr>
+      <tr><td></td><td></td><td></td><td>☐ OK / ☐ Fehler</td><td></td></tr>
+      <tr><td></td><td></td><td></td><td>☐ OK / ☐ Fehler</td><td></td></tr>
+      <tr><td></td><td></td><td></td><td>☐ OK / ☐ Fehler</td><td></td></tr>
+    </table>
+    
+    <h3>👤 Usability-Check</h3>
+    <table>
+      <tr><th>Aufgabe</th><th>Erwarteter Weg</th><th>Beobachtete Hürden</th><th>Feedback</th></tr>
+      <tr><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td></tr>
+    </table>
+    
+    <h3>🔒 Datenschutz-Check</h3>
+    <ul class="checklist">
+      <li>Enthält die App Patientendaten? ☐ Ja / ☐ Nein</li>
+      <li>Werden Daten nur lokal gespeichert? ☐ Ja / ☐ Nein</li>
+      <li>Externe Datenübertragung? ☐ Ja / ☐ Nein</li>
+      <li>Pseudonymisierung möglich? ☐ Ja / ☐ N/A</li>
+    </ul>
+    
+    <h3>📝 Änderungsprotokoll</h3>
+    <table>
+      <tr><th>Datum</th><th>Version</th><th>Änderung</th><th>Grund</th><th>Verantwortlich</th></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td></tr>
+    </table>
+  </div>
+  
+  <div class="en">
+    <h3>🧪 Function Test Protocol</h3>
+    <table>
+      <tr><th>Feature</th><th>Expected Result</th><th>Actual Result</th><th>Status</th><th>Date</th></tr>
+      <tr><td></td><td></td><td></td><td>☐ OK / ☐ Error</td><td></td></tr>
+      <tr><td></td><td></td><td></td><td>☐ OK / ☐ Error</td><td></td></tr>
+      <tr><td></td><td></td><td></td><td>☐ OK / ☐ Error</td><td></td></tr>
+    </table>
+    
+    <h3>👤 Usability Check</h3>
+    <table>
+      <tr><th>Task</th><th>Expected Path</th><th>Observed Hurdles</th><th>Feedback</th></tr>
+      <tr><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td></tr>
+    </table>
+    
+    <h3>🔒 Privacy Check</h3>
+    <ul class="checklist">
+      <li>Does the app contain patient data? ☐ Yes / ☐ No</li>
+      <li>Is data stored locally only? ☐ Yes / ☐ No</li>
+      <li>External data transfer? ☐ Yes / ☐ No</li>
+      <li>Pseudonymization possible? ☐ Yes / ☐ N/A</li>
+    </ul>
+    
+    <h3>📝 Change Log</h3>
+    <table>
+      <tr><th>Date</th><th>Version</th><th>Change</th><th>Reason</th><th>Responsible</th></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- SECTION: TIPS -->
+<section class="card">
+  <h2 class="de">💡 Merksätze & Tipps</h2>
+  <h2 class="en">💡 Mnemonics & Tips</h2>
+  
+  <div class="de">
+    <div class="grid">
+      <div class="feature-card">
+        <div class="icon">🔐</div>
+        <h4>Datenschutz-Merksatz</h4>
+        <p><strong>"Keine Patientendaten in die Cloud!"</strong></p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">✍️</div>
+        <h4>Prompt-Merksatz</h4>
+        <p><strong>"Kurz, Klar, Kontext"</strong> – Die 3 K's für gute Prompts</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">🔍</div>
+        <h4>Prüf-Merksatz</h4>
+        <p><strong>"KI kann irren – immer prüfen!"</strong></p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">🏠</div>
+        <h4>Offline-Merksatz</h4>
+        <p><strong>"Lokal ist sicher, Cloud ist riskant"</strong></p>
+      </div>
+    </div>
+  </div>
+  
+  <div class="en">
+    <div class="grid">
+      <div class="feature-card">
+        <div class="icon">🔐</div>
+        <h4>Privacy Mnemonic</h4>
+        <p><strong>"No patient data in the cloud!"</strong></p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">✍️</div>
+        <h4>Prompt Mnemonic</h4>
+        <p><strong>"Short, Clear, Context"</strong> – The 3 C's for good prompts</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">🔍</div>
+        <h4>Check Mnemonic</h4>
+        <p><strong>"AI can err – always verify!"</strong></p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">🏠</div>
+        <h4>Offline Mnemonic</h4>
+        <p><strong>"Local is safe, cloud is risky"</strong></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION: SOURCES -->
+<section class="card">
+  <h2 class="de">📚 Quellen (Abrufdatum: 2025-12-05)</h2>
+  <h2 class="en">📚 Sources (Retrieved: 2025-12-05)</h2>
+  
+  <ul>
+    <li><strong>GitHub Copilot Produktseite:</strong> <a href="https://github.com/features/copilot" target="_blank">https://github.com/features/copilot</a></li>
+    <li><strong>GitHub Copilot Docs/FAQ:</strong> <a href="https://docs.github.com/en/copilot" target="_blank">https://docs.github.com/en/copilot</a></li>
+    <li><strong>Microsoft Copilot Docs:</strong> <a href="https://learn.microsoft.com/en-us/copilot/" target="_blank">https://learn.microsoft.com/en-us/copilot/</a></li>
+    <li><strong>DSGVO (EU 2016/679):</strong> <a href="https://eur-lex.europa.eu/eli/reg/2016/679/oj" target="_blank">https://eur-lex.europa.eu/eli/reg/2016/679/oj</a></li>
+    <li class="de"><strong>Ärztliche Schweigepflicht (MBO-Ä):</strong> <a href="https://www.bundesaerztekammer.de" target="_blank">https://www.bundesaerztekammer.de</a></li>
+    <li class="en"><strong>Medical Confidentiality:</strong> <a href="https://www.bundesaerztekammer.de" target="_blank">https://www.bundesaerztekammer.de</a></li>
+    <li><strong>EU MDR 2017/745:</strong> <a href="https://eur-lex.europa.eu/eli/reg/2017/745/oj" target="_blank">https://eur-lex.europa.eu/eli/reg/2017/745/oj</a></li>
+  </ul>
+</section>
+
+<!-- CHECKLIST -->
+<section class="card">
+  <h2 class="de">✅ Checkliste – Alles erledigt?</h2>
+  <h2 class="en">✅ Checklist – All done?</h2>
+  
+  <div class="de">
+    <ul class="checklist">
+      <li>Copilot Pro Abo & Kündigung verstanden</li>
+      <li>Chat-Grenzen & Best Practices bekannt</li>
+      <li>Agent Mode ausprobiert</li>
+      <li>Prompt-Vorlagen gespeichert</li>
+      <li>Datenschutz-Regeln verstanden</li>
+      <li>Medizinprodukt-Check durchgeführt</li>
+      <li>Test-Vorlagen bereit</li>
+    </ul>
+  </div>
+  
+  <div class="en">
+    <ul class="checklist">
+      <li>Copilot Pro subscription & cancellation understood</li>
+      <li>Chat limitations & best practices known</li>
+      <li>Agent Mode tried out</li>
+      <li>Prompt templates saved</li>
+      <li>Privacy rules understood</li>
+      <li>Medical device check completed</li>
+      <li>Test templates ready</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <p class="de">📄 Offline-Informationsseite für Radiolog*innen & Diabetolog*innen | Keine Patientendaten eingeben!</p>
+  <p class="en">📄 Offline information page for Radiologists & Diabetologists | Do not enter patient data!</p>
+  <p style="margin-top:10px;opacity:0.8;">
+    © 2025 | <span class="de">Quellen siehe oben</span><span class="en">Sources see above</span>
+  </p>
+</footer>
+
+</div>
+
+<script>
+function setLang(lang, e) {
+  document.body.className = 'show-' + lang;
+  document.querySelectorAll('.lang-btn').forEach(function(btn) {
+    btn.classList.remove('active');
+  });
+  if (e && e.target) {
+    e.target.classList.add('active');
+  }
+}
+
+function copyText(elementId) {
+  var element = document.getElementById(elementId);
+  var text = element.innerText || element.textContent;
+  // Remove the "Copy" button text from the copied content
+  text = text.replace(/📋 Kopieren/g, '').replace(/📋 Copy/g, '').trim();
+  
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function() {
+      showCopied(elementId);
+    }).catch(function(err) {
+      console.error('Clipboard write failed:', err);
+      fallbackCopy(text, elementId);
+    });
+  } else {
+    fallbackCopy(text, elementId);
+  }
+}
+
+function fallbackCopy(text, elementId) {
+  var textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.style.position = 'fixed';
+  textarea.style.opacity = '0';
+  document.body.appendChild(textarea);
+  textarea.select();
+  try {
+    document.execCommand('copy');
+    showCopied(elementId);
+  } catch (err) {
+    console.error('Fallback copy failed:', err);
+  }
+  document.body.removeChild(textarea);
+}
+
+function showCopied(elementId) {
+  var btn = document.querySelector('#' + elementId + ' .copy-btn');
+  if (btn) {
+    var originalText = btn.textContent;
+    var lang = document.body.className.indexOf('show-en') >= 0 ? 'en' : 'de';
+    btn.textContent = lang === 'en' ? '✓ Copied!' : '✓ Kopiert!';
+    btn.classList.add('copied');
+    setTimeout(function() {
+      btn.textContent = originalText;
+      btn.classList.remove('copied');
+    }, 2000);
+  }
+}
+</script>
+</body>
+</html>
