@@ -222,8 +222,8 @@ footer a { color: #a0d2ff; }
   <p class="subtitle de">Für Radiolog*innen & Diabetolog*innen – Einfach erklärt, offline nutzbar</p>
   <p class="subtitle en">For Radiologists & Diabetologists – Simply explained, works offline</p>
   <div class="lang-toggle">
-    <button class="lang-btn active" onclick="setLang('de')">🇩🇪 Deutsch</button>
-    <button class="lang-btn" onclick="setLang('en')">🇬🇧 English</button>
+    <button class="lang-btn active" onclick="setLang('de', event)">🇩🇪 Deutsch</button>
+    <button class="lang-btn" onclick="setLang('en', event)">🇬🇧 English</button>
   </div>
   <div class="warning-box" style="text-align:left; background:rgba(255,243,205,0.9); color:#856404;">
     <strong class="de">⚠️ Wichtig:</strong>
@@ -948,12 +948,14 @@ Provide final HTML code (one file) with embedded CSS/JS.
 </div>
 
 <script>
-function setLang(lang) {
+function setLang(lang, e) {
   document.body.className = 'show-' + lang;
   document.querySelectorAll('.lang-btn').forEach(function(btn) {
     btn.classList.remove('active');
   });
-  event.target.classList.add('active');
+  if (e && e.target) {
+    e.target.classList.add('active');
+  }
 }
 
 function copyText(elementId) {
@@ -965,24 +967,37 @@ function copyText(elementId) {
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(text).then(function() {
       showCopied(elementId);
+    }).catch(function(err) {
+      console.error('Clipboard write failed:', err);
+      fallbackCopy(text, elementId);
     });
   } else {
-    // Fallback for older browsers
-    var textarea = document.createElement('textarea');
-    textarea.value = text;
-    document.body.appendChild(textarea);
-    textarea.select();
-    document.execCommand('copy');
-    document.body.removeChild(textarea);
-    showCopied(elementId);
+    fallbackCopy(text, elementId);
   }
+}
+
+function fallbackCopy(text, elementId) {
+  var textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.style.position = 'fixed';
+  textarea.style.opacity = '0';
+  document.body.appendChild(textarea);
+  textarea.select();
+  try {
+    document.execCommand('copy');
+    showCopied(elementId);
+  } catch (err) {
+    console.error('Fallback copy failed:', err);
+  }
+  document.body.removeChild(textarea);
 }
 
 function showCopied(elementId) {
   var btn = document.querySelector('#' + elementId + ' .copy-btn');
   if (btn) {
     var originalText = btn.textContent;
-    btn.textContent = '✓ Kopiert!';
+    var lang = document.body.className.indexOf('show-en') >= 0 ? 'en' : 'de';
+    btn.textContent = lang === 'en' ? '✓ Copied!' : '✓ Kopiert!';
     btn.classList.add('copied');
     setTimeout(function() {
       btn.textContent = originalText;
