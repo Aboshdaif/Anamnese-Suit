@@ -3,7 +3,7 @@
 ================================================================================
 ANAMNESE SUITE - Offline Medical History Application
 ================================================================================
-Version: 2.0.0
+Version: 2.1.0
 Release Date: 2025-12-05
 Authors: DiggAi GmbH / Laith Alshdaifat
 Medical Content: Dr. Christian Klapproth
@@ -15,13 +15,17 @@ REGULATORY COMPLIANCE:
 - MDR 2017/745: Medical Device Regulation (informational purposes only)
 
 TECHNICAL DOCUMENTATION:
-- All data processed in RAM only, no persistent storage (no cookies, localStorage, IndexedDB)
+- All data processed in RAM only by default
+- Optional local storage with explicit user consent (GDPR Art. 6(1)(a))
 - NFC NDEF export with MIME type application/json, max 4KB payload
 - QR-Code and JSON download as fallback options
 - Automatic data wipe after export or 10-minute inactivity timeout
 - 15 languages with RTL support for Arabic, Farsi, Kurdish
+- Web Speech API for cross-platform voice input
+- Input validation for required fields
 
 VERSIONING:
+- v2.1.0 (2025-12-05): Voice input, validation, save/restore, reset functionality
 - v2.0.0 (2025-12-05): Senior-friendly design, enhanced accessibility, full Q-code structure
 - v1.0.0 (2025-12-04): Initial release with basic sections
 
@@ -32,10 +36,10 @@ LICENSE: Proprietary - DiggAi GmbH - All rights reserved
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=2.0">
-  <title>Anamnese Suite v2.0 - Offline Medical History</title>
+  <title>Anamnese Suite v2.1 - Offline Medical History</title>
   <meta name="description" content="FHIR R5 compliant offline medical anamnesis with 15 languages, NFC export, GDPR compliant">
   <meta name="author" content="DiggAi GmbH / Laith Alshdaifat">
-  <meta name="version" content="2.0.0">
+  <meta name="version" content="2.1.0">
   <style>
     /* ================================================================
        CSS VARIABLES - Senior-Friendly Design (WCAG AA compliant)
@@ -187,6 +191,131 @@ LICENSE: Proprietary - DiggAi GmbH - All rights reserved
     .nfc-status { padding: 2rem; background: var(--bg-secondary); border-radius: 12px; margin: 1.25rem 0; text-align: center; }
     .nfc-icon { font-size: 4rem; margin-bottom: 0.75rem; }
 
+    /* Validation Styles */
+    .form-group.invalid input,
+    .form-group.invalid select,
+    .form-group.invalid textarea {
+      border-color: var(--danger);
+      background: #fff5f5;
+    }
+    .form-group .error-message {
+      color: var(--danger);
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+      display: none;
+    }
+    .form-group.invalid .error-message {
+      display: block;
+    }
+    
+    /* Voice Input Button */
+    .voice-btn {
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 48px;
+      height: 48px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      transition: all 0.2s;
+      margin-left: 0.5rem;
+    }
+    .voice-btn:hover { background: var(--primary-dark); transform: scale(1.05); }
+    .voice-btn.recording { background: var(--danger); animation: pulse 1s infinite; }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+    .voice-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    
+    .input-with-voice {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .input-with-voice input,
+    .input-with-voice textarea {
+      flex: 1;
+    }
+    
+    /* Save/Restore Panel */
+    .data-panel {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: var(--shadow-lg);
+      z-index: 1001;
+      max-width: 500px;
+      width: 90%;
+    }
+    .data-panel h3 { color: var(--primary); margin-bottom: 1rem; }
+    .data-panel .panel-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    
+    /* Header Actions */
+    .header-actions {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .header-btn {
+      background: rgba(255,255,255,0.2);
+      border: 2px solid rgba(255,255,255,0.5);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .header-btn:hover { background: white; color: var(--primary); border-color: white; }
+    .header-btn.danger { border-color: #ff6b6b; }
+    .header-btn.danger:hover { background: #ff6b6b; color: white; }
+    
+    /* Voice Status Indicator */
+    .voice-status {
+      position: fixed;
+      bottom: 260px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--primary);
+      color: white;
+      padding: 1rem 1.5rem;
+      border-radius: 10px;
+      box-shadow: var(--shadow-lg);
+      z-index: 999;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-weight: 600;
+    }
+    .voice-status.hidden { display: none; }
+    .voice-status .voice-indicator {
+      width: 12px;
+      height: 12px;
+      background: #ff6b6b;
+      border-radius: 50%;
+      animation: pulse 1s infinite;
+    }
+
     /* Responsive - Mobile optimized */
     @media (max-width: 768px) {
       body { font-size: 16px; }
@@ -198,6 +327,9 @@ LICENSE: Proprietary - DiggAi GmbH - All rights reserved
       .btn { padding: 0.85rem 1.25rem; font-size: 1rem; min-width: 110px; }
       .answer-summary { max-height: 200px; }
       .answer-summary-content { max-height: 145px; }
+      .header-actions { gap: 0.4rem; }
+      .header-btn { padding: 6px 12px; font-size: 0.75rem; }
+      .voice-btn { width: 42px; height: 42px; font-size: 1.2rem; }
     }
     
     /* RTL Support - Arabic, Farsi, Kurdish */
@@ -208,6 +340,7 @@ LICENSE: Proprietary - DiggAi GmbH - All rights reserved
     [dir="rtl"] .answer-item-edit { margin-left: 0; margin-right: 0.75rem; }
     [dir="rtl"] .red-flag { border-left: none; border-right: 5px solid var(--danger); border-radius: 8px 0 0 8px; }
     [dir="rtl"] .modal-content ul { padding-left: 0; padding-right: 1.75rem; }
+    [dir="rtl"] .voice-btn { margin-left: 0; margin-right: 0.5rem; }
     
     /* High Contrast Mode */
     @media (prefers-contrast: high) {
@@ -279,9 +412,22 @@ LICENSE: Proprietary - DiggAi GmbH - All rights reserved
       <button class="lang-btn" data-lang="fa">فارسی</button>
       <button class="lang-btn" data-lang="uk">Українська</button>
     </div>
+    <div class="header-actions">
+      <button class="header-btn" onclick="showDataPanel('save')" title="Zwischenspeichern">💾 <span data-i18n="btn.save"></span></button>
+      <button class="header-btn" onclick="showDataPanel('restore')" title="Wiederherstellen">📂 <span data-i18n="btn.restore"></span></button>
+      <button class="header-btn" onclick="saveBaseData()" title="Stammdaten speichern">👤 <span data-i18n="btn.saveBaseData"></span></button>
+      <button class="header-btn" onclick="loadBaseData()" title="Stammdaten laden">📥 <span data-i18n="btn.loadBaseData"></span></button>
+      <button class="header-btn danger" onclick="resetForm()" title="Zurücksetzen">🔄 <span data-i18n="btn.reset"></span></button>
+    </div>
     <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
     <div class="progress-text"><span id="progressText">0</span>% <span data-i18n="progress.complete"></span></div>
   </header>
+
+  <!-- Voice Status Indicator -->
+  <div id="voiceStatus" class="voice-status hidden">
+    <div class="voice-indicator"></div>
+    <span data-i18n="voice.listening"></span>
+  </div>
 
   <div class="container" id="mainContainer" style="display: none;">
     <!-- Sections will be dynamically generated -->
@@ -319,12 +465,12 @@ LICENSE: Proprietary - DiggAi GmbH - All rights reserved
   <script>
     // ================================================================
     // ANAMNESE SUITE - Application Core
-    // Version: 2.0.0 | Date: 2025-12-05
+    // Version: 2.1.0 | Date: 2025-12-05
     // FHIR R5 Compliant | GDPR/DSGVO Compliant | NFC Export
     // ================================================================
     
     // Application Metadata
-    const APP_VERSION = '2.0.0';
+    const APP_VERSION = '2.1.0';
     const APP_DATE = '2025-12-05';
     const FHIR_QUESTIONNAIRE_URL = 'https://anamnese-suite.local/fhir/Questionnaire/anamnese-suite';
     
@@ -438,6 +584,25 @@ LICENSE: Proprietary - DiggAi GmbH - All rights reserved
       "warning.chestPain": {de:"Bei Brustschmerzen mit Ausstrahlung in Arm/Kiefer, Luftnot, Übelkeit oder Schweißausbruch: Sofort Notarzt rufen (112)!",en:"For chest pain radiating to arm/jaw, shortness of breath, nausea or sweating: Call emergency services immediately (112)!",tr:"Kola/çeneye yayılan göğüs ağrısı, nefes darlığı, mide bulantısı veya terleme durumunda: Hemen acil servisi arayın!",ru:"При боли в груди с иррадиацией в руку/челюсть, одышке, тошноте или потливости: Немедленно вызовите скорую помощь!",ar:"في حالة ألم الصدر مع امتداد للذراع/الفك، ضيق التنفس، الغثيان أو التعرق: اتصل بالإسعاف فوراً!",ku:"Di rewşa êşa sîngê ya bi belavbûna destê/çenê, teng nefes, gêj an xwîdan: Bi lez re ambûlansê bixwînin!",pl:"W przypadku bólu w klatce piersiowej promieniującego do ramienia/szczęki, duszności, nudności lub pocenia się: Natychmiast wezwij pogotowie!",ro:"Pentru dureri în piept care iradiază spre braț/maxilar, dificultăți de respirație, greață sau transpirație: Sunați imediat la urgențe!",it:"Per dolore toracico irradiato a braccio/mandibola, mancanza di respiro, nausea o sudorazione: Chiamare immediatamente il pronto soccorso!",fr:"Pour une douleur thoracique irradiant vers le bras/la mâchoire, un essoufflement, des nausées ou des sueurs: Appelez immédiatement les urgences!",es:"Para dolor de pecho que irradia al brazo/mandíbula, dificultad para respirar, náuseas o sudoración: ¡Llame a emergencias inmediatamente!",bg:"При болка в гърдите, излъчваща се към ръка/челюст, задух, гадене или изпотяване: Обадете се незабавно на спешна помощ!",nl:"Bij pijn op de borst uitstralend naar arm/kaak, kortademigheid, misselijkheid of zweten: Bel onmiddellijk 112!",fa:"در صورت درد قفسه سینه با انتشار به بازو/فک، تنگی نفس، حالت تهوع یا تعریق: فوراً با اورژانس تماس بگیرید!",uk:"При болю в грудях з віддачею в руку/щелепу, задишці, нудоті або пітливості: Негайно викличте швидку допомогу!"},
       "warning.stroke": {de:"FAST-Test bei Verdacht auf Schlaganfall",en:"FAST test for suspected stroke",tr:"İnme şüphesi için FAST testi",ru:"FAST-тест при подозрении на инсульт",ar:"اختبار FAST للاشتباه بسكتة دماغية",ku:"Testa FAST ji bo gumana felcê",pl:"Test FAST przy podejrzeniu udaru",ro:"Test FAST pentru suspiciune de AVC",it:"Test FAST per sospetto ictus",fr:"Test FAST en cas de suspicion d'AVC",es:"Prueba FAST ante sospecha de ACV",bg:"FAST тест при съмнение за инсулт",nl:"FAST-test bij vermoeden van beroerte",fa:"آزمایش FAST برای مشکوک به سکته مغزی",uk:"FAST-тест при підозрі на інсульт"},
       "warning.strokeText": {de:"Face (Gesicht hängt), Arms (Arme heben), Speech (Sprache), Time (Zeit = 112 rufen!)",en:"Face (drooping), Arms (raise), Speech (slurred), Time (call 112!)",tr:"Face (yüz düşmesi), Arms (kol kaldırma), Speech (konuşma), Time (112'yi arayın!)",ru:"Face (лицо опущено), Arms (поднять руки), Speech (речь), Time (звоните 112!)",ar:"الوجه (ترهل)، الذراعين (رفع)، الكلام (ثقيل)، الوقت (اتصل بـ 112!)",ku:"Rû (daketî), Dest (rakirin), Axaftin (zorî), Dem (112 bixwînin!)",pl:"Twarz (opadająca), Ramiona (unieś), Mowa (niewyraźna), Czas (dzwoń 112!)",ro:"Față (căzută), Brațe (ridicare), Vorbire (neclară), Timp (sună 112!)",it:"Viso (cadente), Braccia (alzare), Parola (confusa), Tempo (chiama 112!)",fr:"Visage (tombant), Bras (lever), Parole (trouble), Temps (appelez 112!)",es:"Cara (caída), Brazos (levantar), Habla (arrastrada), Tiempo (llame al 112!)",bg:"Лице (увиснало), Ръце (повдигане), Реч (неясна), Време (обадете се на 112!)",nl:"Gezicht (hangend), Armen (heffen), Spraak (onduidelijk), Tijd (bel 112!)",fa:"صورت (افتاده)، بازوها (بلند کردن)، گفتار (نامفهوم)، زمان (با 112 تماس بگیرید!)",uk:"Обличчя (опущене), Руки (підняти), Мова (незрозуміла), Час (дзвоніть 112!)"},
+      // New v2.1 labels - Validation, Voice Input, Save/Reset
+      "validation.required": {de:"Dieses Feld ist erforderlich",en:"This field is required",tr:"Bu alan gereklidir",ru:"Это поле обязательно",ar:"هذا الحقل مطلوب",ku:"Ev qad pêwîst e",pl:"To pole jest wymagane",ro:"Acest câmp este obligatoriu",it:"Questo campo è obbligatorio",fr:"Ce champ est obligatoire",es:"Este campo es obligatorio",bg:"Това поле е задължително",nl:"Dit veld is verplicht",fa:"این فیلد الزامی است",uk:"Це поле обов'язкове"},
+      "validation.nameMin3": {de:"Name muss mindestens 3 Buchstaben haben",en:"Name must have at least 3 letters",tr:"İsim en az 3 harf olmalıdır",ru:"Имя должно содержать минимум 3 буквы",ar:"يجب أن يحتوي الاسم على 3 أحرف على الأقل",ku:"Divê nav herî kêm 3 tîp hebe",pl:"Imię musi mieć minimum 3 litery",ro:"Numele trebuie să aibă minim 3 litere",it:"Il nome deve avere almeno 3 lettere",fr:"Le nom doit contenir au moins 3 lettres",es:"El nombre debe tener al menos 3 letras",bg:"Името трябва да е поне 3 букви",nl:"Naam moet minstens 3 letters hebben",fa:"نام باید حداقل 3 حرف داشته باشد",uk:"Ім'я повинно мати мінімум 3 літери"},
+      "validation.nameLettersOnly": {de:"Name darf nur Buchstaben enthalten",en:"Name must contain only letters",tr:"İsim yalnızca harflerden oluşmalıdır",ru:"Имя должно содержать только буквы",ar:"يجب أن يحتوي الاسم على أحرف فقط",ku:"Divê nav tenê tîpan hebe",pl:"Imię może zawierać tylko litery",ro:"Numele trebuie să conțină doar litere",it:"Il nome deve contenere solo lettere",fr:"Le nom ne doit contenir que des lettres",es:"El nombre solo debe contener letras",bg:"Името трябва да съдържа само букви",nl:"Naam mag alleen letters bevatten",fa:"نام باید فقط شامل حروف باشد",uk:"Ім'я повинно містити лише літери"},
+      "validation.emailInvalid": {de:"Bitte geben Sie eine gültige E-Mail-Adresse ein",en:"Please enter a valid email address",tr:"Lütfen geçerli bir e-posta adresi girin",ru:"Пожалуйста, введите действительный адрес электронной почты",ar:"الرجاء إدخال عنوان بريد إلكتروني صالح",ku:"Ji kerema xwe navnîşana e-nameyê ya derbasdar binivîsin",pl:"Proszę podać prawidłowy adres e-mail",ro:"Vă rugăm să introduceți o adresă de email validă",it:"Inserire un indirizzo email valido",fr:"Veuillez saisir une adresse e-mail valide",es:"Por favor ingrese una dirección de correo válida",bg:"Моля, въведете валиден имейл адрес",nl:"Voer een geldig e-mailadres in",fa:"لطفاً یک آدرس ایمیل معتبر وارد کنید",uk:"Будь ласка, введіть дійсну адресу електронної пошти"},
+      "btn.reset": {de:"Zurücksetzen",en:"Reset",tr:"Sıfırla",ru:"Сбросить",ar:"إعادة تعيين",ku:"Nûve bike",pl:"Resetuj",ro:"Resetare",it:"Reset",fr:"Réinitialiser",es:"Restablecer",bg:"Нулиране",nl:"Reset",fa:"بازنشانی",uk:"Скинути"},
+      "btn.save": {de:"Speichern",en:"Save",tr:"Kaydet",ru:"Сохранить",ar:"حفظ",ku:"Tomar bike",pl:"Zapisz",ro:"Salvează",it:"Salva",fr:"Sauvegarder",es:"Guardar",bg:"Запази",nl:"Opslaan",fa:"ذخیره",uk:"Зберегти"},
+      "btn.restore": {de:"Wiederherstellen",en:"Restore",tr:"Geri yükle",ru:"Восстановить",ar:"استعادة",ku:"Vegerîne",pl:"Przywróć",ro:"Restaurează",it:"Ripristina",fr:"Restaurer",es:"Restaurar",bg:"Възстанови",nl:"Herstellen",fa:"بازیابی",uk:"Відновити"},
+      "btn.saveBaseData": {de:"Stammdaten speichern",en:"Save Base Data",tr:"Temel verileri kaydet",ru:"Сохранить базовые данные",ar:"حفظ البيانات الأساسية",ku:"Daneyên bingehîn tomar bike",pl:"Zapisz dane podstawowe",ro:"Salvează datele de bază",it:"Salva dati di base",fr:"Sauvegarder les données de base",es:"Guardar datos básicos",bg:"Запази основни данни",nl:"Basisgegevens opslaan",fa:"ذخیره داده‌های پایه",uk:"Зберегти базові дані"},
+      "btn.loadBaseData": {de:"Stammdaten laden",en:"Load Base Data",tr:"Temel verileri yükle",ru:"Загрузить базовые данные",ar:"تحميل البيانات الأساسية",ku:"Daneyên bingehîn bar bike",pl:"Załaduj dane podstawowe",ro:"Încarcă datele de bază",it:"Carica dati di base",fr:"Charger les données de base",es:"Cargar datos básicos",bg:"Зареди основни данни",nl:"Basisgegevens laden",fa:"بارگذاری داده‌های پایه",uk:"Завантажити базові дані"},
+      "btn.voice": {de:"Spracheingabe",en:"Voice Input",tr:"Sesli giriş",ru:"Голосовой ввод",ar:"إدخال صوتي",ku:"Têketina dengî",pl:"Wprowadzanie głosowe",ro:"Introducere vocală",it:"Input vocale",fr:"Saisie vocale",es:"Entrada de voz",bg:"Гласов вход",nl:"Spraakinvoer",fa:"ورودی صوتی",uk:"Голосовий ввід"},
+      "voice.listening": {de:"Ich höre zu...",en:"Listening...",tr:"Dinliyorum...",ru:"Слушаю...",ar:"أستمع...",ku:"Guhdarî dikim...",pl:"Słucham...",ro:"Ascult...",it:"Ascolto...",fr:"J'écoute...",es:"Escuchando...",bg:"Слушам...",nl:"Luisteren...",fa:"در حال گوش دادن...",uk:"Слухаю..."},
+      "voice.unavailable": {de:"Spracherkennung nicht verfügbar",en:"Speech recognition not available",tr:"Konuşma tanıma mevcut değil",ru:"Распознавание речи недоступно",ar:"التعرف على الكلام غير متاح",ku:"Nasîna axaftinê peyda nabe",pl:"Rozpoznawanie mowy niedostępne",ro:"Recunoașterea vocală nu este disponibilă",it:"Riconoscimento vocale non disponibile",fr:"Reconnaissance vocale non disponible",es:"Reconocimiento de voz no disponible",bg:"Разпознаването на реч не е налично",nl:"Spraakherkenning niet beschikbaar",fa:"تشخیص گفتار در دسترس نیست",uk:"Розпізнавання мовлення недоступне"},
+      "confirm.reset": {de:"Möchten Sie wirklich alle Daten löschen und von vorne beginnen?",en:"Do you really want to delete all data and start over?",tr:"Tüm verileri silip baştan başlamak istiyor musunuz?",ru:"Вы действительно хотите удалить все данные и начать сначала?",ar:"هل تريد حقًا حذف جميع البيانات والبدء من جديد؟",ku:"Ma hûn bi rastî dixwazin hemî daneyan jêbirin û ji nû ve dest pê bikin?",pl:"Czy na pewno chcesz usunąć wszystkie dane i zacząć od nowa?",ro:"Doriți să ștergeți toate datele și să începeți de la început?",it:"Vuoi davvero eliminare tutti i dati e ricominciare?",fr:"Voulez-vous vraiment supprimer toutes les données et recommencer?",es:"¿Realmente desea eliminar todos los datos y empezar de nuevo?",bg:"Наистина ли искате да изтриете всички данни и да започнете отначало?",nl:"Wilt u echt alle gegevens verwijderen en opnieuw beginnen?",fa:"آیا واقعاً می‌خواهید همه داده‌ها را حذف کنید و از اول شروع کنید؟",uk:"Ви дійсно хочете видалити всі дані і почати спочатку?"},
+      "save.success": {de:"Daten erfolgreich gespeichert (nur lokal auf diesem Gerät)",en:"Data saved successfully (local to this device only)",tr:"Veriler başarıyla kaydedildi (yalnızca bu cihazda)",ru:"Данные успешно сохранены (только на этом устройстве)",ar:"تم حفظ البيانات بنجاح (على هذا الجهاز فقط)",ku:"Dane bi serkeftî hatin tomarkirin (tenê li vê cîhazê)",pl:"Dane zapisane pomyślnie (tylko lokalnie na tym urządzeniu)",ro:"Datele au fost salvate cu succes (doar local pe acest dispozitiv)",it:"Dati salvati con successo (solo localmente su questo dispositivo)",fr:"Données sauvegardées avec succès (localement sur cet appareil uniquement)",es:"Datos guardados exitosamente (solo localmente en este dispositivo)",bg:"Данните са запазени успешно (само локално на това устройство)",nl:"Gegevens succesvol opgeslagen (alleen lokaal op dit apparaat)",fa:"داده‌ها با موفقیت ذخیره شدند (فقط محلی در این دستگاه)",uk:"Дані успішно збережено (лише локально на цьому пристрої)"},
+      "save.restored": {de:"Gespeicherte Daten wiederhergestellt",en:"Saved data restored",tr:"Kaydedilen veriler geri yüklendi",ru:"Сохраненные данные восстановлены",ar:"تمت استعادة البيانات المحفوظة",ku:"Daneyên tomarkirî hatin vegerandin",pl:"Zapisane dane przywrócone",ro:"Datele salvate au fost restaurate",it:"Dati salvati ripristinati",fr:"Données sauvegardées restaurées",es:"Datos guardados restaurados",bg:"Запазените данни са възстановени",nl:"Opgeslagen gegevens hersteld",fa:"داده‌های ذخیره شده بازیابی شدند",uk:"Збережені дані відновлено"},
+      "save.noData": {de:"Keine gespeicherten Daten gefunden",en:"No saved data found",tr:"Kaydedilmiş veri bulunamadı",ru:"Сохраненные данные не найдены",ar:"لم يتم العثور على بيانات محفوظة",ku:"Daneyên tomarkirî nehatin dîtin",pl:"Nie znaleziono zapisanych danych",ro:"Nu s-au găsit date salvate",it:"Nessun dato salvato trovato",fr:"Aucune donnée sauvegardée trouvée",es:"No se encontraron datos guardados",bg:"Няма намерени запазени данни",nl:"Geen opgeslagen gegevens gevonden",fa:"داده‌های ذخیره شده‌ای یافت نشد",uk:"Збережених даних не знайдено"},
+      "save.baseDataSaved": {de:"Stammdaten gespeichert - diese können bei zukünftigen Besuchen geladen werden",en:"Base data saved - can be loaded on future visits",tr:"Temel veriler kaydedildi - gelecek ziyaretlerde yüklenebilir",ru:"Базовые данные сохранены - можно загрузить при следующих посещениях",ar:"تم حفظ البيانات الأساسية - يمكن تحميلها في الزيارات المستقبلية",ku:"Daneyên bingehîn hatin tomarkirin - dikarin di serdanên pêşerojê de werin barkirin",pl:"Dane podstawowe zapisane - można załadować przy przyszłych wizytach",ro:"Datele de bază au fost salvate - pot fi încărcate la viitoarele vizite",it:"Dati di base salvati - possono essere caricati nelle visite future",fr:"Données de base sauvegardées - peuvent être chargées lors de visites futures",es:"Datos básicos guardados - se pueden cargar en futuras visitas",bg:"Основни данни запазени - могат да се заредят при бъдещи посещения",nl:"Basisgegevens opgeslagen - kunnen bij toekomstige bezoeken worden geladen",fa:"داده‌های پایه ذخیره شدند - می‌توانند در بازدیدهای آینده بارگذاری شوند",uk:"Базові дані збережено - можуть бути завантажені при наступних відвідуваннях"},
+      "save.consent": {de:"Lokale Speicherung (DSGVO Art. 6 Abs. 1a - Einwilligung)",en:"Local storage (GDPR Art. 6(1)(a) - Consent)",tr:"Yerel depolama (KVKK onayı)",ru:"Локальное хранение (GDPR - согласие)",ar:"التخزين المحلي (GDPR - موافقة)",ku:"Tomarkirina herêmî (GDPR - razîbûn)",pl:"Pamięć lokalna (RODO - zgoda)",ro:"Stocare locală (GDPR - consimțământ)",it:"Archiviazione locale (GDPR - consenso)",fr:"Stockage local (RGPD - consentement)",es:"Almacenamiento local (RGPD - consentimiento)",bg:"Локално съхранение (GDPR - съгласие)",nl:"Lokale opslag (AVG - toestemming)",fa:"ذخیره‌سازی محلی (GDPR - رضایت)",uk:"Локальне зберігання (GDPR - згода)"},
     };
 
     // ============================================================
@@ -587,12 +752,33 @@ LICENSE: Proprietary - DiggAi GmbH - All rights reserved
           group.appendChild(label);
           
           if (field.type === 'text') {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'input-with-voice';
+            
             const input = document.createElement('input');
             input.type = 'text';
             input.dataset.qcode = field.qcode;
             input.value = state.formData[field.qcode] || '';
-            input.addEventListener('input', () => { state.formData[field.qcode] = input.value; updateAnswerSummary(); });
-            group.appendChild(input);
+            input.addEventListener('input', () => { 
+              state.formData[field.qcode] = input.value; 
+              updateAnswerSummary(); 
+              // Clear validation error on input
+              group.classList.remove('invalid');
+              const err = group.querySelector('.error-message');
+              if (err) err.remove();
+            });
+            wrapper.appendChild(input);
+            
+            // Add voice input button
+            const voiceBtn = document.createElement('button');
+            voiceBtn.type = 'button';
+            voiceBtn.className = 'voice-btn';
+            voiceBtn.innerHTML = '🎤';
+            voiceBtn.title = t('btn.voice') || 'Spracheingabe';
+            voiceBtn.onclick = () => startVoiceInput(input);
+            wrapper.appendChild(voiceBtn);
+            
+            group.appendChild(wrapper);
           } else if (field.type === 'date') {
             const input = document.createElement('input');
             input.type = 'date';
@@ -601,12 +787,27 @@ LICENSE: Proprietary - DiggAi GmbH - All rights reserved
             input.addEventListener('change', () => { state.formData[field.qcode] = input.value; checkAge(); updateAnswerSummary(); });
             group.appendChild(input);
           } else if (field.type === 'textarea') {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'input-with-voice';
+            wrapper.style.alignItems = 'flex-start';
+            
             const textarea = document.createElement('textarea');
             textarea.rows = 3;
             textarea.dataset.qcode = field.qcode;
             textarea.value = state.formData[field.qcode] || '';
             textarea.addEventListener('input', () => { state.formData[field.qcode] = textarea.value; updateAnswerSummary(); });
-            group.appendChild(textarea);
+            wrapper.appendChild(textarea);
+            
+            // Add voice input button
+            const voiceBtn = document.createElement('button');
+            voiceBtn.type = 'button';
+            voiceBtn.className = 'voice-btn';
+            voiceBtn.innerHTML = '🎤';
+            voiceBtn.title = t('btn.voice') || 'Spracheingabe';
+            voiceBtn.onclick = () => startVoiceInput(textarea);
+            wrapper.appendChild(voiceBtn);
+            
+            group.appendChild(wrapper);
           } else if (field.type === 'select') {
             const select = document.createElement('select');
             select.dataset.qcode = field.qcode;
@@ -740,6 +941,10 @@ LICENSE: Proprietary - DiggAi GmbH - All rights reserved
     // NAVIGATION
     // ============================================================
     function nextSection() {
+      // Validate current section before moving forward
+      if (!validateSection(state.currentSection)) {
+        return;
+      }
       if (state.currentSection < SECTIONS.length - 1) {
         showSection(state.currentSection + 1);
       }
@@ -928,6 +1133,330 @@ LICENSE: Proprietary - DiggAi GmbH - All rights reserved
       clearInterval(countdownTimer);
       updateAnswerSummary();
       alert(t('security.dataWiped') || 'Daten wurden aus Sicherheitsgründen gelöscht.');
+    }
+
+    // ============================================================
+    // VALIDATION FUNCTIONS
+    // ============================================================
+    function validateSection(sectionIdx) {
+      const section = SECTIONS[sectionIdx];
+      let isValid = true;
+      let firstInvalidField = null;
+
+      section.fields.forEach(field => {
+        const group = document.getElementById('group-' + field.qcode);
+        if (!group) return;
+        
+        // Skip hidden fields
+        if (group.style.display === 'none') return;
+        
+        // Clear previous errors
+        group.classList.remove('invalid');
+        const existingError = group.querySelector('.error-message');
+        if (existingError) existingError.remove();
+        
+        if (field.required) {
+          const value = state.formData[field.qcode];
+          let errorMessage = null;
+          
+          // Check if field is empty
+          if (!value || (Array.isArray(value) && value.length === 0)) {
+            errorMessage = t('validation.required');
+            isValid = false;
+          }
+          
+          // Additional validation for name fields (q0000, q0001)
+          if (value && (field.qcode === 'q0000' || field.qcode === 'q0001')) {
+            // Check minimum 3 characters
+            if (value.length < 3) {
+              errorMessage = t('validation.nameMin3');
+              isValid = false;
+            }
+            // Check only letters (including international characters)
+            else if (!/^[\p{L}\s\-']+$/u.test(value)) {
+              errorMessage = t('validation.nameLettersOnly');
+              isValid = false;
+            }
+          }
+          
+          // Email validation (if field is email type)
+          if (value && field.type === 'email') {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(value)) {
+              errorMessage = t('validation.emailInvalid');
+              isValid = false;
+            }
+          }
+          
+          if (errorMessage) {
+            group.classList.add('invalid');
+            const errorEl = document.createElement('div');
+            errorEl.className = 'error-message';
+            errorEl.textContent = errorMessage;
+            group.appendChild(errorEl);
+            
+            if (!firstInvalidField) {
+              firstInvalidField = group;
+            }
+          }
+        }
+      });
+      
+      // Scroll to first invalid field
+      if (firstInvalidField) {
+        firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      
+      return isValid;
+    }
+
+    // ============================================================
+    // SAVE & RESTORE FUNCTIONS (GDPR Art. 6(1)(a) - Consent)
+    // ============================================================
+    const STORAGE_KEY = 'anamnese_draft';
+    const BASE_DATA_KEY = 'anamnese_basedata';
+
+    function showDataPanel(mode) {
+      if (mode === 'save') {
+        saveFormData();
+      } else if (mode === 'restore') {
+        restoreFormData();
+      }
+    }
+
+    function saveFormData() {
+      try {
+        const dataToSave = {
+          formData: state.formData,
+          currentSection: state.currentSection,
+          language: state.language,
+          timestamp: new Date().toISOString()
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+        alert(t('save.success') || 'Daten erfolgreich gespeichert');
+      } catch (e) {
+        console.error('Save error:', e);
+        alert('Speichern fehlgeschlagen: ' + e.message);
+      }
+    }
+
+    function restoreFormData() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (!saved) {
+          alert(t('save.noData') || 'Keine gespeicherten Daten gefunden');
+          return;
+        }
+        const data = JSON.parse(saved);
+        state.formData = data.formData || {};
+        state.currentSection = data.currentSection || 0;
+        
+        buildSections();
+        showSection(state.currentSection);
+        updateAnswerSummary();
+        
+        // Show answer summary
+        document.getElementById('answerSummary').classList.remove('hidden');
+        
+        alert(t('save.restored') || 'Gespeicherte Daten wiederhergestellt');
+      } catch (e) {
+        console.error('Restore error:', e);
+        alert('Wiederherstellen fehlgeschlagen: ' + e.message);
+      }
+    }
+
+    function saveBaseData() {
+      try {
+        // Only save base data fields (q0000 - q0003)
+        const baseData = {
+          q0000: state.formData['q0000'] || '',
+          q0001: state.formData['q0001'] || '',
+          q0002: state.formData['q0002'] || '',
+          q0003: state.formData['q0003'] || ''
+        };
+        localStorage.setItem(BASE_DATA_KEY, JSON.stringify(baseData));
+        alert(t('save.baseDataSaved') || 'Stammdaten gespeichert');
+      } catch (e) {
+        console.error('Save base data error:', e);
+        alert('Speichern fehlgeschlagen: ' + e.message);
+      }
+    }
+
+    function loadBaseData() {
+      try {
+        const saved = localStorage.getItem(BASE_DATA_KEY);
+        if (!saved) {
+          alert(t('save.noData') || 'Keine Stammdaten gefunden');
+          return;
+        }
+        const baseData = JSON.parse(saved);
+        
+        // Merge base data into current form data
+        Object.assign(state.formData, baseData);
+        
+        buildSections();
+        showSection(0);
+        updateAnswerSummary();
+        
+        alert(t('save.restored') || 'Stammdaten geladen');
+      } catch (e) {
+        console.error('Load base data error:', e);
+        alert('Laden fehlgeschlagen: ' + e.message);
+      }
+    }
+
+    function resetForm() {
+      if (confirm(t('confirm.reset') || 'Möchten Sie wirklich alle Daten löschen und von vorne beginnen?')) {
+        state.formData = {};
+        state.currentSection = 0;
+        buildSections();
+        showSection(0);
+        updateAnswerSummary();
+        document.getElementById('answerSummary').classList.add('hidden');
+        window.scrollTo(0, 0);
+      }
+    }
+
+    // ============================================================
+    // SPEECH-TO-TEXT (Web Speech API - Cross-Platform)
+    // ============================================================
+    let speechRecognition = null;
+    let currentVoiceField = null;
+
+    function initSpeechRecognition() {
+      if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        speechRecognition = new SpeechRecognition();
+        speechRecognition.continuous = false;
+        speechRecognition.interimResults = false;
+        
+        // Set language based on current UI language
+        const langMap = {
+          'de': 'de-DE', 'en': 'en-US', 'tr': 'tr-TR', 'ru': 'ru-RU',
+          'ar': 'ar-SA', 'ku': 'ku-TR', 'pl': 'pl-PL', 'ro': 'ro-RO',
+          'it': 'it-IT', 'fr': 'fr-FR', 'es': 'es-ES', 'bg': 'bg-BG',
+          'nl': 'nl-NL', 'fa': 'fa-IR', 'uk': 'uk-UA'
+        };
+        speechRecognition.lang = langMap[state.language] || 'de-DE';
+        
+        speechRecognition.onresult = (event) => {
+          const transcript = event.results[0][0].transcript;
+          if (currentVoiceField) {
+            currentVoiceField.value = transcript;
+            currentVoiceField.dispatchEvent(new Event('input', { bubbles: true }));
+          }
+          hideVoiceStatus();
+        };
+        
+        speechRecognition.onerror = (event) => {
+          console.error('Speech recognition error:', event.error);
+          hideVoiceStatus();
+        };
+        
+        speechRecognition.onend = () => {
+          hideVoiceStatus();
+        };
+        
+        return true;
+      }
+      return false;
+    }
+
+    function startVoiceInput(inputElement) {
+      if (!speechRecognition && !initSpeechRecognition()) {
+        alert(t('voice.unavailable') || 'Spracherkennung nicht verfügbar');
+        return;
+      }
+      
+      // Update language setting
+      const langMap = {
+        'de': 'de-DE', 'en': 'en-US', 'tr': 'tr-TR', 'ru': 'ru-RU',
+        'ar': 'ar-SA', 'ku': 'ku-TR', 'pl': 'pl-PL', 'ro': 'ro-RO',
+        'it': 'it-IT', 'fr': 'fr-FR', 'es': 'es-ES', 'bg': 'bg-BG',
+        'nl': 'nl-NL', 'fa': 'fa-IR', 'uk': 'uk-UA'
+      };
+      speechRecognition.lang = langMap[state.language] || 'de-DE';
+      
+      currentVoiceField = inputElement;
+      showVoiceStatus();
+      
+      try {
+        speechRecognition.start();
+      } catch (e) {
+        console.error('Speech start error:', e);
+        hideVoiceStatus();
+      }
+    }
+
+    function showVoiceStatus() {
+      document.getElementById('voiceStatus').classList.remove('hidden');
+    }
+
+    function hideVoiceStatus() {
+      document.getElementById('voiceStatus').classList.add('hidden');
+      currentVoiceField = null;
+    }
+
+    // ============================================================
+    // MEDICAL DICTIONARY FOR INTELLIGENT ANSWER ASSIGNMENT
+    // ============================================================
+    const MEDICAL_DICTIONARY = {
+      // Symptoms mapped to Q-codes
+      'kopfschmerzen': { qcode: 'q2000', value: 'q2000.neuro' },
+      'headache': { qcode: 'q2000', value: 'q2000.neuro' },
+      'bauchschmerzen': { qcode: 'q2000', value: 'q2000.gi' },
+      'stomach pain': { qcode: 'q2000', value: 'q2000.gi' },
+      'rückenschmerzen': { qcode: 'q2000', value: 'q2000.msk' },
+      'back pain': { qcode: 'q2000', value: 'q2000.msk' },
+      'husten': { qcode: 'q2000', value: 'q2000.resp' },
+      'cough': { qcode: 'q2000', value: 'q2000.resp' },
+      'atemnot': { qcode: 'q2000', value: 'q2000.resp' },
+      'shortness of breath': { qcode: 'q2000', value: 'q2000.resp' },
+      'brustschmerzen': { qcode: 'q2000', value: 'q2000.cardio' },
+      'chest pain': { qcode: 'q2000', value: 'q2000.cardio' },
+      'herzrasen': { qcode: 'q2000', value: 'q2000.cardio' },
+      'palpitations': { qcode: 'q2000', value: 'q2000.cardio' },
+      'schwindel': { qcode: 'q2000', value: 'q2000.neuro' },
+      'dizziness': { qcode: 'q2000', value: 'q2000.neuro' },
+      'fieber': { qcode: 'q1005', value: 'q1005.fever' },
+      'fever': { qcode: 'q1005', value: 'q1005.fever' },
+      'müdigkeit': { qcode: 'q1005', value: 'q1005.fatigue' },
+      'fatigue': { qcode: 'q1005', value: 'q1005.fatigue' },
+      'nachtschweiß': { qcode: 'q1005', value: 'q1005.nightsweats' },
+      'night sweats': { qcode: 'q1005', value: 'q1005.nightsweats' },
+      'gewichtsverlust': { qcode: 'q1005', value: 'q1005.weightloss' },
+      'weight loss': { qcode: 'q1005', value: 'q1005.weightloss' },
+      // Yes/No answers
+      'ja': { value: 'yes' },
+      'yes': { value: 'yes' },
+      'nein': { value: 'no' },
+      'no': { value: 'no' }
+    };
+
+    function analyzeSpokenText(text, qcode) {
+      const words = text.toLowerCase().split(/\s+/);
+      
+      for (const word of words) {
+        if (MEDICAL_DICTIONARY[word]) {
+          const match = MEDICAL_DICTIONARY[word];
+          
+          // If the match has a qcode, it's a symptom that can be auto-assigned
+          if (match.qcode) {
+            // Handle checkbox fields
+            const currentValues = state.formData[match.qcode] || [];
+            if (!currentValues.includes(match.value)) {
+              currentValues.push(match.value);
+              state.formData[match.qcode] = currentValues;
+            }
+          } else if (match.value && qcode) {
+            // Simple value assignment (yes/no)
+            state.formData[qcode] = match.value;
+          }
+        }
+      }
+      
+      updateAnswerSummary();
+      buildSections();
     }
   </script>
 </body>
