@@ -1,0 +1,1471 @@
+<!DOCTYPE html>
+<!--
+================================================================================
+ANAMNESE SUITE - Offline Medical History Application
+================================================================================
+Version: 2.1.0
+Release Date: 2025-12-05
+Authors: DiggAi GmbH / Laith Alshdaifat
+Medical Content: Dr. Christian Klapproth
+
+REGULATORY COMPLIANCE:
+- DSGVO/GDPR Art. 5, 6, 9, 32: Privacy by Design, Data Minimization
+- FHIR R5: HL7 Standard for Healthcare Interoperability (https://hl7.org/fhir/R5/)
+- ISO 27001: Information Security Management
+- MDR 2017/745: Medical Device Regulation (informational purposes only)
+
+TECHNICAL DOCUMENTATION:
+- All data processed in RAM only by default
+- Optional local storage with explicit user consent (GDPR Art. 6(1)(a))
+- NFC NDEF export with MIME type application/json, max 4KB payload
+- QR-Code and JSON download as fallback options
+- Automatic data wipe after export or 10-minute inactivity timeout
+- 15 languages with RTL support for Arabic, Farsi, Kurdish
+- Web Speech API for cross-platform voice input
+- Input validation for required fields
+
+VERSIONING:
+- v2.1.0 (2025-12-05): Voice input, validation, save/restore, reset functionality
+- v2.0.0 (2025-12-05): Senior-friendly design, enhanced accessibility, full Q-code structure
+- v1.0.0 (2025-12-04): Initial release with basic sections
+
+LICENSE: Proprietary - DiggAi GmbH - All rights reserved
+================================================================================
+-->
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=2.0">
+  <title>Anamnese Suite v2.1 - Offline Medical History</title>
+  <meta name="description" content="FHIR R5 compliant offline medical anamnesis with 15 languages, NFC export, GDPR compliant">
+  <meta name="author" content="DiggAi GmbH / Laith Alshdaifat">
+  <meta name="version" content="2.1.0">
+  <style>
+    /* ================================================================
+       CSS VARIABLES - Senior-Friendly Design (WCAG AA compliant)
+       Enhanced contrast, larger fonts, bigger touch targets
+       ================================================================ */
+    :root {
+      /* Primary Colors - High Contrast for better readability */
+      --primary: #0056b3;
+      --primary-dark: #003d82;
+      --primary-light: #4a90d9;
+      /* Status Colors */
+      --success: #1a7f37;
+      --warning: #9a6700;
+      --danger: #cf222e;
+      /* Background & Text - High Contrast */
+      --bg: #ffffff;
+      --bg-secondary: #f6f8fa;
+      --card-bg: #ffffff;
+      --text: #1f2328;
+      --text-secondary: #57606a;
+      --border: #d0d7de;
+      /* Shadows */
+      --shadow: 0 3px 12px rgba(0,0,0,0.12);
+      --shadow-lg: 0 8px 24px rgba(0,0,0,0.2);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg-secondary);
+      color: var(--text);
+      line-height: 1.7;
+      min-height: 100vh;
+      padding-bottom: 240px;
+      font-size: 18px; /* Larger base font for seniors */
+    }
+    .container { max-width: 900px; margin: 0 auto; padding: 1.25rem; }
+    header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: white;
+      padding: 1.25rem;
+      text-align: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: var(--shadow);
+    }
+    header h1 { font-size: 1.75rem; margin-bottom: 0.5rem; font-weight: 700; }
+    .language-selector { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; margin: 0.75rem 0; }
+    .lang-btn {
+      background: rgba(255,255,255,0.2);
+      border: 2px solid rgba(255,255,255,0.5);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 600;
+      transition: all 0.2s;
+      min-width: 70px;
+    }
+    .lang-btn:hover, .lang-btn.active { background: white; color: var(--primary); border-color: white; }
+    .progress-bar { background: rgba(255,255,255,0.3); height: 12px; border-radius: 6px; margin-top: 0.75rem; overflow: hidden; }
+    .progress-fill { background: linear-gradient(90deg, #4ade80 0%, #22c55e 100%); height: 100%; width: 0%; transition: width 0.3s; border-radius: 6px; }
+    .progress-text { font-size: 1rem; margin-top: 0.4rem; font-weight: 600; }
+    .card { background: var(--card-bg); border-radius: 12px; box-shadow: var(--shadow); padding: 2rem; margin-bottom: 1.25rem; border: 1px solid var(--border); }
+    .card-title { font-size: 1.5rem; color: var(--primary); margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 3px solid var(--primary); }
+    .form-group { margin-bottom: 1.75rem; }
+    .form-group label { display: block; font-weight: 600; margin-bottom: 0.75rem; font-size: 1.1rem; }
+    .form-group label.required::after { content: " *"; color: var(--danger); font-weight: 700; }
+    input[type="text"], input[type="date"], input[type="number"], input[type="email"], select, textarea {
+      width: 100%; padding: 1rem; border: 2px solid var(--border); border-radius: 8px; font-size: 1.1rem;
+      background: var(--card-bg); color: var(--text); transition: border-color 0.2s, box-shadow 0.2s;
+      min-height: 54px;
+    }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(0,86,179,0.2); }
+    .options-list { display: flex; flex-direction: column; gap: 0.75rem; }
+    .options-list label {
+      display: flex; align-items: center; padding: 1rem 1.25rem; border: 2px solid var(--border);
+      border-radius: 8px; cursor: pointer; transition: all 0.2s; font-weight: 500; font-size: 1.05rem;
+      min-height: 56px; background: var(--bg);
+    }
+    .options-list label:hover { background: rgba(0,86,179,0.05); border-color: var(--primary-light); }
+    .options-list label.selected { background: rgba(0,86,179,0.1); border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0,86,179,0.15); }
+    .options-list input { margin-right: 14px; width: 22px; height: 22px; accent-color: var(--primary); }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+      padding: 1rem 1.75rem; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: 600;
+      cursor: pointer; transition: all 0.2s; min-width: 140px; min-height: 54px;
+    }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); box-shadow: var(--shadow); }
+    .btn-success { background: var(--success); color: white; }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-secondary { background: var(--text-secondary); color: white; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .section { display: none; }
+    .section.active { display: block; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .nav-buttons { display: flex; justify-content: space-between; gap: 1rem; margin-top: 2rem; padding-top: 1.25rem; border-top: 2px solid var(--border); }
+    .alert { padding: 1.25rem; border-radius: 8px; margin-bottom: 1.25rem; display: flex; align-items: flex-start; gap: 1rem; font-size: 1.05rem; }
+    .alert-warning { background: #fef3c7; border: 2px solid #f59e0b; color: #92400e; }
+    .alert-info { background: #dbeafe; border: 2px solid #3b82f6; color: #1e40af; }
+    .alert-danger { background: #fee2e2; border: 2px solid #ef4444; color: #991b1b; }
+    .hidden { display: none !important; }
+    .consent-modal, .export-modal {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.75);
+      display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 1.25rem;
+    }
+    .modal-content { background: white; border-radius: 16px; max-width: 700px; max-height: 90vh; overflow-y: auto; padding: 2.5rem; box-shadow: var(--shadow-lg); }
+    .modal-content h2 { color: var(--primary); margin-bottom: 1.25rem; font-size: 1.5rem; }
+    .modal-content h3 { color: var(--text); font-size: 1.2rem; margin: 1.25rem 0 0.75rem 0; }
+    .modal-content ul { margin: 1rem 0; padding-left: 1.75rem; }
+    .modal-content li { margin-bottom: 0.75rem; line-height: 1.6; }
+    .red-flag { background: #fff5f5; border-left: 5px solid var(--danger); padding: 1.25rem; margin: 1.25rem 0; border-radius: 0 8px 8px 0; }
+    .red-flag-title { color: var(--danger); font-weight: 700; margin-bottom: 0.5rem; font-size: 1.1rem; }
+
+    /* Answer Summary Box - Enhanced for seniors */
+    .answer-summary {
+      position: fixed; bottom: 0; left: 0; right: 0; background: white;
+      border-top: 4px solid var(--primary); box-shadow: 0 -6px 20px rgba(0,0,0,0.15);
+      z-index: 99; max-height: 220px; transition: max-height 0.3s;
+    }
+    .answer-summary.collapsed { max-height: 56px; }
+    .answer-summary-header {
+      background: var(--primary); color: white; padding: 1rem 1.25rem;
+      display: flex; justify-content: space-between; align-items: center; cursor: pointer;
+    }
+    .answer-summary-header h3 { font-size: 1.05rem; margin: 0; display: flex; align-items: center; gap: 0.5rem; }
+    .answer-summary-toggle { background: none; border: none; color: white; font-size: 1.4rem; cursor: pointer; transition: transform 0.3s; padding: 0.25rem; }
+    .answer-summary.collapsed .answer-summary-toggle { transform: rotate(180deg); }
+    .answer-summary-content { padding: 1rem 1.25rem; overflow-y: auto; max-height: 165px; }
+    .answer-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0.75rem 1rem; margin-bottom: 0.6rem; background: var(--bg-secondary);
+      border-radius: 8px; cursor: pointer; transition: background 0.2s; font-size: 0.95rem; border: 2px solid transparent;
+    }
+    .answer-item:hover { background: rgba(0,86,179,0.1); border-color: var(--primary-light); }
+    .answer-item-q { color: var(--text-secondary); font-size: 0.9rem; flex: 1; }
+    .answer-item-a { font-weight: 600; color: var(--text); max-width: 55%; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .answer-item-edit { color: var(--primary); font-size: 1rem; margin-left: 0.75rem; }
+    .no-answers { color: var(--text-secondary); font-style: italic; text-align: center; padding: 1.25rem; }
+
+    .timeout-warning {
+      position: fixed; bottom: 240px; right: 1.25rem; background: #fbbf24; color: #78350f;
+      padding: 1.25rem 1.75rem; border-radius: 10px; box-shadow: var(--shadow-lg); z-index: 999;
+      display: flex; align-items: center; gap: 1rem; font-weight: 600; font-size: 1.05rem;
+    }
+    .export-options { display: flex; flex-direction: column; gap: 1.25rem; margin: 1.75rem 0; }
+    .nfc-status { padding: 2rem; background: var(--bg-secondary); border-radius: 12px; margin: 1.25rem 0; text-align: center; }
+    .nfc-icon { font-size: 4rem; margin-bottom: 0.75rem; }
+
+    /* Validation Styles */
+    .form-group.invalid input,
+    .form-group.invalid select,
+    .form-group.invalid textarea {
+      border-color: var(--danger);
+      background: #fff5f5;
+    }
+    .form-group .error-message {
+      color: var(--danger);
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+      display: none;
+    }
+    .form-group.invalid .error-message {
+      display: block;
+    }
+    
+    /* Voice Input Button */
+    .voice-btn {
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 48px;
+      height: 48px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      transition: all 0.2s;
+      margin-left: 0.5rem;
+    }
+    .voice-btn:hover { background: var(--primary-dark); transform: scale(1.05); }
+    .voice-btn.recording { background: var(--danger); animation: pulse 1s infinite; }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+    .voice-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    
+    .input-with-voice {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .input-with-voice input,
+    .input-with-voice textarea {
+      flex: 1;
+    }
+    
+    /* Save/Restore Panel */
+    .data-panel {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: var(--shadow-lg);
+      z-index: 1001;
+      max-width: 500px;
+      width: 90%;
+    }
+    .data-panel h3 { color: var(--primary); margin-bottom: 1rem; }
+    .data-panel .panel-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    
+    /* Header Actions */
+    .header-actions {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .header-btn {
+      background: rgba(255,255,255,0.2);
+      border: 2px solid rgba(255,255,255,0.5);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .header-btn:hover { background: white; color: var(--primary); border-color: white; }
+    .header-btn.danger { border-color: #ff6b6b; }
+    .header-btn.danger:hover { background: #ff6b6b; color: white; }
+    
+    /* Voice Status Indicator */
+    .voice-status {
+      position: fixed;
+      bottom: 260px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--primary);
+      color: white;
+      padding: 1rem 1.5rem;
+      border-radius: 10px;
+      box-shadow: var(--shadow-lg);
+      z-index: 999;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-weight: 600;
+    }
+    .voice-status.hidden { display: none; }
+    .voice-status .voice-indicator {
+      width: 12px;
+      height: 12px;
+      background: #ff6b6b;
+      border-radius: 50%;
+      animation: pulse 1s infinite;
+    }
+
+    /* Responsive - Mobile optimized */
+    @media (max-width: 768px) {
+      body { font-size: 16px; }
+      .container { padding: 0.75rem; }
+      .card { padding: 1.5rem; }
+      header { padding: 1rem; }
+      header h1 { font-size: 1.4rem; }
+      .lang-btn { padding: 6px 10px; font-size: 0.8rem; min-width: 55px; }
+      .btn { padding: 0.85rem 1.25rem; font-size: 1rem; min-width: 110px; }
+      .answer-summary { max-height: 200px; }
+      .answer-summary-content { max-height: 145px; }
+      .header-actions { gap: 0.4rem; }
+      .header-btn { padding: 6px 12px; font-size: 0.75rem; }
+      .voice-btn { width: 42px; height: 42px; font-size: 1.2rem; }
+    }
+    
+    /* RTL Support - Arabic, Farsi, Kurdish */
+    [dir="rtl"] { text-align: right; }
+    [dir="rtl"] .options-list input { margin-right: 0; margin-left: 14px; }
+    [dir="rtl"] .answer-item { flex-direction: row-reverse; }
+    [dir="rtl"] .answer-item-a { text-align: left; }
+    [dir="rtl"] .answer-item-edit { margin-left: 0; margin-right: 0.75rem; }
+    [dir="rtl"] .red-flag { border-left: none; border-right: 5px solid var(--danger); border-radius: 8px 0 0 8px; }
+    [dir="rtl"] .modal-content ul { padding-left: 0; padding-right: 1.75rem; }
+    [dir="rtl"] .voice-btn { margin-left: 0; margin-right: 0.5rem; }
+    
+    /* High Contrast Mode */
+    @media (prefers-contrast: high) {
+      :root { --border: #000000; --text-secondary: #333333; }
+      .options-list label { border-width: 3px; }
+      input, select, textarea { border-width: 3px; }
+    }
+    
+    /* Focus visible for accessibility */
+    :focus-visible {
+      outline: 3px solid var(--primary);
+      outline-offset: 2px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Consent Modal -->
+  <div id="consentModal" class="consent-modal">
+    <div class="modal-content">
+      <h2 data-i18n="consent.title"></h2>
+      <p data-i18n="consent.intro"></p>
+      <h3 data-i18n="consent.purpose"></h3>
+      <p data-i18n="consent.purposeText"></p>
+      <h3 data-i18n="consent.dataHandling"></h3>
+      <ul>
+        <li data-i18n="consent.noStorage"></li>
+        <li data-i18n="consent.noTracking"></li>
+        <li data-i18n="consent.autoDelete"></li>
+        <li data-i18n="consent.nfcTransfer"></li>
+      </ul>
+      <h3 data-i18n="consent.rights"></h3>
+      <ul>
+        <li data-i18n="consent.rightAccess"></li>
+        <li data-i18n="consent.rightRectification"></li>
+        <li data-i18n="consent.rightErasure"></li>
+        <li data-i18n="consent.rightWithdraw"></li>
+      </ul>
+      <p data-i18n="consent.contact"></p>
+      <div style="text-align: center; margin-top: 1.5rem;">
+        <button class="btn btn-primary" onclick="acceptConsent()" data-i18n="consent.accept"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Timeout Warning -->
+  <div id="timeoutWarning" class="timeout-warning hidden">
+    <span data-i18n="timeout.warning"></span> <span id="timeoutCounter">60</span>s
+    <button class="btn btn-primary" onclick="resetTimeout()" style="margin-left: 1rem;" data-i18n="timeout.continue"></button>
+  </div>
+
+  <!-- Header -->
+  <header>
+    <h1 data-i18n="app.title"></h1>
+    <p data-i18n="app.subtitle"></p>
+    <div class="language-selector">
+      <button class="lang-btn active" data-lang="de">Deutsch</button>
+      <button class="lang-btn" data-lang="en">English</button>
+      <button class="lang-btn" data-lang="tr">Türkçe</button>
+      <button class="lang-btn" data-lang="ru">Русский</button>
+      <button class="lang-btn" data-lang="ar">العربية</button>
+      <button class="lang-btn" data-lang="ku">Kurdî</button>
+      <button class="lang-btn" data-lang="pl">Polski</button>
+      <button class="lang-btn" data-lang="ro">Română</button>
+      <button class="lang-btn" data-lang="it">Italiano</button>
+      <button class="lang-btn" data-lang="fr">Français</button>
+      <button class="lang-btn" data-lang="es">Español</button>
+      <button class="lang-btn" data-lang="bg">Български</button>
+      <button class="lang-btn" data-lang="nl">Nederlands</button>
+      <button class="lang-btn" data-lang="fa">فارسی</button>
+      <button class="lang-btn" data-lang="uk">Українська</button>
+    </div>
+    <div class="header-actions">
+      <button class="header-btn" onclick="showDataPanel('save')" title="Zwischenspeichern">💾 <span data-i18n="btn.save"></span></button>
+      <button class="header-btn" onclick="showDataPanel('restore')" title="Wiederherstellen">📂 <span data-i18n="btn.restore"></span></button>
+      <button class="header-btn" onclick="saveBaseData()" title="Stammdaten speichern">👤 <span data-i18n="btn.saveBaseData"></span></button>
+      <button class="header-btn" onclick="loadBaseData()" title="Stammdaten laden">📥 <span data-i18n="btn.loadBaseData"></span></button>
+      <button class="header-btn danger" onclick="resetForm()" title="Zurücksetzen">🔄 <span data-i18n="btn.reset"></span></button>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text"><span id="progressText">0</span>% <span data-i18n="progress.complete"></span></div>
+  </header>
+
+  <!-- Voice Status Indicator -->
+  <div id="voiceStatus" class="voice-status hidden">
+    <div class="voice-indicator"></div>
+    <span data-i18n="voice.listening"></span>
+  </div>
+
+  <div class="container" id="mainContainer" style="display: none;">
+    <!-- Sections will be dynamically generated -->
+  </div>
+
+  <!-- Answer Summary Box -->
+  <div id="answerSummary" class="answer-summary collapsed hidden">
+    <div class="answer-summary-header" onclick="toggleAnswerSummary()">
+      <h3><span data-i18n="summary.title"></span> (<span id="answerCount">0</span>)</h3>
+      <button class="answer-summary-toggle" id="summaryToggle">▲</button>
+    </div>
+    <div class="answer-summary-content" id="answerSummaryContent">
+      <div class="no-answers" data-i18n="summary.empty"></div>
+    </div>
+  </div>
+
+  <!-- Export Modal -->
+  <div id="exportModal" class="export-modal hidden">
+    <div class="modal-content" style="text-align: center;">
+      <h2 data-i18n="export.title"></h2>
+      <p data-i18n="export.instruction"></p>
+      <div class="nfc-status" id="nfcStatus">
+        <div class="nfc-icon">📡</div>
+        <p id="nfcStatusText" data-i18n="nfc.ready"></p>
+      </div>
+      <div class="export-options">
+        <button class="btn btn-primary" onclick="exportNFC()" id="nfcButton" data-i18n="export.nfc"></button>
+        <button class="btn btn-secondary" onclick="exportQR()" data-i18n="export.qr"></button>
+        <button class="btn btn-secondary" onclick="downloadJSON()" data-i18n="export.download"></button>
+      </div>
+      <button class="btn btn-danger" onclick="cancelExport()" style="margin-top: 1rem;" data-i18n="export.cancel"></button>
+    </div>
+  </div>
+
+  <script>
+    // ================================================================
+    // ANAMNESE SUITE - Application Core
+    // Version: 2.1.0 | Date: 2025-12-05
+    // FHIR R5 Compliant | GDPR/DSGVO Compliant | NFC Export
+    // ================================================================
+    
+    // Application Metadata
+    const APP_VERSION = '2.1.0';
+    const APP_DATE = '2025-12-05';
+    const FHIR_QUESTIONNAIRE_URL = 'https://anamnese-suite.local/fhir/Questionnaire/anamnese-suite';
+    
+    // ============================================================
+    // LABELS: All translations organized by key with all 15 languages
+    // Structure: { key: { de, en, tr, ru, ar, ku, pl, ro, it, fr, es, bg, nl, fa, uk } }
+    // ============================================================
+    const L = {
+      "app.title": {de:"Anamnese Suite",en:"Medical History Suite",tr:"Tıbbi Öykü",ru:"Медицинский анамнез",ar:"السجل الطبي",ku:"Dîroka Bijîjkî",pl:"Historia medyczna",ro:"Istoric medical",it:"Anamnesi medica",fr:"Antécédents médicaux",es:"Historia clínica",bg:"Медицинска анамнеза",nl:"Medische voorgeschiedenis",fa:"سابقه پزشکی",uk:"Медичний анамнез"},
+      "app.subtitle": {de:"Medizinische Anamnese – Offline & Datenschutzkonform",en:"Medical History – Offline & Privacy Compliant",tr:"Tıbbi Öykü – Çevrimdışı ve Gizlilik Uyumlu",ru:"Медицинский анамнез – Офлайн и конфиденциально",ar:"السجل الطبي – غير متصل ومتوافق مع الخصوصية",ku:"Dîroka Bijîjkî – Offline û Li Gorî Parastina Daneyên",pl:"Historia medyczna – Offline i zgodna z prywatnością",ro:"Istoric medical – Offline și conform cu confidențialitatea",it:"Anamnesi medica – Offline e conforme alla privacy",fr:"Antécédents médicaux – Hors ligne et conforme",es:"Historia clínica – Sin conexión y conforme",bg:"Медицинска анамнеза – Офлайн и поверително",nl:"Medische voorgeschiedenis – Offline en privacyconform",fa:"سابقه پزشکی – آفلاین و مطابق با حریم خصوصی",uk:"Медичний анамнез – Офлайн та конфіденційно"},
+      "consent.title": {de:"Datenschutzhinweis & Einwilligung",en:"Privacy Notice & Consent",tr:"Gizlilik Bildirimi ve Onay",ru:"Уведомление о конфиденциальности",ar:"إشعار الخصوصية والموافقة",ku:"Agahdariya Parastinê û Razîbûn",pl:"Informacja o prywatności i zgoda",ro:"Notificare de confidențialitate",it:"Informativa sulla privacy e consenso",fr:"Avis de confidentialité et consentement",es:"Aviso de privacidad y consentimiento",bg:"Известие за поверителност и съгласие",nl:"Privacyverklaring en toestemming",fa:"اطلاعیه حریم خصوصی و رضایت",uk:"Повідомлення про конфіденційність"},
+      "consent.intro": {de:"Bevor Sie mit der Anamnese beginnen, lesen Sie bitte die folgenden Hinweise:",en:"Before starting, please read the following information:",tr:"Başlamadan önce lütfen aşağıdaki bilgileri okuyun:",ru:"Перед началом прочтите следующую информацию:",ar:"قبل البدء، يرجى قراءة المعلومات التالية:",ku:"Berî destpêkirinê, ji kerema xwe agahdariya jêrîn bixwînin:",pl:"Przed rozpoczęciem prosimy o przeczytanie informacji:",ro:"Înainte de a începe, vă rugăm să citiți:",it:"Prima di iniziare, leggere le seguenti informazioni:",fr:"Avant de commencer, veuillez lire les informations:",es:"Antes de comenzar, lea la siguiente información:",bg:"Преди да започнете, моля прочетете:",nl:"Lees voordat u begint de volgende informatie:",fa:"قبل از شروع، لطفاً اطلاعات زیر را بخوانید:",uk:"Перш ніж розпочати, прочитайте:"},
+      "consent.purpose": {de:"Zweck der Datenerhebung",en:"Purpose of Data Collection",tr:"Veri Toplama Amacı",ru:"Цель сбора данных",ar:"الغرض من جمع البيانات",ku:"Armanca Berhevkirina Daneyan",pl:"Cel zbierania danych",ro:"Scopul colectării datelor",it:"Scopo della raccolta dei dati",fr:"Objectif de la collecte",es:"Propósito de la recopilación",bg:"Цел на събирането на данни",nl:"Doel van gegevensverzameling",fa:"هدف از جمع‌آوری داده‌ها",uk:"Мета збору даних"},
+      "consent.purposeText": {de:"Diese Anamnese dient ausschließlich der medizinischen Versorgung in dieser Praxis.",en:"This medical history is solely for medical care in this practice.",tr:"Bu tıbbi öykü yalnızca bu muayenehanedeki tıbbi bakım içindir.",ru:"Этот анамнез предназначен исключительно для медицинского обслуживания.",ar:"هذا السجل الطبي مخصص فقط للرعاية الطبية في هذه العيادة.",ku:"Ev dîrok tenê ji bo lênihêrîna bijîjkî li vê nexweşxaneyê ye.",pl:"Ta historia medyczna służy wyłącznie opiece medycznej.",ro:"Acest istoric medical este exclusiv pentru îngrijirea medicală.",it:"Questa anamnesi è esclusivamente per le cure mediche.",fr:"Ces antécédents sont uniquement destinés aux soins médicaux.",es:"Este historial es únicamente para la atención médica.",bg:"Тази анамнеза е само за медицинско обслужване.",nl:"Deze voorgeschiedenis is uitsluitend voor medische zorg.",fa:"این سابقه پزشکی فقط برای مراقبت پزشکی است.",uk:"Цей анамнез призначений виключно для медичного обслуговування."},
+      "consent.dataHandling": {de:"Datenverarbeitung",en:"Data Processing",tr:"Veri İşleme",ru:"Обработка данных",ar:"معالجة البيانات",ku:"Pêvajoya Daneyan",pl:"Przetwarzanie danych",ro:"Prelucrarea datelor",it:"Trattamento dei dati",fr:"Traitement des données",es:"Procesamiento de datos",bg:"Обработка на данни",nl:"Gegevensverwerking",fa:"پردازش داده‌ها",uk:"Обробка даних"},
+      "consent.noStorage": {de:"Ihre Daten werden nur im Arbeitsspeicher verarbeitet, nicht dauerhaft gespeichert",en:"Your data is only processed in memory, not permanently stored",tr:"Verileriniz yalnızca bellekte işlenir, kalıcı olarak depolanmaz",ru:"Ваши данные обрабатываются только в памяти",ar:"تتم معالجة بياناتك فقط في الذاكرة",ku:"Daneyên we tenê di bîrê de têne pêvajo kirin",pl:"Twoje dane są przetwarzane tylko w pamięci",ro:"Datele dvs. sunt procesate doar în memorie",it:"I tuoi dati vengono elaborati solo in memoria",fr:"Vos données sont traitées uniquement en mémoire",es:"Sus datos se procesan solo en memoria",bg:"Вашите данни се обработват само в паметта",nl:"Uw gegevens worden alleen in het geheugen verwerkt",fa:"داده‌های شما فقط در حافظه پردازش می‌شوند",uk:"Ваші дані обробляються лише в пам'яті"},
+      "consent.noTracking": {de:"Kein Tracking, keine Cookies, keine externe Datenübertragung",en:"No tracking, no cookies, no external data transmission",tr:"İzleme yok, çerez yok, harici veri aktarımı yok",ru:"Нет отслеживания, нет файлов cookie",ar:"لا تتبع، لا ملفات تعريف ارتباط",ku:"Şopandin tune, çerez tune",pl:"Brak śledzenia, brak plików cookie",ro:"Fără urmărire, fără cookie-uri",it:"Nessun tracciamento, nessun cookie",fr:"Pas de suivi, pas de cookies",es:"Sin seguimiento, sin cookies",bg:"Без проследяване, без бисквитки",nl:"Geen tracking, geen cookies",fa:"بدون ردیابی، بدون کوکی",uk:"Немає відстеження, немає файлів cookie"},
+      "consent.autoDelete": {de:"Nach dem Export werden alle Daten automatisch gelöscht",en:"All data is automatically deleted after export",tr:"Dışa aktarma sonrasında tüm veriler otomatik olarak silinir",ru:"После экспорта все данные автоматически удаляются",ar:"يتم حذف جميع البيانات تلقائياً بعد التصدير",ku:"Piştî eksportkirinê hemî dane bixweber têne jêbirin",pl:"Wszystkie dane są automatycznie usuwane po eksporcie",ro:"Toate datele sunt șterse automat după export",it:"Tutti i dati vengono eliminati dopo l'esportazione",fr:"Toutes les données sont supprimées après l'exportation",es:"Todos los datos se eliminan después de la exportación",bg:"Всички данни се изтриват след експортиране",nl:"Alle gegevens worden verwijderd na export",fa:"تمام داده‌ها پس از صادرات حذف می‌شوند",uk:"Всі дані видаляються після експорту"},
+      "consent.nfcTransfer": {de:"Die Übertragung erfolgt per NFC direkt an das Praxisgerät",en:"Transfer is done via NFC directly to the practice device",tr:"Aktarım NFC ile doğrudan cihaza yapılır",ru:"Передача осуществляется через NFC",ar:"يتم النقل عبر NFC مباشرة إلى الجهاز",ku:"Veguherin bi NFC rasterast bo cîhazê ye",pl:"Transfer odbywa się przez NFC",ro:"Transferul se face prin NFC",it:"Il trasferimento avviene tramite NFC",fr:"Le transfert se fait par NFC",es:"La transferencia se realiza mediante NFC",bg:"Прехвърлянето е чрез NFC",nl:"Overdracht via NFC",fa:"انتقال از طریق NFC انجام می‌شود",uk:"Передача здійснюється через NFC"},
+      "consent.rights": {de:"Ihre Rechte (DSGVO)",en:"Your Rights (GDPR)",tr:"Haklarınız (KVKK)",ru:"Ваши права (GDPR)",ar:"حقوقك (GDPR)",ku:"Mafên We (GDPR)",pl:"Twoje prawa (RODO)",ro:"Drepturile dvs. (GDPR)",it:"I tuoi diritti (GDPR)",fr:"Vos droits (RGPD)",es:"Sus derechos (RGPD)",bg:"Вашите права (GDPR)",nl:"Uw rechten (AVG)",fa:"حقوق شما (GDPR)",uk:"Ваші права (GDPR)"},
+      "consent.rightAccess": {de:"Recht auf Auskunft (Art. 15 DSGVO)",en:"Right of access (Art. 15 GDPR)",tr:"Erişim hakkı",ru:"Право на доступ",ar:"حق الوصول",ku:"Mafê gihîştinê",pl:"Prawo dostępu",ro:"Dreptul de acces",it:"Diritto di accesso",fr:"Droit d'accès",es:"Derecho de acceso",bg:"Право на достъп",nl:"Recht op toegang",fa:"حق دسترسی",uk:"Право на доступ"},
+      "consent.rightRectification": {de:"Recht auf Berichtigung (Art. 16 DSGVO)",en:"Right to rectification (Art. 16 GDPR)",tr:"Düzeltme hakkı",ru:"Право на исправление",ar:"حق التصحيح",ku:"Mafê rastkirinê",pl:"Prawo do sprostowania",ro:"Dreptul la rectificare",it:"Diritto di rettifica",fr:"Droit de rectification",es:"Derecho de rectificación",bg:"Право на коригиране",nl:"Recht op rectificatie",fa:"حق اصلاح",uk:"Право на виправлення"},
+      "consent.rightErasure": {de:"Recht auf Löschung (Art. 17 DSGVO)",en:"Right to erasure (Art. 17 GDPR)",tr:"Silme hakkı",ru:"Право на удаление",ar:"حق المحو",ku:"Mafê jêbirinê",pl:"Prawo do usunięcia",ro:"Dreptul la ștergere",it:"Diritto alla cancellazione",fr:"Droit à l'effacement",es:"Derecho de supresión",bg:"Право на изтриване",nl:"Recht op verwijdering",fa:"حق پاک کردن",uk:"Право на видалення"},
+      "consent.rightWithdraw": {de:"Recht auf Widerruf der Einwilligung",en:"Right to withdraw consent",tr:"Onayı geri çekme hakkı",ru:"Право на отзыв согласия",ar:"حق سحب الموافقة",ku:"Mafê paşgirkirina razîbûnê",pl:"Prawo do wycofania zgody",ro:"Dreptul de retragere",it:"Diritto di revocare il consenso",fr:"Droit de retirer le consentement",es:"Derecho a retirar el consentimiento",bg:"Право на оттегляне",nl:"Recht om toestemming in te trekken",fa:"حق لغو رضایت",uk:"Право на відкликання згоди"},
+      "consent.contact": {de:"Verantwortliche Stelle: [Praxisname eintragen]",en:"Responsible entity: [Enter practice name]",tr:"Sorumlu kuruluş: [Muayenehane adını girin]",ru:"Ответственный орган: [Введите название]",ar:"الجهة المسؤولة: [أدخل اسم العيادة]",ku:"Saziya berpirsyar: [Navê nexweşxaneyê]",pl:"Odpowiedzialny podmiot: [Wpisz nazwę]",ro:"Entitate responsabilă: [Introduceți numele]",it:"Entità responsabile: [Inserire nome]",fr:"Entité responsable: [Entrez le nom]",es:"Entidad responsable: [Ingrese el nombre]",bg:"Отговорен орган: [Въведете името]",nl:"Verantwoordelijke entiteit: [Voer naam in]",fa:"نهاد مسئول: [نام را وارد کنید]",uk:"Відповідальний орган: [Введіть назву]"},
+      "consent.accept": {de:"Ich stimme zu und möchte fortfahren",en:"I agree and want to continue",tr:"Kabul ediyorum ve devam etmek istiyorum",ru:"Я согласен и хочу продолжить",ar:"أوافق وأريد المتابعة",ku:"Ez razî me û dixwazim bidomînim",pl:"Zgadzam się i chcę kontynuować",ro:"Sunt de acord și vreau să continui",it:"Accetto e voglio continuare",fr:"J'accepte et je veux continuer",es:"Acepto y quiero continuar",bg:"Съгласен съм и искам да продължа",nl:"Ik ga akkoord en wil doorgaan",fa:"موافقم و می‌خواهم ادامه دهم",uk:"Я погоджуюсь і хочу продовжити"},
+      "nav.next": {de:"Weiter",en:"Next",tr:"İleri",ru:"Далее",ar:"التالي",ku:"Pêş",pl:"Dalej",ro:"Înainte",it:"Avanti",fr:"Suivant",es:"Siguiente",bg:"Напред",nl:"Volgende",fa:"بعدی",uk:"Далі"},
+      "nav.back": {de:"Zurück",en:"Back",tr:"Geri",ru:"Назад",ar:"رجوع",ku:"Paş",pl:"Wstecz",ro:"Înapoi",it:"Indietro",fr:"Retour",es:"Atrás",bg:"Назад",nl:"Terug",fa:"قبلی",uk:"Назад"},
+      "nav.export": {de:"Daten exportieren",en:"Export Data",tr:"Verileri Dışa Aktar",ru:"Экспорт данных",ar:"تصدير البيانات",ku:"Daneyan derxîne",pl:"Eksportuj dane",ro:"Exportă datele",it:"Esporta dati",fr:"Exporter",es:"Exportar datos",bg:"Експортиране",nl:"Exporteren",fa:"صادرات داده‌ها",uk:"Експорт даних"},
+      "yes": {de:"Ja",en:"Yes",tr:"Evet",ru:"Да",ar:"نعم",ku:"Erê",pl:"Tak",ro:"Da",it:"Sì",fr:"Oui",es:"Sí",bg:"Да",nl:"Ja",fa:"بله",uk:"Так"},
+      "no": {de:"Nein",en:"No",tr:"Hayır",ru:"Нет",ar:"لا",ku:"Na",pl:"Nie",ro:"Nu",it:"No",fr:"Non",es:"No",bg:"Не",nl:"Nee",fa:"خیر",uk:"Ні"},
+      "unknown": {de:"Nicht bekannt",en:"Unknown",tr:"Bilinmiyor",ru:"Неизвестно",ar:"غير معروف",ku:"Nenas",pl:"Nieznane",ro:"Necunoscut",it:"Sconosciuto",fr:"Inconnu",es:"Desconocido",bg:"Неизвестно",nl:"Onbekend",fa:"نامشخص",uk:"Невідомо"},
+      "select.placeholder": {de:"Bitte wählen…",en:"Please select…",tr:"Lütfen seçin…",ru:"Выберите…",ar:"الرجاء الاختيار…",ku:"Ji kerema xwe hilbijêre…",pl:"Proszę wybrać…",ro:"Selectați…",it:"Seleziona…",fr:"Sélectionnez…",es:"Seleccione…",bg:"Изберете…",nl:"Selecteer…",fa:"انتخاب کنید…",uk:"Виберіть…"},
+      "progress.complete": {de:"abgeschlossen",en:"complete",tr:"tamamlandı",ru:"завершено",ar:"مكتمل",ku:"qediya",pl:"ukończone",ro:"complet",it:"completato",fr:"terminé",es:"completado",bg:"завършено",nl:"voltooid",fa:"کامل شده",uk:"завершено"},
+      "timeout.warning": {de:"Inaktivität erkannt! Daten werden gelöscht in",en:"Inactivity detected! Data will be deleted in",tr:"Hareketsizlik algılandı! Veriler silinecek:",ru:"Обнаружена неактивность! Данные будут удалены через",ar:"تم اكتشاف عدم النشاط! سيتم حذف البيانات في",ku:"Bêçalakî hate dîtin! Dane dê bên jêbirin di",pl:"Wykryto nieaktywność! Dane zostaną usunięte za",ro:"Inactivitate detectată! Datele vor fi șterse în",it:"Inattività rilevata! I dati saranno eliminati tra",fr:"Inactivité détectée! Les données seront supprimées dans",es:"Inactividad detectada! Los datos se eliminarán en",bg:"Открита неактивност! Данните ще бъдат изтрити след",nl:"Inactiviteit gedetecteerd! Gegevens worden verwijderd over",fa:"عدم فعالیت شناسایی شد! داده‌ها حذف خواهند شد در",uk:"Виявлено неактивність! Дані будуть видалені через"},
+      "timeout.continue": {de:"Fortfahren",en:"Continue",tr:"Devam",ru:"Продолжить",ar:"متابعة",ku:"Berdewam",pl:"Kontynuuj",ro:"Continuă",it:"Continua",fr:"Continuer",es:"Continuar",bg:"Продължи",nl:"Doorgaan",fa:"ادامه",uk:"Продовжити"},
+      "summary.title": {de:"Ihre Antworten",en:"Your Answers",tr:"Yanıtlarınız",ru:"Ваши ответы",ar:"إجاباتك",ku:"Bersivên We",pl:"Twoje odpowiedzi",ro:"Răspunsurile dvs.",it:"Le tue risposte",fr:"Vos réponses",es:"Sus respuestas",bg:"Вашите отговори",nl:"Uw antwoorden",fa:"پاسخ‌های شما",uk:"Ваші відповіді"},
+      "summary.empty": {de:"Noch keine Antworten",en:"No answers yet",tr:"Henüz yanıt yok",ru:"Пока нет ответов",ar:"لا توجد إجابات بعد",ku:"Hêj bersiv tune",pl:"Brak odpowiedzi",ro:"Încă nu există răspunsuri",it:"Nessuna risposta ancora",fr:"Pas encore de réponses",es:"Aún no hay respuestas",bg:"Все още няма отговори",nl:"Nog geen antwoorden",fa:"هنوز پاسخی نیست",uk:"Ще немає відповідей"},
+      "summary.edit": {de:"Bearbeiten",en:"Edit",tr:"Düzenle",ru:"Редактировать",ar:"تعديل",ku:"Biguherîne",pl:"Edytuj",ro:"Editează",it:"Modifica",fr:"Modifier",es:"Editar",bg:"Редактиране",nl:"Bewerken",fa:"ویرایش",uk:"Редагувати"},
+      "export.title": {de:"Daten übertragen",en:"Transfer Data",tr:"Veri Aktarımı",ru:"Передача данных",ar:"نقل البيانات",ku:"Veguhertina Daneyan",pl:"Transfer danych",ro:"Transferă datele",it:"Trasferisci dati",fr:"Transférer les données",es:"Transferir datos",bg:"Прехвърляне на данни",nl:"Gegevens overdragen",fa:"انتقال داده‌ها",uk:"Передача даних"},
+      "export.instruction": {de:"Wählen Sie eine Übertragungsmethode:",en:"Select a transfer method:",tr:"Bir aktarım yöntemi seçin:",ru:"Выберите метод передачи:",ar:"اختر طريقة النقل:",ku:"Rêbazek veguhestinê hilbijêre:",pl:"Wybierz metodę transferu:",ro:"Selectați o metodă de transfer:",it:"Seleziona un metodo di trasferimento:",fr:"Sélectionnez une méthode de transfert:",es:"Seleccione un método de transferencia:",bg:"Изберете метод за прехвърляне:",nl:"Selecteer een overdrachtsmethode:",fa:"یک روش انتقال انتخاب کنید:",uk:"Виберіть метод передачі:"},
+      "export.nfc": {de:"Per NFC übertragen",en:"Transfer via NFC",tr:"NFC ile aktar",ru:"Передать через NFC",ar:"نقل عبر NFC",ku:"Bi NFC ve bişîne",pl:"Prześlij przez NFC",ro:"Transferă prin NFC",it:"Trasferisci via NFC",fr:"Transférer par NFC",es:"Transferir por NFC",bg:"Прехвърляне чрез NFC",nl:"Overdragen via NFC",fa:"انتقال از طریق NFC",uk:"Передати через NFC"},
+      "export.qr": {de:"Als QR-Code anzeigen",en:"Show as QR Code",tr:"QR Kodu olarak göster",ru:"Показать как QR-код",ar:"عرض كرمز QR",ku:"Wek QR-Kodê nîşan bide",pl:"Pokaż jako kod QR",ro:"Afișează ca cod QR",it:"Mostra come codice QR",fr:"Afficher comme code QR",es:"Mostrar como código QR",bg:"Покажи като QR код",nl:"Toon als QR-code",fa:"نمایش به عنوان کد QR",uk:"Показати як QR-код"},
+      "export.download": {de:"JSON herunterladen",en:"Download JSON",tr:"JSON İndir",ru:"Скачать JSON",ar:"تحميل JSON",ku:"JSON dakêşe",pl:"Pobierz JSON",ro:"Descarcă JSON",it:"Scarica JSON",fr:"Télécharger JSON",es:"Descargar JSON",bg:"Изтегли JSON",nl:"Download JSON",fa:"دانلود JSON",uk:"Завантажити JSON"},
+      "export.cancel": {de:"Abbrechen",en:"Cancel",tr:"İptal",ru:"Отмена",ar:"إلغاء",ku:"Betal",pl:"Anuluj",ro:"Anulează",it:"Annulla",fr:"Annuler",es:"Cancelar",bg:"Отказ",nl:"Annuleren",fa:"لغو",uk:"Скасувати"},
+      "nfc.ready": {de:"Bereit für NFC-Übertragung",en:"Ready for NFC transfer",tr:"NFC aktarımına hazır",ru:"Готово к передаче NFC",ar:"جاهز لنقل NFC",ku:"Amade ji bo veguhertina NFC",pl:"Gotowe do transferu NFC",ro:"Pregătit pentru transfer NFC",it:"Pronto per il trasferimento NFC",fr:"Prêt pour le transfert NFC",es:"Listo para transferencia NFC",bg:"Готов за NFC прехвърляне",nl:"Klaar voor NFC-overdracht",fa:"آماده برای انتقال NFC",uk:"Готово до передачі NFC"},
+      "nfc.success": {de:"Übertragung erfolgreich!",en:"Transfer successful!",tr:"Aktarım başarılı!",ru:"Передача успешна!",ar:"تم النقل بنجاح!",ku:"Veguhestin bi ser ket!",pl:"Transfer udany!",ro:"Transfer reușit!",it:"Trasferimento riuscito!",fr:"Transfert réussi!",es:"¡Transferencia exitosa!",bg:"Успешно прехвърляне!",nl:"Overdracht geslaagd!",fa:"انتقال موفق!",uk:"Передача успішна!"},
+      "nfc.unavailable": {de:"NFC nicht verfügbar",en:"NFC not available",tr:"NFC mevcut değil",ru:"NFC недоступен",ar:"NFC غير متوفر",ku:"NFC peyda nabe",pl:"NFC niedostępne",ro:"NFC indisponibil",it:"NFC non disponibile",fr:"NFC non disponible",es:"NFC no disponible",bg:"NFC не е наличен",nl:"NFC niet beschikbaar",fa:"NFC در دسترس نیست",uk:"NFC недоступний"},
+      "nfc.tooLarge": {de:"Daten zu groß für NFC. Bitte QR-Code oder Download nutzen.",en:"Data too large for NFC. Please use QR code or download.",tr:"Veriler NFC için çok büyük. Lütfen QR kodu veya indirmeyi kullanın.",ru:"Данные слишком велики для NFC. Используйте QR-код или скачивание.",ar:"البيانات كبيرة جداً لـ NFC. يرجى استخدام رمز QR أو التحميل.",ku:"Dane ji bo NFC pir mezin in. Ji kerema xwe QR-koda an dakêşandinê bikar bînin.",pl:"Dane za duże dla NFC. Użyj kodu QR lub pobierz.",ro:"Date prea mari pentru NFC. Folosiți codul QR sau descărcați.",it:"Dati troppo grandi per NFC. Usa il codice QR o scarica.",fr:"Données trop volumineuses pour NFC. Utilisez le code QR ou téléchargez.",es:"Datos demasiado grandes para NFC. Use el código QR o descargue.",bg:"Данните са твърде големи за NFC. Използвайте QR код или изтегляне.",nl:"Gegevens te groot voor NFC. Gebruik QR-code of download.",fa:"داده‌ها برای NFC خیلی بزرگ هستند. لطفاً از کد QR یا دانلود استفاده کنید.",uk:"Дані занадто великі для NFC. Використовуйте QR-код або завантаження."},
+      "security.dataWiped": {de:"Daten wurden aus Sicherheitsgründen gelöscht.",en:"Data has been deleted for security reasons.",tr:"Veriler güvenlik nedeniyle silindi.",ru:"Данные удалены по соображениям безопасности.",ar:"تم حذف البيانات لأسباب أمنية.",ku:"Dane ji ber sedemên ewlehiyê hatin jêbirin.",pl:"Dane zostały usunięte ze względów bezpieczeństwa.",ro:"Datele au fost șterse din motive de securitate.",it:"I dati sono stati eliminati per motivi di sicurezza.",fr:"Les données ont été supprimées pour des raisons de sécurité.",es:"Los datos han sido eliminados por razones de seguridad.",bg:"Данните бяха изтрити от съображения за сигурност.",nl:"Gegevens zijn om veiligheidsredenen verwijderd.",fa:"داده‌ها به دلایل امنیتی حذف شدند.",uk:"Дані видалено з міркувань безпеки."},
+      "final.dataNote": {de:"Ihre Daten werden nach dem Export automatisch gelöscht.",en:"Your data will be automatically deleted after export.",tr:"Verileriniz dışa aktarma sonrasında otomatik olarak silinecektir.",ru:"Ваши данные будут автоматически удалены после экспорта.",ar:"سيتم حذف بياناتك تلقائياً بعد التصدير.",ku:"Daneyên we piştî eksportkirinê bixweber dê bên jêbirin.",pl:"Twoje dane zostaną automatycznie usunięte po eksporcie.",ro:"Datele dvs. vor fi șterse automat după export.",it:"I tuoi dati saranno eliminati automaticamente dopo l'esportazione.",fr:"Vos données seront automatiquement supprimées après l'exportation.",es:"Sus datos se eliminarán automáticamente después de la exportación.",bg:"Вашите данни ще бъдат изтрити автоматично след експортиране.",nl:"Uw gegevens worden automatisch verwijderd na export.",fa:"داده‌های شما پس از صادرات به طور خودکار حذف خواهند شد.",uk:"Ваші дані будуть автоматично видалені після експорту."},
+      // Section titles
+      "s.q0000": {de:"👤 Basisdaten",en:"👤 Basic Information",tr:"👤 Temel Bilgiler",ru:"👤 Основная информация",ar:"👤 المعلومات الأساسية",ku:"👤 Agahiyên Bingehîn",pl:"👤 Dane podstawowe",ro:"👤 Informații de bază",it:"👤 Informazioni di base",fr:"👤 Informations de base",es:"👤 Información básica",bg:"👤 Основна информация",nl:"👤 Basisgegevens",fa:"👤 اطلاعات پایه",uk:"👤 Основна інформація"},
+      "s.q1000": {de:"🩺 Aktuelle Beschwerden",en:"🩺 Current Complaints",tr:"🩺 Mevcut Şikayetler",ru:"🩺 Текущие жалобы",ar:"🩺 الشكاوى الحالية",ku:"🩺 Giliyên Niha",pl:"🩺 Aktualne dolegliwości",ro:"🩺 Plângeri actuale",it:"🩺 Disturbi attuali",fr:"🩺 Plaintes actuelles",es:"🩺 Quejas actuales",bg:"🩺 Текущи оплаквания",nl:"🩺 Huidige klachten",fa:"🩺 شکایات فعلی",uk:"🩺 Поточні скарги"},
+      "s.q2000": {de:"🔬 Systemabfrage",en:"🔬 System Review",tr:"🔬 Sistem Taraması",ru:"🔬 Системный обзор",ar:"🔬 مراجعة الأنظمة",ku:"🔬 Vekolîna Sîstemê",pl:"🔬 Przegląd systemów",ro:"🔬 Revizuire sisteme",it:"🔬 Revisione sistemi",fr:"🔬 Revue des systèmes",es:"🔬 Revisión de sistemas",bg:"🔬 Системен преглед",nl:"🔬 Systeemonderzoek",fa:"🔬 بررسی سیستم‌ها",uk:"🔬 Огляд систем"},
+      "s.q3000": {de:"💊 Medikamente & Allergien",en:"💊 Medications & Allergies",tr:"💊 İlaçlar ve Alerjiler",ru:"💊 Лекарства и аллергии",ar:"💊 الأدوية والحساسية",ku:"💊 Derman û Alerjî",pl:"💊 Leki i alergie",ro:"💊 Medicamente și alergii",it:"💊 Farmaci e allergie",fr:"💊 Médicaments et allergies",es:"💊 Medicamentos y alergias",bg:"💊 Лекарства и алергии",nl:"💊 Medicijnen en allergieën",fa:"💊 داروها و آلرژی‌ها",uk:"💊 Ліки та алергії"},
+      "s.q4000": {de:"👨‍👩‍👧 Familienanamnese",en:"👨‍👩‍👧 Family History",tr:"👨‍👩‍👧 Aile Öyküsü",ru:"👨‍👩‍👧 Семейный анамнез",ar:"👨‍👩‍👧 التاريخ العائلي",ku:"👨‍👩‍👧 Dîroka Malbatî",pl:"👨‍👩‍👧 Historia rodzinna",ro:"👨‍👩‍👧 Istoric familial",it:"👨‍👩‍👧 Anamnesi familiare",fr:"👨‍👩‍👧 Antécédents familiaux",es:"👨‍👩‍👧 Historia familiar",bg:"👨‍👩‍👧 Семейна история",nl:"👨‍👩‍👧 Familiegeschiedenis",fa:"��‍👩‍👧 سابقه خانوادگی",uk:"👨‍👩‍👧 Сімейний анамнез"},
+      "s.q5000": {de:"🏃 Lebensstil",en:"🏃 Lifestyle",tr:"🏃 Yaşam Tarzı",ru:"🏃 Образ жизни",ar:"🏃 نمط الحياة",ku:"🏃 Şêwaza Jiyanê",pl:"🏃 Styl życia",ro:"🏃 Stil de viață",it:"🏃 Stile di vita",fr:"🏃 Mode de vie",es:"🏃 Estilo de vida",bg:"🏃 Начин на живот",nl:"🏃 Levensstijl",fa:"🏃 سبک زندگی",uk:"🏃 Спосіб життя"},
+      "s.q6000": {de:"✅ Abschluss",en:"✅ Conclusion",tr:"✅ Sonuç",ru:"✅ Заключение",ar:"✅ الختام",ku:"✅ Dawî",pl:"✅ Zakończenie",ro:"✅ Concluzie",it:"✅ Conclusione",fr:"✅ Conclusion",es:"✅ Conclusión",bg:"✅ Заключение",nl:"✅ Afsluiting",fa:"✅ نتیجه‌گیری",uk:"✅ Висновок"},
+      // Question labels using Q-codes
+      "q0000": {de:"Nachname",en:"Last Name",tr:"Soyadı",ru:"Фамилия",ar:"اسم العائلة",ku:"Paşnav",pl:"Nazwisko",ro:"Nume",it:"Cognome",fr:"Nom",es:"Apellido",bg:"Фамилия",nl:"Achternaam",fa:"نام خانوادگی",uk:"Прізвище"},
+      "q0001": {de:"Vorname",en:"First Name",tr:"Ad",ru:"Имя",ar:"الاسم الأول",ku:"Nav",pl:"Imię",ro:"Prenume",it:"Nome",fr:"Prénom",es:"Nombre",bg:"Име",nl:"Voornaam",fa:"نام",uk:"Ім'я"},
+      "q0002": {de:"Geschlecht",en:"Gender",tr:"Cinsiyet",ru:"Пол",ar:"الجنس",ku:"Zayend",pl:"Płeć",ro:"Gen",it:"Genere",fr:"Genre",es:"Género",bg:"Пол",nl:"Geslacht",fa:"جنسیت",uk:"Стать"},
+      "q0002.m": {de:"männlich",en:"male",tr:"erkek",ru:"мужской",ar:"ذكر",ku:"mêr",pl:"mężczyzna",ro:"masculin",it:"maschio",fr:"masculin",es:"masculino",bg:"мъж",nl:"man",fa:"مرد",uk:"чоловік"},
+      "q0002.w": {de:"weiblich",en:"female",tr:"kadın",ru:"женский",ar:"أنثى",ku:"jin",pl:"kobieta",ro:"feminin",it:"femmina",fr:"féminin",es:"femenino",bg:"жена",nl:"vrouw",fa:"زن",uk:"жінка"},
+      "q0002.d": {de:"divers",en:"diverse",tr:"diğer",ru:"другой",ar:"آخر",ku:"cuda",pl:"inna",ro:"altul",it:"altro",fr:"autre",es:"otro",bg:"друг",nl:"anders",fa:"دیگر",uk:"інше"},
+      "q0003": {de:"Geburtsdatum",en:"Date of Birth",tr:"Doğum Tarihi",ru:"Дата рождения",ar:"تاريخ الميلاد",ku:"Dîroka Jidayikbûnê",pl:"Data urodzenia",ro:"Data nașterii",it:"Data di nascita",fr:"Date de naissance",es:"Fecha de nacimiento",bg:"Дата на раждане",nl:"Geboortedatum",fa:"تاریخ تولد",uk:"Дата народження"},
+      "q1000": {de:"Haben Sie aktuell Beschwerden?",en:"Do you currently have any complaints?",tr:"Şu anda herhangi bir şikayetiniz var mı?",ru:"Есть ли у вас сейчас жалобы?",ar:"هل لديك أي شكاوى حاليًا؟",ku:"Ma niha giliyên we hene?",pl:"Czy masz obecnie jakieś dolegliwości?",ro:"Aveți în prezent plângeri?",it:"Ha attualmente dei disturbi?",fr:"Avez-vous actuellement des plaintes?",es:"¿Tiene actualmente alguna queja?",bg:"Имате ли в момента оплаквания?",nl:"Heeft u momenteel klachten?",fa:"آیا در حال حاضر شکایتی دارید؟",uk:"Чи є у вас зараз скарги?"},
+      "q1001": {de:"Wie lange bestehen Ihre Beschwerden?",en:"How long have you had these complaints?",tr:"Bu şikayetleriniz ne kadar süredir var?",ru:"Как долго у вас эти жалобы?",ar:"منذ متى لديك هذه الشكاوى؟",ku:"Giliyên we çiqas demdir hene?",pl:"Jak długo masz te dolegliwości?",ro:"De cât timp aveți aceste plângeri?",it:"Da quanto tempo ha questi disturbi?",fr:"Depuis combien de temps avez-vous ces plaintes?",es:"¿Cuánto tiempo tiene estas quejas?",bg:"От колко време имате тези оплаквания?",nl:"Hoe lang heeft u deze klachten?",fa:"چه مدت است که این شکایات را دارید؟",uk:"Як довго у вас ці скарги?"},
+      "q1001.days": {de:"wenige Tage",en:"a few days",tr:"birkaç gün",ru:"несколько дней",ar:"بضعة أيام",ku:"çend roj",pl:"kilka dni",ro:"câteva zile",it:"pochi giorni",fr:"quelques jours",es:"unos días",bg:"няколко дни",nl:"een paar dagen",fa:"چند روز",uk:"кілька днів"},
+      "q1001.weeks": {de:"wenige Wochen",en:"a few weeks",tr:"birkaç hafta",ru:"несколько недель",ar:"بضعة أسابيع",ku:"çend hefte",pl:"kilka tygodni",ro:"câteva săptămâni",it:"alcune settimane",fr:"quelques semaines",es:"unas semanas",bg:"няколко седмици",nl:"een paar weken",fa:"چند هفته",uk:"кілька тижнів"},
+      "q1001.months": {de:"wenige Monate",en:"a few months",tr:"birkaç ay",ru:"несколько месяцев",ar:"بضعة أشهر",ku:"çend meh",pl:"kilka miesięcy",ro:"câteva luni",it:"alcuni mesi",fr:"quelques mois",es:"unos meses",bg:"няколко месеца",nl:"een paar maanden",fa:"چند ماه",uk:"кілька місяців"},
+      "q1001.years": {de:"seit Jahren",en:"for years",tr:"yıllardır",ru:"несколько лет",ar:"منذ سنوات",ku:"ji salan ve",pl:"od lat",ro:"de ani",it:"da anni",fr:"depuis des années",es:"desde hace años",bg:"от години",nl:"jaren",fa:"سال‌ها",uk:"роками"},
+      "q1002": {de:"Wie häufig treten diese Beschwerden auf?",en:"How often do these complaints occur?",tr:"Bu şikayetler ne sıklıkla oluyor?",ru:"Как часто возникают эти жалобы?",ar:"كم مرة تحدث هذه الشكاوى؟",ku:"Ev gilî çend caran dibin?",pl:"Jak często występują te dolegliwości?",ro:"Cât de des apar aceste plângeri?",it:"Con quale frequenza si presentano questi disturbi?",fr:"À quelle fréquence ces plaintes surviennent-elles?",es:"¿Con qué frecuencia ocurren estas quejas?",bg:"Колко често се появяват тези оплаквания?",nl:"Hoe vaak komen deze klachten voor?",fa:"این شکایات چند وقت یکبار رخ می‌دهند؟",uk:"Як часто виникають ці скарги?"},
+      "q1003": {de:"Wodurch werden Ihre Beschwerden ausgelöst?",en:"What triggers your complaints?",tr:"Şikayetlerinizi ne tetikliyor?",ru:"Что вызывает ваши жалобы?",ar:"ما الذي يثير شكاواك؟",ku:"Giliyên we ji çi çêdibin?",pl:"Co wywołuje twoje dolegliwości?",ro:"Ce declanșează plângerile dvs.?",it:"Cosa scatena i suoi disturbi?",fr:"Qu'est-ce qui déclenche vos plaintes?",es:"¿Qué desencadena sus quejas?",bg:"Какво предизвиква вашите оплаквания?",nl:"Wat veroorzaakt uw klachten?",fa:"چه چیزی شکایات شما را تحریک می‌کند؟",uk:"Що викликає ваші скарги?"},
+      "q1005": {de:"Haben Sie sonstige Auffälligkeiten?",en:"Do you have any other noticeable symptoms?",tr:"Başka belirtileriniz var mı?",ru:"Есть ли у вас другие заметные симптомы?",ar:"هل لديك أي أعراض ملحوظة أخرى؟",ku:"Nîşaneyên din hene?",pl:"Czy masz inne zauważalne objawy?",ro:"Aveți alte simptome notabile?",it:"Ha altri sintomi evidenti?",fr:"Avez-vous d'autres symptômes notables?",es:"¿Tiene otros síntomas notables?",bg:"Имате ли други забележими симптоми?",nl:"Heeft u andere opvallende symptomen?",fa:"آیا علائم قابل توجه دیگری دارید؟",uk:"Чи є у вас інші помітні симптоми?"},
+      "q1005.fever": {de:"Fieber",en:"Fever",tr:"Ateş",ru:"Лихорадка",ar:"حمى",ku:"Ta",pl:"Gorączka",ro:"Febră",it:"Febbre",fr:"Fièvre",es:"Fiebre",bg:"Треска",nl:"Koorts",fa:"تب",uk:"Гарячка"},
+      "q1005.fatigue": {de:"Kraftlosigkeit",en:"Fatigue",tr:"Halsizlik",ru:"Слабость",ar:"إرهاق",ku:"Bêhêzî",pl:"Osłabienie",ro:"Oboseală",it:"Stanchezza",fr:"Fatigue",es:"Fatiga",bg:"Умора",nl:"Vermoeidheid",fa:"خستگی",uk:"Втома"},
+      "q1005.nightsweats": {de:"Nachtschweiß",en:"Night sweats",tr:"Gece terlemesi",ru:"Ночная потливость",ar:"تعرق ليلي",ku:"Xwîdana şevê",pl:"Nocne poty",ro:"Transpirații nocturne",it:"Sudorazione notturna",fr:"Sueurs nocturnes",es:"Sudores nocturnos",bg:"Нощно изпотяване",nl:"Nachtzweten",fa:"تعریق شبانه",uk:"Нічна пітливість"},
+      "q1005.weightloss": {de:"ungewollter Gewichtsverlust",en:"Unintended weight loss",tr:"İstem dışı kilo kaybı",ru:"Непреднамеренная потеря веса",ar:"فقدان الوزن غير المقصود",ku:"Kêmbûna giraniyê ya nexwestî",pl:"Niezamierzona utrata wagi",ro:"Pierdere neintenționată în greutate",it:"Perdita di peso involontaria",fr:"Perte de poids involontaire",es:"Pérdida de peso involuntaria",bg:"Неволна загуба на тегло",nl:"Onbedoeld gewichtsverlies",fa:"کاهش وزن ناخواسته",uk:"Ненавмисна втрата ваги"},
+      "q2000": {de:"Welche Beschwerden haben Sie?",en:"What complaints do you have?",tr:"Ne tür şikayetleriniz var?",ru:"Какие у вас жалобы?",ar:"ما هي شكاواك؟",ku:"Giliyên we çi ne?",pl:"Jakie masz dolegliwości?",ro:"Ce plângeri aveți?",it:"Quali disturbi ha?",fr:"Quelles plaintes avez-vous?",es:"¿Qué quejas tiene?",bg:"Какви са оплакванията ви?",nl:"Welke klachten heeft u?",fa:"شکایات شما چیست؟",uk:"Які у вас скарги?"},
+      "q2000.angio": {de:"Durchblutung (Gefäße)",en:"Circulation (Vessels)",tr:"Dolaşım (Damarlar)",ru:"Кровообращение (сосуды)",ar:"الدورة الدموية (الأوعية)",ku:"Gerandin (Damar)",pl:"Krążenie (naczynia)",ro:"Circulație (vase)",it:"Circolazione (vasi)",fr:"Circulation (vaisseaux)",es:"Circulación (vasos)",bg:"Кръвообращение (съдове)",nl:"Circulatie (vaten)",fa:"گردش خون (عروق)",uk:"Кровообіг (судини)"},
+      "q2000.resp": {de:"Atemwege/Lunge",en:"Respiratory/Lung",tr:"Solunum/Akciğer",ru:"Дыхательная система/Легкие",ar:"الجهاز التنفسي/الرئتين",ku:"Bêhnvekirin/Pişik",pl:"Drogi oddechowe/Płuca",ro:"Respirator/Plămâni",it:"Respiratorio/Polmoni",fr:"Respiratoire/Poumons",es:"Respiratorio/Pulmones",bg:"Дихателна/Бял дроб",nl:"Luchtwegen/Longen",fa:"تنفسی/ریه",uk:"Дихальна/Легені"},
+      "q2000.cardio": {de:"Herz-Kreislauf",en:"Cardiovascular",tr:"Kalp-Damar",ru:"Сердечно-сосудистая",ar:"القلب والأوعية الدموية",ku:"Dil û Xwîngerok",pl:"Sercowo-naczyniowy",ro:"Cardiovascular",it:"Cardiovascolare",fr:"Cardiovasculaire",es:"Cardiovascular",bg:"Сърдечно-съдова",nl:"Cardiovasculair",fa:"قلبی عروقی",uk:"Серцево-судинна"},
+      "q2000.gi": {de:"Magen-Darm",en:"Gastrointestinal",tr:"Mide-Bağırsak",ru:"Желудочно-кишечный",ar:"الجهاز الهضمي",ku:"Zik-Rûvî",pl:"Żołądkowo-jelitowy",ro:"Gastrointestinal",it:"Gastrointestinale",fr:"Gastro-intestinal",es:"Gastrointestinal",bg:"Стомашно-чревен",nl:"Gastro-intestinaal",fa:"گوارشی",uk:"Шлунково-кишковий"},
+      "q2000.uro": {de:"Urologie/Gynäkologie",en:"Urology/Gynecology",tr:"Üroloji/Jinekoloji",ru:"Урология/Гинекология",ar:"المسالك البولية/أمراض النساء",ku:"Urolojî/Jînolojî",pl:"Urologia/Ginekologia",ro:"Urologie/Ginecologie",it:"Urologia/Ginecologia",fr:"Urologie/Gynécologie",es:"Urología/Ginecología",bg:"Урология/Гинекология",nl:"Urologie/Gynaecologie",fa:"اورولوژی/زنان",uk:"Урологія/Гінекологія"},
+      "q2000.msk": {de:"Bewegungsapparat",en:"Musculoskeletal",tr:"Kas-İskelet",ru:"Опорно-двигательная",ar:"الجهاز العضلي الهيكلي",ku:"Hestî û Masûlke",pl:"Układ mięśniowo-szkieletowy",ro:"Musculo-scheletic",it:"Muscolo-scheletrico",fr:"Musculo-squelettique",es:"Musculoesquelético",bg:"Мускулно-скелетна",nl:"Musculoskeletaal",fa:"اسکلتی عضلانی",uk:"Опорно-руховий"},
+      "q2000.neuro": {de:"Neurologie",en:"Neurology",tr:"Nöroloji",ru:"Неврология",ar:"الجهاز العصبي",ku:"Neurolojî",pl:"Neurologia",ro:"Neurologie",it:"Neurologia",fr:"Neurologie",es:"Neurología",bg:"Неврология",nl:"Neurologie",fa:"اعصاب",uk:"Неврологія"},
+      "q2000.skin": {de:"Haut",en:"Skin",tr:"Cilt",ru:"Кожа",ar:"الجلد",ku:"Çerm",pl:"Skóra",ro:"Piele",it:"Pelle",fr:"Peau",es:"Piel",bg:"Кожа",nl:"Huid",fa:"پوست",uk:"Шкіра"},
+      "q2000.psych": {de:"Psyche",en:"Mental Health",tr:"Ruh Sağlığı",ru:"Психика",ar:"الصحة النفسية",ku:"Derûnî",pl:"Zdrowie psychiczne",ro:"Sănătate mintală",it:"Salute mentale",fr:"Santé mentale",es:"Salud mental",bg:"Психично здраве",nl:"Geestelijke gezondheid",fa:"سلامت روان",uk:"Психічне здоров'я"},
+      "q2000.ent": {de:"HNO (Hals-Nasen-Ohren)",en:"ENT (Ear-Nose-Throat)",tr:"KBB (Kulak-Burun-Boğaz)",ru:"ЛОР (ухо-горло-нос)",ar:"أنف وأذن وحنجرة",ku:"Guh-Poz-Qirik",pl:"Laryngologia",ro:"ORL",it:"ORL",fr:"ORL",es:"ORL",bg:"УНГ",nl:"KNO",fa:"گوش و حلق و بینی",uk:"ЛОР"},
+      "q2000.eyes": {de:"Augen",en:"Eyes",tr:"Gözler",ru:"Глаза",ar:"العيون",ku:"Çav",pl:"Oczy",ro:"Ochi",it:"Occhi",fr:"Yeux",es:"Ojos",bg:"Очи",nl:"Ogen",fa:"چشم‌ها",uk:"Очі"},
+      "q3000": {de:"Welche Medikamente nehmen Sie?",en:"What medications do you take?",tr:"Hangi ilaçları kullanıyorsunuz?",ru:"Какие лекарства вы принимаете?",ar:"ما الأدوية التي تتناولها؟",ku:"Hûn kîjan dermanan digirin?",pl:"Jakie leki przyjmujesz?",ro:"Ce medicamente luați?",it:"Quali farmaci assume?",fr:"Quels médicaments prenez-vous?",es:"¿Qué medicamentos toma?",bg:"Какви лекарства приемате?",nl:"Welke medicijnen neemt u?",fa:"چه داروهایی مصرف می‌کنید؟",uk:"Які ліки ви приймаєте?"},
+      "q3001": {de:"Haben Sie Allergien?",en:"Do you have allergies?",tr:"Alerjiniz var mı?",ru:"Есть ли у вас аллергии?",ar:"هل لديك حساسية؟",ku:"Alerjiyên we hene?",pl:"Czy masz alergie?",ro:"Aveți alergii?",it:"Ha allergie?",fr:"Avez-vous des allergies?",es:"¿Tiene alergias?",bg:"Имате ли алергии?",nl:"Heeft u allergieën?",fa:"آیا آلرژی دارید؟",uk:"Чи є у вас алергії?"},
+      "q4000": {de:"Gibt es in Ihrer Familie folgende Erkrankungen?",en:"Are there any of the following diseases in your family?",tr:"Ailenizde aşağıdaki hastalıklar var mı?",ru:"Есть ли в вашей семье следующие заболевания?",ar:"هل توجد أي من الأمراض التالية في عائلتك؟",ku:"Di malbata we de nexweşiyên jêrîn hene?",pl:"Czy w twojej rodzinie występują następujące choroby?",ro:"Există în familia dvs. următoarele boli?",it:"Ci sono le seguenti malattie nella sua famiglia?",fr:"Y a-t-il les maladies suivantes dans votre famille?",es:"¿Hay alguna de las siguientes enfermedades en su familia?",bg:"Има ли във вашето семейство следните заболявания?",nl:"Zijn er de volgende ziekten in uw familie?",fa:"آیا بیماری‌های زیر در خانواده شما وجود دارد؟",uk:"Чи є у вашій родині наступні захворювання?"},
+      "q4000.heart": {de:"Herzinfarkt",en:"Heart attack",tr:"Kalp krizi",ru:"Инфаркт",ar:"نوبة قلبية",ku:"Krîza dil",pl:"Zawał serca",ro:"Infarct",it:"Infarto",fr:"Crise cardiaque",es:"Infarto",bg:"Инфаркт",nl:"Hartaanval",fa:"حمله قلبی",uk:"Інфаркт"},
+      "q4000.stroke": {de:"Schlaganfall",en:"Stroke",tr:"İnme",ru:"Инсульт",ar:"سكتة دماغية",ku:"Felc",pl:"Udar",ro:"AVC",it:"Ictus",fr:"AVC",es:"ACV",bg:"Инсулт",nl:"Beroerte",fa:"سکته مغزی",uk:"Інсульт"},
+      "q4000.diabetes": {de:"Diabetes",en:"Diabetes",tr:"Diyabet",ru:"Диабет",ar:"السكري",ku:"Şêkirê xunan",pl:"Cukrzyca",ro:"Diabet",it:"Diabete",fr:"Diabète",es:"Diabetes",bg:"Диабет",nl:"Diabetes",fa:"دیابت",uk:"Діабет"},
+      "q4000.cancer": {de:"Krebs",en:"Cancer",tr:"Kanser",ru:"Рак",ar:"سرطان",ku:"Penceşêr",pl:"Rak",ro:"Cancer",it:"Cancro",fr:"Cancer",es:"Cáncer",bg:"Рак",nl:"Kanker",fa:"سرطان",uk:"Рак"},
+      "q5000": {de:"Rauchen Sie?",en:"Do you smoke?",tr:"Sigara içiyor musunuz?",ru:"Вы курите?",ar:"هل تدخن؟",ku:"Hûn cixare dikşînin?",pl:"Czy palisz?",ro:"Fumați?",it:"Fuma?",fr:"Fumez-vous?",es:"¿Fuma?",bg:"Пушите ли?",nl:"Rookt u?",fa:"سیگار می‌کشید؟",uk:"Ви курите?"},
+      "q5000.never": {de:"Nie geraucht",en:"Never smoked",tr:"Hiç içmedim",ru:"Никогда не курил",ar:"لم أدخن أبداً",ku:"Qet nekêşandime",pl:"Nigdy nie paliłem",ro:"Nu am fumat niciodată",it:"Mai fumato",fr:"Jamais fumé",es:"Nunca fumé",bg:"Никога не съм пушил",nl:"Nooit gerookt",fa:"هرگز سیگار نکشیدم",uk:"Ніколи не курив"},
+      "q5000.former": {de:"Ehemaliger Raucher",en:"Former smoker",tr:"Eski sigara içicisi",ru:"Бывший курильщик",ar:"مدخن سابق",ku:"Berê dikêşand",pl:"Były palacz",ro:"Fost fumător",it:"Ex fumatore",fr:"Ancien fumeur",es:"Ex fumador",bg:"Бивш пушач",nl:"Voormalig roker",fa:"سیگاری سابق",uk:"Колишній курець"},
+      "q5000.current": {de:"Ja, aktuell",en:"Yes, currently",tr:"Evet, şu anda",ru:"Да, сейчас",ar:"نعم، حالياً",ku:"Erê, niha",pl:"Tak, obecnie",ro:"Da, în prezent",it:"Sì, attualmente",fr:"Oui, actuellement",es:"Sí, actualmente",bg:"Да, в момента",nl:"Ja, momenteel",fa:"بله، در حال حاضر",uk:"Так, зараз"},
+      "q5001": {de:"Alkoholkonsum?",en:"Alcohol consumption?",tr:"Alkol tüketimi?",ru:"Употребление алкоголя?",ar:"استهلاك الكحول؟",ku:"Vexwarina alkolê?",pl:"Spożycie alkoholu?",ro:"Consum de alcool?",it:"Consumo di alcol?",fr:"Consommation d'alcool?",es:"Consumo de alcohol?",bg:"Консумация на алкохол?",nl:"Alcoholgebruik?",fa:"مصرف الکل؟",uk:"Вживання алкоголю?"},
+      "q5001.never": {de:"Kein Alkohol",en:"No alcohol",tr:"Alkol yok",ru:"Без алкоголя",ar:"لا كحول",ku:"Bê alkol",pl:"Bez alkoholu",ro:"Fără alcool",it:"Niente alcol",fr:"Pas d'alcool",es:"Sin alcohol",bg:"Без алкохол",nl:"Geen alcohol",fa:"بدون الکل",uk:"Без алкоголю"},
+      "q5001.occasional": {de:"Gelegentlich",en:"Occasionally",tr:"Ara sıra",ru:"Иногда",ar:"أحياناً",ku:"Carinan",pl:"Okazjonalnie",ro:"Ocazional",it:"Occasionalmente",fr:"Occasionnellement",es:"Ocasionalmente",bg:"Понякога",nl:"Af en toe",fa:"گاهی",uk:"Іноді"},
+      "q5001.regular": {de:"Regelmäßig",en:"Regularly",tr:"Düzenli",ru:"Регулярно",ar:"بانتظام",ku:"Bi rêkûpêk",pl:"Regularnie",ro:"Regulat",it:"Regolarmente",fr:"Régulièrement",es:"Regularmente",bg:"Редовно",nl:"Regelmatig",fa:"منظم",uk:"Регулярно"},
+      "q6000": {de:"Gibt es noch etwas, das Sie uns mitteilen möchten?",en:"Is there anything else you would like to tell us?",tr:"Bize söylemek istediğiniz başka bir şey var mı?",ru:"Есть ли что-то еще, что вы хотели бы нам сообщить?",ar:"هل هناك أي شيء آخر تريد إخبارنا به؟",ku:"Tiştek din heye ku hûn dixwazin ji me re bêjin?",pl:"Czy jest coś jeszcze, co chciałbyś nam powiedzieć?",ro:"Mai este ceva ce doriți să ne spuneți?",it:"C'è qualcos'altro che vorrebbe dirci?",fr:"Y a-t-il autre chose que vous aimeriez nous dire?",es:"¿Hay algo más que le gustaría decirnos?",bg:"Има ли нещо друго, което бихте искали да ни кажете?",nl:"Is er nog iets dat u ons wilt vertellen?",fa:"آیا چیز دیگری هست که بخواهید به ما بگویید؟",uk:"Чи є щось ще, що ви хотіли б нам сказати?"},
+      // Warnings
+      "warning.title": {de:"Hinweis",en:"Notice",tr:"Uyarı",ru:"Внимание",ar:"تنبيه",ku:"Hişyarî",pl:"Uwaga",ro:"Atenție",it:"Avviso",fr:"Avis",es:"Aviso",bg:"Внимание",nl:"Let op",fa:"توجه",uk:"Увага"},
+      "warning.chestPain": {de:"Bei Brustschmerzen mit Ausstrahlung in Arm/Kiefer, Luftnot, Übelkeit oder Schweißausbruch: Sofort Notarzt rufen (112)!",en:"For chest pain radiating to arm/jaw, shortness of breath, nausea or sweating: Call emergency services immediately (112)!",tr:"Kola/çeneye yayılan göğüs ağrısı, nefes darlığı, mide bulantısı veya terleme durumunda: Hemen acil servisi arayın!",ru:"При боли в груди с иррадиацией в руку/челюсть, одышке, тошноте или потливости: Немедленно вызовите скорую помощь!",ar:"في حالة ألم الصدر مع امتداد للذراع/الفك، ضيق التنفس، الغثيان أو التعرق: اتصل بالإسعاف فوراً!",ku:"Di rewşa êşa sîngê ya bi belavbûna destê/çenê, teng nefes, gêj an xwîdan: Bi lez re ambûlansê bixwînin!",pl:"W przypadku bólu w klatce piersiowej promieniującego do ramienia/szczęki, duszności, nudności lub pocenia się: Natychmiast wezwij pogotowie!",ro:"Pentru dureri în piept care iradiază spre braț/maxilar, dificultăți de respirație, greață sau transpirație: Sunați imediat la urgențe!",it:"Per dolore toracico irradiato a braccio/mandibola, mancanza di respiro, nausea o sudorazione: Chiamare immediatamente il pronto soccorso!",fr:"Pour une douleur thoracique irradiant vers le bras/la mâchoire, un essoufflement, des nausées ou des sueurs: Appelez immédiatement les urgences!",es:"Para dolor de pecho que irradia al brazo/mandíbula, dificultad para respirar, náuseas o sudoración: ¡Llame a emergencias inmediatamente!",bg:"При болка в гърдите, излъчваща се към ръка/челюст, задух, гадене или изпотяване: Обадете се незабавно на спешна помощ!",nl:"Bij pijn op de borst uitstralend naar arm/kaak, kortademigheid, misselijkheid of zweten: Bel onmiddellijk 112!",fa:"در صورت درد قفسه سینه با انتشار به بازو/فک، تنگی نفس، حالت تهوع یا تعریق: فوراً با اورژانس تماس بگیرید!",uk:"При болю в грудях з віддачею в руку/щелепу, задишці, нудоті або пітливості: Негайно викличте швидку допомогу!"},
+      "warning.stroke": {de:"FAST-Test bei Verdacht auf Schlaganfall",en:"FAST test for suspected stroke",tr:"İnme şüphesi için FAST testi",ru:"FAST-тест при подозрении на инсульт",ar:"اختبار FAST للاشتباه بسكتة دماغية",ku:"Testa FAST ji bo gumana felcê",pl:"Test FAST przy podejrzeniu udaru",ro:"Test FAST pentru suspiciune de AVC",it:"Test FAST per sospetto ictus",fr:"Test FAST en cas de suspicion d'AVC",es:"Prueba FAST ante sospecha de ACV",bg:"FAST тест при съмнение за инсулт",nl:"FAST-test bij vermoeden van beroerte",fa:"آزمایش FAST برای مشکوک به سکته مغزی",uk:"FAST-тест при підозрі на інсульт"},
+      "warning.strokeText": {de:"Face (Gesicht hängt), Arms (Arme heben), Speech (Sprache), Time (Zeit = 112 rufen!)",en:"Face (drooping), Arms (raise), Speech (slurred), Time (call 112!)",tr:"Face (yüz düşmesi), Arms (kol kaldırma), Speech (konuşma), Time (112'yi arayın!)",ru:"Face (лицо опущено), Arms (поднять руки), Speech (речь), Time (звоните 112!)",ar:"الوجه (ترهل)، الذراعين (رفع)، الكلام (ثقيل)، الوقت (اتصل بـ 112!)",ku:"Rû (daketî), Dest (rakirin), Axaftin (zorî), Dem (112 bixwînin!)",pl:"Twarz (opadająca), Ramiona (unieś), Mowa (niewyraźna), Czas (dzwoń 112!)",ro:"Față (căzută), Brațe (ridicare), Vorbire (neclară), Timp (sună 112!)",it:"Viso (cadente), Braccia (alzare), Parola (confusa), Tempo (chiama 112!)",fr:"Visage (tombant), Bras (lever), Parole (trouble), Temps (appelez 112!)",es:"Cara (caída), Brazos (levantar), Habla (arrastrada), Tiempo (llame al 112!)",bg:"Лице (увиснало), Ръце (повдигане), Реч (неясна), Време (обадете се на 112!)",nl:"Gezicht (hangend), Armen (heffen), Spraak (onduidelijk), Tijd (bel 112!)",fa:"صورت (افتاده)، بازوها (بلند کردن)، گفتار (نامفهوم)، زمان (با 112 تماس بگیرید!)",uk:"Обличчя (опущене), Руки (підняти), Мова (незрозуміла), Час (дзвоніть 112!)"},
+      // New v2.1 labels - Validation, Voice Input, Save/Reset
+      "validation.required": {de:"Dieses Feld ist erforderlich",en:"This field is required",tr:"Bu alan gereklidir",ru:"Это поле обязательно",ar:"هذا الحقل مطلوب",ku:"Ev qad pêwîst e",pl:"To pole jest wymagane",ro:"Acest câmp este obligatoriu",it:"Questo campo è obbligatorio",fr:"Ce champ est obligatoire",es:"Este campo es obligatorio",bg:"Това поле е задължително",nl:"Dit veld is verplicht",fa:"این فیلد الزامی است",uk:"Це поле обов'язкове"},
+      "validation.nameMin3": {de:"Name muss mindestens 3 Buchstaben haben",en:"Name must have at least 3 letters",tr:"İsim en az 3 harf olmalıdır",ru:"Имя должно содержать минимум 3 буквы",ar:"يجب أن يحتوي الاسم على 3 أحرف على الأقل",ku:"Divê nav herî kêm 3 tîp hebe",pl:"Imię musi mieć minimum 3 litery",ro:"Numele trebuie să aibă minim 3 litere",it:"Il nome deve avere almeno 3 lettere",fr:"Le nom doit contenir au moins 3 lettres",es:"El nombre debe tener al menos 3 letras",bg:"Името трябва да е поне 3 букви",nl:"Naam moet minstens 3 letters hebben",fa:"نام باید حداقل 3 حرف داشته باشد",uk:"Ім'я повинно мати мінімум 3 літери"},
+      "validation.nameLettersOnly": {de:"Name darf nur Buchstaben enthalten",en:"Name must contain only letters",tr:"İsim yalnızca harflerden oluşmalıdır",ru:"Имя должно содержать только буквы",ar:"يجب أن يحتوي الاسم على أحرف فقط",ku:"Divê nav tenê tîpan hebe",pl:"Imię może zawierać tylko litery",ro:"Numele trebuie să conțină doar litere",it:"Il nome deve contenere solo lettere",fr:"Le nom ne doit contenir que des lettres",es:"El nombre solo debe contener letras",bg:"Името трябва да съдържа само букви",nl:"Naam mag alleen letters bevatten",fa:"نام باید فقط شامل حروف باشد",uk:"Ім'я повинно містити лише літери"},
+      "validation.emailInvalid": {de:"Bitte geben Sie eine gültige E-Mail-Adresse ein",en:"Please enter a valid email address",tr:"Lütfen geçerli bir e-posta adresi girin",ru:"Пожалуйста, введите действительный адрес электронной почты",ar:"الرجاء إدخال عنوان بريد إلكتروني صالح",ku:"Ji kerema xwe navnîşana e-nameyê ya derbasdar binivîsin",pl:"Proszę podać prawidłowy adres e-mail",ro:"Vă rugăm să introduceți o adresă de email validă",it:"Inserire un indirizzo email valido",fr:"Veuillez saisir une adresse e-mail valide",es:"Por favor ingrese una dirección de correo válida",bg:"Моля, въведете валиден имейл адрес",nl:"Voer een geldig e-mailadres in",fa:"لطفاً یک آدرس ایمیل معتبر وارد کنید",uk:"Будь ласка, введіть дійсну адресу електронної пошти"},
+      "btn.reset": {de:"Zurücksetzen",en:"Reset",tr:"Sıfırla",ru:"Сбросить",ar:"إعادة تعيين",ku:"Nûve bike",pl:"Resetuj",ro:"Resetare",it:"Reset",fr:"Réinitialiser",es:"Restablecer",bg:"Нулиране",nl:"Reset",fa:"بازنشانی",uk:"Скинути"},
+      "btn.save": {de:"Speichern",en:"Save",tr:"Kaydet",ru:"Сохранить",ar:"حفظ",ku:"Tomar bike",pl:"Zapisz",ro:"Salvează",it:"Salva",fr:"Sauvegarder",es:"Guardar",bg:"Запази",nl:"Opslaan",fa:"ذخیره",uk:"Зберегти"},
+      "btn.restore": {de:"Wiederherstellen",en:"Restore",tr:"Geri yükle",ru:"Восстановить",ar:"استعادة",ku:"Vegerîne",pl:"Przywróć",ro:"Restaurează",it:"Ripristina",fr:"Restaurer",es:"Restaurar",bg:"Възстанови",nl:"Herstellen",fa:"بازیابی",uk:"Відновити"},
+      "btn.saveBaseData": {de:"Stammdaten speichern",en:"Save Base Data",tr:"Temel verileri kaydet",ru:"Сохранить базовые данные",ar:"حفظ البيانات الأساسية",ku:"Daneyên bingehîn tomar bike",pl:"Zapisz dane podstawowe",ro:"Salvează datele de bază",it:"Salva dati di base",fr:"Sauvegarder les données de base",es:"Guardar datos básicos",bg:"Запази основни данни",nl:"Basisgegevens opslaan",fa:"ذخیره داده‌های پایه",uk:"Зберегти базові дані"},
+      "btn.loadBaseData": {de:"Stammdaten laden",en:"Load Base Data",tr:"Temel verileri yükle",ru:"Загрузить базовые данные",ar:"تحميل البيانات الأساسية",ku:"Daneyên bingehîn bar bike",pl:"Załaduj dane podstawowe",ro:"Încarcă datele de bază",it:"Carica dati di base",fr:"Charger les données de base",es:"Cargar datos básicos",bg:"Зареди основни данни",nl:"Basisgegevens laden",fa:"بارگذاری داده‌های پایه",uk:"Завантажити базові дані"},
+      "btn.voice": {de:"Spracheingabe",en:"Voice Input",tr:"Sesli giriş",ru:"Голосовой ввод",ar:"إدخال صوتي",ku:"Têketina dengî",pl:"Wprowadzanie głosowe",ro:"Introducere vocală",it:"Input vocale",fr:"Saisie vocale",es:"Entrada de voz",bg:"Гласов вход",nl:"Spraakinvoer",fa:"ورودی صوتی",uk:"Голосовий ввід"},
+      "voice.listening": {de:"Ich höre zu...",en:"Listening...",tr:"Dinliyorum...",ru:"Слушаю...",ar:"أستمع...",ku:"Guhdarî dikim...",pl:"Słucham...",ro:"Ascult...",it:"Ascolto...",fr:"J'écoute...",es:"Escuchando...",bg:"Слушам...",nl:"Luisteren...",fa:"در حال گوش دادن...",uk:"Слухаю..."},
+      "voice.unavailable": {de:"Spracherkennung nicht verfügbar",en:"Speech recognition not available",tr:"Konuşma tanıma mevcut değil",ru:"Распознавание речи недоступно",ar:"التعرف على الكلام غير متاح",ku:"Nasîna axaftinê peyda nabe",pl:"Rozpoznawanie mowy niedostępne",ro:"Recunoașterea vocală nu este disponibilă",it:"Riconoscimento vocale non disponibile",fr:"Reconnaissance vocale non disponible",es:"Reconocimiento de voz no disponible",bg:"Разпознаването на реч не е налично",nl:"Spraakherkenning niet beschikbaar",fa:"تشخیص گفتار در دسترس نیست",uk:"Розпізнавання мовлення недоступне"},
+      "confirm.reset": {de:"Möchten Sie wirklich alle Daten löschen und von vorne beginnen?",en:"Do you really want to delete all data and start over?",tr:"Tüm verileri silip baştan başlamak istiyor musunuz?",ru:"Вы действительно хотите удалить все данные и начать сначала?",ar:"هل تريد حقًا حذف جميع البيانات والبدء من جديد؟",ku:"Ma hûn bi rastî dixwazin hemî daneyan jêbirin û ji nû ve dest pê bikin?",pl:"Czy na pewno chcesz usunąć wszystkie dane i zacząć od nowa?",ro:"Doriți să ștergeți toate datele și să începeți de la început?",it:"Vuoi davvero eliminare tutti i dati e ricominciare?",fr:"Voulez-vous vraiment supprimer toutes les données et recommencer?",es:"¿Realmente desea eliminar todos los datos y empezar de nuevo?",bg:"Наистина ли искате да изтриете всички данни и да започнете отначало?",nl:"Wilt u echt alle gegevens verwijderen en opnieuw beginnen?",fa:"آیا واقعاً می‌خواهید همه داده‌ها را حذف کنید و از اول شروع کنید؟",uk:"Ви дійсно хочете видалити всі дані і почати спочатку?"},
+      "save.success": {de:"Daten erfolgreich gespeichert (nur lokal auf diesem Gerät)",en:"Data saved successfully (local to this device only)",tr:"Veriler başarıyla kaydedildi (yalnızca bu cihazda)",ru:"Данные успешно сохранены (только на этом устройстве)",ar:"تم حفظ البيانات بنجاح (على هذا الجهاز فقط)",ku:"Dane bi serkeftî hatin tomarkirin (tenê li vê cîhazê)",pl:"Dane zapisane pomyślnie (tylko lokalnie na tym urządzeniu)",ro:"Datele au fost salvate cu succes (doar local pe acest dispozitiv)",it:"Dati salvati con successo (solo localmente su questo dispositivo)",fr:"Données sauvegardées avec succès (localement sur cet appareil uniquement)",es:"Datos guardados exitosamente (solo localmente en este dispositivo)",bg:"Данните са запазени успешно (само локално на това устройство)",nl:"Gegevens succesvol opgeslagen (alleen lokaal op dit apparaat)",fa:"داده‌ها با موفقیت ذخیره شدند (فقط محلی در این دستگاه)",uk:"Дані успішно збережено (лише локально на цьому пристрої)"},
+      "save.restored": {de:"Gespeicherte Daten wiederhergestellt",en:"Saved data restored",tr:"Kaydedilen veriler geri yüklendi",ru:"Сохраненные данные восстановлены",ar:"تمت استعادة البيانات المحفوظة",ku:"Daneyên tomarkirî hatin vegerandin",pl:"Zapisane dane przywrócone",ro:"Datele salvate au fost restaurate",it:"Dati salvati ripristinati",fr:"Données sauvegardées restaurées",es:"Datos guardados restaurados",bg:"Запазените данни са възстановени",nl:"Opgeslagen gegevens hersteld",fa:"داده‌های ذخیره شده بازیابی شدند",uk:"Збережені дані відновлено"},
+      "save.noData": {de:"Keine gespeicherten Daten gefunden",en:"No saved data found",tr:"Kaydedilmiş veri bulunamadı",ru:"Сохраненные данные не найдены",ar:"لم يتم العثور على بيانات محفوظة",ku:"Daneyên tomarkirî nehatin dîtin",pl:"Nie znaleziono zapisanych danych",ro:"Nu s-au găsit date salvate",it:"Nessun dato salvato trovato",fr:"Aucune donnée sauvegardée trouvée",es:"No se encontraron datos guardados",bg:"Няма намерени запазени данни",nl:"Geen opgeslagen gegevens gevonden",fa:"داده‌های ذخیره شده‌ای یافت نشد",uk:"Збережених даних не знайдено"},
+      "save.baseDataSaved": {de:"Stammdaten gespeichert - diese können bei zukünftigen Besuchen geladen werden",en:"Base data saved - can be loaded on future visits",tr:"Temel veriler kaydedildi - gelecek ziyaretlerde yüklenebilir",ru:"Базовые данные сохранены - можно загрузить при следующих посещениях",ar:"تم حفظ البيانات الأساسية - يمكن تحميلها في الزيارات المستقبلية",ku:"Daneyên bingehîn hatin tomarkirin - dikarin di serdanên pêşerojê de werin barkirin",pl:"Dane podstawowe zapisane - można załadować przy przyszłych wizytach",ro:"Datele de bază au fost salvate - pot fi încărcate la viitoarele vizite",it:"Dati di base salvati - possono essere caricati nelle visite future",fr:"Données de base sauvegardées - peuvent être chargées lors de visites futures",es:"Datos básicos guardados - se pueden cargar en futuras visitas",bg:"Основни данни запазени - могат да се заредят при бъдещи посещения",nl:"Basisgegevens opgeslagen - kunnen bij toekomstige bezoeken worden geladen",fa:"داده‌های پایه ذخیره شدند - می‌توانند در بازدیدهای آینده بارگذاری شوند",uk:"Базові дані збережено - можуть бути завантажені при наступних відвідуваннях"},
+      "save.consent": {de:"Lokale Speicherung (DSGVO Art. 6 Abs. 1a - Einwilligung)",en:"Local storage (GDPR Art. 6(1)(a) - Consent)",tr:"Yerel depolama (KVKK onayı)",ru:"Локальное хранение (GDPR - согласие)",ar:"التخزين المحلي (GDPR - موافقة)",ku:"Tomarkirina herêmî (GDPR - razîbûn)",pl:"Pamięć lokalna (RODO - zgoda)",ro:"Stocare locală (GDPR - consimțământ)",it:"Archiviazione locale (GDPR - consenso)",fr:"Stockage local (RGPD - consentement)",es:"Almacenamiento local (RGPD - consentimiento)",bg:"Локално съхранение (GDPR - съгласие)",nl:"Lokale opslag (AVG - toestemming)",fa:"ذخیره‌سازی محلی (GDPR - رضایت)",uk:"Локальне зберігання (GDPR - згода)"},
+    };
+
+    // ============================================================
+    // QUESTIONNAIRE STRUCTURE with Q-codes
+    // ============================================================
+    const SECTIONS = [
+      {
+        id: "q0000", fields: [
+          { qcode: "q0000", type: "text", required: true },
+          { qcode: "q0001", type: "text", required: true },
+          { qcode: "q0002", type: "select", options: ["q0002.m", "q0002.w", "q0002.d"], required: true },
+          { qcode: "q0003", type: "date", required: true }
+        ]
+      },
+      {
+        id: "q1000", fields: [
+          { qcode: "q1000", type: "radio", options: ["yes", "no"], required: true },
+          { qcode: "q1001", type: "select", options: ["q1001.days", "q1001.weeks", "q1001.months", "q1001.years"], showIf: { q1000: "yes" } },
+          { qcode: "q1002", type: "text", showIf: { q1000: "yes" } },
+          { qcode: "q1003", type: "text", showIf: { q1000: "yes" } },
+          { qcode: "q1005", type: "checkbox", options: ["q1005.fever", "q1005.fatigue", "q1005.nightsweats", "q1005.weightloss"], showIf: { q1000: "yes" } }
+        ]
+      },
+      {
+        id: "q2000", fields: [
+          { qcode: "q2000", type: "checkbox", options: ["q2000.angio", "q2000.resp", "q2000.cardio", "q2000.gi", "q2000.uro", "q2000.msk", "q2000.neuro", "q2000.skin", "q2000.psych", "q2000.ent", "q2000.eyes"] }
+        ]
+      },
+      {
+        id: "q3000", fields: [
+          { qcode: "q3000", type: "textarea" },
+          { qcode: "q3001", type: "radio", options: ["yes", "no", "unknown"] }
+        ]
+      },
+      {
+        id: "q4000", fields: [
+          { qcode: "q4000", type: "checkbox", options: ["q4000.heart", "q4000.stroke", "q4000.diabetes", "q4000.cancer"] }
+        ]
+      },
+      {
+        id: "q5000", fields: [
+          { qcode: "q5000", type: "radio", options: ["q5000.never", "q5000.former", "q5000.current"] },
+          { qcode: "q5001", type: "radio", options: ["q5001.never", "q5001.occasional", "q5001.regular"] }
+        ]
+      },
+      {
+        id: "q6000", fields: [
+          { qcode: "q6000", type: "textarea" }
+        ]
+      }
+    ];
+
+    // ============================================================
+    // STATE MANAGEMENT (RAM only)
+    // ============================================================
+    let state = {
+      currentSection: 0,
+      language: 'de',
+      formData: {},
+      isConsentGiven: false,
+      isPediatric: false
+    };
+    let inactivityTimer, countdownTimer, countdownValue = 60;
+    const TIMEOUT_MS = 600000; // 10 minutes
+
+    // ============================================================
+    // HELPER: Get translated label
+    // ============================================================
+    function t(key) {
+      const entry = L[key];
+      if (!entry) return key;
+      return entry[state.language] || entry.de || key;
+    }
+
+    // ============================================================
+    // INITIALIZATION
+    // ============================================================
+    document.addEventListener('DOMContentLoaded', () => {
+      setupLanguageButtons();
+      setupInactivityTimer();
+      applyTranslations();
+      buildSections();
+    });
+
+    function acceptConsent() {
+      state.isConsentGiven = true;
+      document.getElementById('consentModal').classList.add('hidden');
+      document.getElementById('mainContainer').style.display = 'block';
+      document.getElementById('answerSummary').classList.remove('hidden');
+      updateProgress();
+      showSection(0);
+    }
+
+    // ============================================================
+    // LANGUAGE HANDLING
+    // ============================================================
+    function setupLanguageButtons() {
+      document.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          state.language = btn.dataset.lang;
+          document.documentElement.lang = state.language;
+          document.body.dir = ['ar', 'fa', 'ku'].includes(state.language) ? 'rtl' : 'ltr';
+          applyTranslations();
+          buildSections();
+          showSection(state.currentSection);
+          updateAnswerSummary();
+        });
+      });
+    }
+
+    function applyTranslations() {
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        el.textContent = t(el.dataset.i18n);
+      });
+    }
+
+    // ============================================================
+    // BUILD SECTIONS DYNAMICALLY
+    // ============================================================
+    function buildSections() {
+      const container = document.getElementById('mainContainer');
+      container.innerHTML = '';
+      
+      SECTIONS.forEach((section, idx) => {
+        const sectionEl = document.createElement('section');
+        sectionEl.className = 'section' + (idx === 0 ? ' active' : '');
+        sectionEl.dataset.section = idx;
+        
+        const card = document.createElement('div');
+        card.className = 'card';
+        
+        const title = document.createElement('h2');
+        title.className = 'card-title';
+        title.textContent = t('s.' + section.id);
+        card.appendChild(title);
+        
+        section.fields.forEach(field => {
+          const group = document.createElement('div');
+          group.className = 'form-group';
+          group.id = 'group-' + field.qcode;
+          
+          const label = document.createElement('label');
+          if (field.required) label.className = 'required';
+          label.textContent = t(field.qcode);
+          group.appendChild(label);
+          
+          if (field.type === 'text') {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'input-with-voice';
+            
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.dataset.qcode = field.qcode;
+            input.value = state.formData[field.qcode] || '';
+            input.addEventListener('input', () => { 
+              state.formData[field.qcode] = input.value; 
+              updateAnswerSummary(); 
+              // Clear validation error on input
+              group.classList.remove('invalid');
+              const err = group.querySelector('.error-message');
+              if (err) err.remove();
+            });
+            wrapper.appendChild(input);
+            
+            // Add voice input button
+            const voiceBtn = document.createElement('button');
+            voiceBtn.type = 'button';
+            voiceBtn.className = 'voice-btn';
+            voiceBtn.innerHTML = '🎤';
+            voiceBtn.title = t('btn.voice') || 'Spracheingabe';
+            voiceBtn.onclick = () => startVoiceInput(input);
+            wrapper.appendChild(voiceBtn);
+            
+            group.appendChild(wrapper);
+          } else if (field.type === 'date') {
+            const input = document.createElement('input');
+            input.type = 'date';
+            input.dataset.qcode = field.qcode;
+            input.value = state.formData[field.qcode] || '';
+            input.addEventListener('change', () => { state.formData[field.qcode] = input.value; checkAge(); updateAnswerSummary(); });
+            group.appendChild(input);
+          } else if (field.type === 'textarea') {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'input-with-voice';
+            wrapper.style.alignItems = 'flex-start';
+            
+            const textarea = document.createElement('textarea');
+            textarea.rows = 3;
+            textarea.dataset.qcode = field.qcode;
+            textarea.value = state.formData[field.qcode] || '';
+            textarea.addEventListener('input', () => { state.formData[field.qcode] = textarea.value; updateAnswerSummary(); });
+            wrapper.appendChild(textarea);
+            
+            // Add voice input button
+            const voiceBtn = document.createElement('button');
+            voiceBtn.type = 'button';
+            voiceBtn.className = 'voice-btn';
+            voiceBtn.innerHTML = '🎤';
+            voiceBtn.title = t('btn.voice') || 'Spracheingabe';
+            voiceBtn.onclick = () => startVoiceInput(textarea);
+            wrapper.appendChild(voiceBtn);
+            
+            group.appendChild(wrapper);
+          } else if (field.type === 'select') {
+            const select = document.createElement('select');
+            select.dataset.qcode = field.qcode;
+            const placeholder = document.createElement('option');
+            placeholder.value = '';
+            placeholder.textContent = t('select.placeholder');
+            select.appendChild(placeholder);
+            field.options.forEach(opt => {
+              const option = document.createElement('option');
+              option.value = opt;
+              option.textContent = t(opt);
+              if (state.formData[field.qcode] === opt) option.selected = true;
+              select.appendChild(option);
+            });
+            select.addEventListener('change', () => { state.formData[field.qcode] = select.value; applyBranching(); updateAnswerSummary(); });
+            group.appendChild(select);
+          } else if (field.type === 'radio') {
+            const optionsList = document.createElement('div');
+            optionsList.className = 'options-list';
+            field.options.forEach(opt => {
+              const optLabel = document.createElement('label');
+              const radio = document.createElement('input');
+              radio.type = 'radio';
+              radio.name = field.qcode;
+              radio.value = opt;
+              radio.dataset.qcode = field.qcode;
+              if (state.formData[field.qcode] === opt) radio.checked = true;
+              radio.addEventListener('change', () => { 
+                state.formData[field.qcode] = opt; 
+                optionsList.querySelectorAll('label').forEach(l => l.classList.remove('selected'));
+                optLabel.classList.add('selected');
+                applyBranching(); 
+                updateAnswerSummary(); 
+              });
+              optLabel.appendChild(radio);
+              optLabel.appendChild(document.createTextNode(t(opt)));
+              if (state.formData[field.qcode] === opt) optLabel.classList.add('selected');
+              optionsList.appendChild(optLabel);
+            });
+            group.appendChild(optionsList);
+          } else if (field.type === 'checkbox') {
+            const optionsList = document.createElement('div');
+            optionsList.className = 'options-list';
+            field.options.forEach(opt => {
+              const optLabel = document.createElement('label');
+              const cb = document.createElement('input');
+              cb.type = 'checkbox';
+              cb.value = opt;
+              cb.dataset.qcode = field.qcode;
+              const currentVals = state.formData[field.qcode] || [];
+              if (currentVals.includes(opt)) { cb.checked = true; optLabel.classList.add('selected'); }
+              cb.addEventListener('change', () => {
+                let vals = state.formData[field.qcode] || [];
+                if (cb.checked) { vals.push(opt); optLabel.classList.add('selected'); }
+                else { vals = vals.filter(v => v !== opt); optLabel.classList.remove('selected'); }
+                state.formData[field.qcode] = vals;
+                updateAnswerSummary();
+              });
+              optLabel.appendChild(cb);
+              optLabel.appendChild(document.createTextNode(t(opt)));
+              optionsList.appendChild(optLabel);
+            });
+            group.appendChild(optionsList);
+          }
+          
+          card.appendChild(group);
+        });
+        
+        // Navigation buttons
+        const navButtons = document.createElement('div');
+        navButtons.className = 'nav-buttons';
+        if (idx > 0) {
+          const backBtn = document.createElement('button');
+          backBtn.className = 'btn btn-secondary';
+          backBtn.textContent = t('nav.back');
+          backBtn.onclick = () => prevSection();
+          navButtons.appendChild(backBtn);
+        } else {
+          navButtons.appendChild(document.createElement('div'));
+        }
+        if (idx < SECTIONS.length - 1) {
+          const nextBtn = document.createElement('button');
+          nextBtn.className = 'btn btn-primary';
+          nextBtn.textContent = t('nav.next');
+          nextBtn.onclick = () => nextSection();
+          navButtons.appendChild(nextBtn);
+        } else {
+          const exportBtn = document.createElement('button');
+          exportBtn.className = 'btn btn-success';
+          exportBtn.textContent = t('nav.export');
+          exportBtn.onclick = () => showExportModal();
+          navButtons.appendChild(exportBtn);
+        }
+        card.appendChild(navButtons);
+        
+        sectionEl.appendChild(card);
+        container.appendChild(sectionEl);
+      });
+      
+      applyBranching();
+    }
+
+    // ============================================================
+    // BRANCHING LOGIC
+    // ============================================================
+    function applyBranching() {
+      SECTIONS.forEach(section => {
+        section.fields.forEach(field => {
+          if (field.showIf) {
+            const group = document.getElementById('group-' + field.qcode);
+            if (group) {
+              let show = true;
+              for (const [key, val] of Object.entries(field.showIf)) {
+                if (state.formData[key] !== val) show = false;
+              }
+              group.style.display = show ? 'block' : 'none';
+            }
+          }
+        });
+      });
+    }
+
+    function checkAge() {
+      const bd = state.formData['q0003'];
+      if (!bd) return;
+      const age = Math.floor((new Date() - new Date(bd)) / 31557600000);
+      state.isPediatric = age < 16;
+    }
+
+    // ============================================================
+    // NAVIGATION
+    // ============================================================
+    function nextSection() {
+      // Validate current section before moving forward
+      if (!validateSection(state.currentSection)) {
+        return;
+      }
+      if (state.currentSection < SECTIONS.length - 1) {
+        showSection(state.currentSection + 1);
+      }
+    }
+
+    function prevSection() {
+      if (state.currentSection > 0) {
+        showSection(state.currentSection - 1);
+      }
+    }
+
+    function showSection(idx) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.querySelector(`[data-section="${idx}"]`)?.classList.add('active');
+      state.currentSection = idx;
+      updateProgress();
+      window.scrollTo(0, 0);
+      resetTimeout();
+    }
+
+    function goToQuestion(qcode) {
+      // Find which section contains this qcode
+      for (let i = 0; i < SECTIONS.length; i++) {
+        for (const field of SECTIONS[i].fields) {
+          if (field.qcode === qcode) {
+            showSection(i);
+            setTimeout(() => {
+              const group = document.getElementById('group-' + qcode);
+              if (group) group.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
+            toggleAnswerSummary(); // Collapse summary
+            return;
+          }
+        }
+      }
+    }
+
+    function updateProgress() {
+      const pct = Math.round(((state.currentSection + 1) / SECTIONS.length) * 100);
+      document.getElementById('progressFill').style.width = pct + '%';
+      document.getElementById('progressText').textContent = pct;
+    }
+
+    // ============================================================
+    // ANSWER SUMMARY BOX
+    // ============================================================
+    function toggleAnswerSummary() {
+      const summary = document.getElementById('answerSummary');
+      summary.classList.toggle('collapsed');
+    }
+
+    function updateAnswerSummary() {
+      const content = document.getElementById('answerSummaryContent');
+      const entries = Object.entries(state.formData).filter(([k, v]) => v && (Array.isArray(v) ? v.length > 0 : true));
+      
+      document.getElementById('answerCount').textContent = entries.length;
+      
+      if (entries.length === 0) {
+        content.innerHTML = '<div class="no-answers">' + t('summary.empty') + '</div>';
+        return;
+      }
+      
+      content.innerHTML = entries.map(([qcode, value]) => {
+        let displayValue = value;
+        if (Array.isArray(value)) {
+          displayValue = value.map(v => t(v)).join(', ');
+        } else if (L[value]) {
+          displayValue = t(value);
+        }
+        return `<div class="answer-item" onclick="goToQuestion('${qcode}')">
+          <span class="answer-item-q">${t(qcode)}</span>
+          <span class="answer-item-a">${displayValue}</span>
+          <span class="answer-item-edit">✏️</span>
+        </div>`;
+      }).join('');
+    }
+
+    // ============================================================
+    // FHIR R5 QuestionnaireResponse GENERATION
+    // ============================================================
+    function generateFHIRResponse() {
+      return {
+        resourceType: "QuestionnaireResponse",
+        questionnaire: "https://anamnese-suite.local/fhir/Questionnaire/anamnese-suite|1.0.0",
+        status: "completed",
+        authored: new Date().toISOString(),
+        item: Object.entries(state.formData).filter(([k, v]) => v).map(([qcode, value]) => ({
+          linkId: qcode,
+          answer: Array.isArray(value) 
+            ? value.map(v => ({ valueString: v }))
+            : [typeof value === 'boolean' ? { valueBoolean: value } :
+               /^\d{4}-\d{2}-\d{2}$/.test(value) ? { valueDate: value } :
+               { valueString: String(value) }]
+        }))
+      };
+    }
+
+    // ============================================================
+    // EXPORT FUNCTIONS
+    // ============================================================
+    function showExportModal() {
+      document.getElementById('exportModal').classList.remove('hidden');
+      if (!('NDEFReader' in window)) {
+        document.getElementById('nfcButton').disabled = true;
+        document.getElementById('nfcStatusText').textContent = t('nfc.unavailable') || 'NFC nicht verfügbar';
+      }
+    }
+
+    function cancelExport() {
+      document.getElementById('exportModal').classList.add('hidden');
+    }
+
+    async function exportNFC() {
+      const response = generateFHIRResponse();
+      const json = JSON.stringify(response);
+      const size = new Blob([json]).size;
+      
+      if (size > 4000) {
+        alert(t('nfc.tooLarge') + ' (' + size + ' Bytes)');
+        return;
+      }
+      
+      try {
+        if ('NDEFReader' in window) {
+          const ndef = new NDEFReader();
+          await ndef.write({ records: [{ recordType: "mime", mediaType: "application/json", data: json }] });
+          document.getElementById('nfcStatusText').textContent = '✓ ' + (t('nfc.success') || 'Übertragung erfolgreich!');
+          setTimeout(wipeData, 2000);
+        }
+      } catch (e) {
+        document.getElementById('nfcStatusText').textContent = (t('nfc.error') || 'Fehler') + ': ' + e.message;
+      }
+    }
+
+    function exportQR() {
+      const response = generateFHIRResponse();
+      const json = JSON.stringify(response);
+      alert('QR-Code Funktion: Daten bereit (' + json.length + ' Zeichen)\n\nIn Produktion würde hier ein QR-Code generiert.');
+    }
+
+    function downloadJSON() {
+      const response = generateFHIRResponse();
+      const blob = new Blob([JSON.stringify(response, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'anamnese-' + new Date().toISOString().slice(0, 10) + '.json';
+      a.click();
+      URL.revokeObjectURL(url);
+      setTimeout(wipeData, 1000);
+    }
+
+    // ============================================================
+    // SECURITY: TIMEOUT & WIPE
+    // ============================================================
+    function setupInactivityTimer() {
+      ['mousedown', 'keydown', 'touchstart', 'scroll'].forEach(e => document.addEventListener(e, resetTimeout));
+      resetTimeout();
+    }
+
+    function resetTimeout() {
+      clearTimeout(inactivityTimer);
+      clearInterval(countdownTimer);
+      document.getElementById('timeoutWarning').classList.add('hidden');
+      countdownValue = 60;
+      inactivityTimer = setTimeout(showTimeoutWarning, TIMEOUT_MS);
+    }
+
+    function showTimeoutWarning() {
+      document.getElementById('timeoutWarning').classList.remove('hidden');
+      countdownTimer = setInterval(() => {
+        countdownValue--;
+        document.getElementById('timeoutCounter').textContent = countdownValue;
+        if (countdownValue <= 0) wipeData();
+      }, 1000);
+    }
+
+    function wipeData() {
+      state = { currentSection: 0, language: state.language, formData: {}, isConsentGiven: false, isPediatric: false };
+      buildSections();
+      document.getElementById('exportModal').classList.add('hidden');
+      document.getElementById('answerSummary').classList.add('hidden');
+      document.getElementById('mainContainer').style.display = 'none';
+      document.getElementById('consentModal').classList.remove('hidden');
+      document.getElementById('timeoutWarning').classList.add('hidden');
+      clearInterval(countdownTimer);
+      updateAnswerSummary();
+      alert(t('security.dataWiped') || 'Daten wurden aus Sicherheitsgründen gelöscht.');
+    }
+
+    // ============================================================
+    // VALIDATION FUNCTIONS
+    // ============================================================
+    function validateSection(sectionIdx) {
+      const section = SECTIONS[sectionIdx];
+      let isValid = true;
+      let firstInvalidField = null;
+
+      section.fields.forEach(field => {
+        const group = document.getElementById('group-' + field.qcode);
+        if (!group) return;
+        
+        // Skip hidden fields
+        if (group.style.display === 'none') return;
+        
+        // Clear previous errors
+        group.classList.remove('invalid');
+        const existingError = group.querySelector('.error-message');
+        if (existingError) existingError.remove();
+        
+        if (field.required) {
+          const value = state.formData[field.qcode];
+          let errorMessage = null;
+          
+          // Check if field is empty
+          if (!value || (Array.isArray(value) && value.length === 0)) {
+            errorMessage = t('validation.required');
+            isValid = false;
+          }
+          
+          // Additional validation for name fields (q0000, q0001)
+          if (value && (field.qcode === 'q0000' || field.qcode === 'q0001')) {
+            // Check minimum 3 characters
+            if (value.length < 3) {
+              errorMessage = t('validation.nameMin3');
+              isValid = false;
+            }
+            // Check only letters (including international characters, spaces, hyphens, apostrophes)
+            else if (!/^[\p{L}\s\-']+$/u.test(value)) {
+              errorMessage = t('validation.nameLettersOnly');
+              isValid = false;
+            }
+          }
+          
+          // Email validation (if field is email type)
+          if (value && field.type === 'email') {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(value)) {
+              errorMessage = t('validation.emailInvalid');
+              isValid = false;
+            }
+          }
+          
+          if (errorMessage) {
+            group.classList.add('invalid');
+            const errorEl = document.createElement('div');
+            errorEl.className = 'error-message';
+            errorEl.textContent = errorMessage;
+            group.appendChild(errorEl);
+            
+            if (!firstInvalidField) {
+              firstInvalidField = group;
+            }
+          }
+        }
+      });
+      
+      // Scroll to first invalid field
+      if (firstInvalidField) {
+        firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      
+      return isValid;
+    }
+
+    // ============================================================
+    // SAVE & RESTORE FUNCTIONS (GDPR Art. 6(1)(a) - Consent)
+    // ============================================================
+    const STORAGE_KEY = 'anamnese_draft';
+    const BASE_DATA_KEY = 'anamnese_basedata';
+
+    function showDataPanel(mode) {
+      if (mode === 'save') {
+        saveFormData();
+      } else if (mode === 'restore') {
+        restoreFormData();
+      }
+    }
+
+    function saveFormData() {
+      try {
+        const dataToSave = {
+          formData: state.formData,
+          currentSection: state.currentSection,
+          language: state.language,
+          timestamp: new Date().toISOString()
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+        alert(t('save.success') || 'Daten erfolgreich gespeichert');
+      } catch (e) {
+        console.error('Save error:', e);
+        alert('Speichern fehlgeschlagen: ' + e.message);
+      }
+    }
+
+    function restoreFormData() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (!saved) {
+          alert(t('save.noData') || 'Keine gespeicherten Daten gefunden');
+          return;
+        }
+        const data = JSON.parse(saved);
+        state.formData = data.formData || {};
+        state.currentSection = data.currentSection || 0;
+        
+        buildSections();
+        showSection(state.currentSection);
+        updateAnswerSummary();
+        
+        // Show answer summary
+        document.getElementById('answerSummary').classList.remove('hidden');
+        
+        alert(t('save.restored') || 'Gespeicherte Daten wiederhergestellt');
+      } catch (e) {
+        console.error('Restore error:', e);
+        alert('Wiederherstellen fehlgeschlagen: ' + e.message);
+      }
+    }
+
+    function saveBaseData() {
+      try {
+        // Only save base data fields (q0000 - q0003)
+        const baseData = {
+          q0000: state.formData['q0000'] || '',
+          q0001: state.formData['q0001'] || '',
+          q0002: state.formData['q0002'] || '',
+          q0003: state.formData['q0003'] || ''
+        };
+        localStorage.setItem(BASE_DATA_KEY, JSON.stringify(baseData));
+        alert(t('save.baseDataSaved') || 'Stammdaten gespeichert');
+      } catch (e) {
+        console.error('Save base data error:', e);
+        alert('Speichern fehlgeschlagen: ' + e.message);
+      }
+    }
+
+    function loadBaseData() {
+      try {
+        const saved = localStorage.getItem(BASE_DATA_KEY);
+        if (!saved) {
+          alert(t('save.noData') || 'Keine Stammdaten gefunden');
+          return;
+        }
+        const baseData = JSON.parse(saved);
+        
+        // Merge base data into current form data (only base data fields q0000-q0003)
+        // This explicitly only overwrites base data fields, preserving other form data
+        if (baseData.q0000) state.formData['q0000'] = baseData.q0000;
+        if (baseData.q0001) state.formData['q0001'] = baseData.q0001;
+        if (baseData.q0002) state.formData['q0002'] = baseData.q0002;
+        if (baseData.q0003) state.formData['q0003'] = baseData.q0003;
+        
+        buildSections();
+        showSection(0);
+        updateAnswerSummary();
+        
+        alert(t('save.restored') || 'Stammdaten geladen');
+      } catch (e) {
+        console.error('Load base data error:', e);
+        alert('Laden fehlgeschlagen: ' + e.message);
+      }
+    }
+
+    function resetForm() {
+      if (confirm(t('confirm.reset') || 'Möchten Sie wirklich alle Daten löschen und von vorne beginnen?')) {
+        state.formData = {};
+        state.currentSection = 0;
+        buildSections();
+        showSection(0);
+        updateAnswerSummary();
+        document.getElementById('answerSummary').classList.add('hidden');
+        window.scrollTo(0, 0);
+      }
+    }
+
+    // ============================================================
+    // SPEECH-TO-TEXT (Web Speech API - Cross-Platform)
+    // ============================================================
+    let speechRecognition = null;
+    let currentVoiceField = null;
+
+    function initSpeechRecognition() {
+      if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        speechRecognition = new SpeechRecognition();
+        speechRecognition.continuous = false;
+        speechRecognition.interimResults = false;
+        
+        // Set language based on current UI language
+        const langMap = {
+          'de': 'de-DE', 'en': 'en-US', 'tr': 'tr-TR', 'ru': 'ru-RU',
+          'ar': 'ar-SA', 'ku': 'ku-TR', 'pl': 'pl-PL', 'ro': 'ro-RO',
+          'it': 'it-IT', 'fr': 'fr-FR', 'es': 'es-ES', 'bg': 'bg-BG',
+          'nl': 'nl-NL', 'fa': 'fa-IR', 'uk': 'uk-UA'
+        };
+        speechRecognition.lang = langMap[state.language] || 'de-DE';
+        
+        speechRecognition.onresult = (event) => {
+          const transcript = event.results[0][0].transcript;
+          if (currentVoiceField) {
+            currentVoiceField.value = transcript;
+            currentVoiceField.dispatchEvent(new Event('input', { bubbles: true }));
+          }
+          hideVoiceStatus();
+        };
+        
+        speechRecognition.onerror = (event) => {
+          console.error('Speech recognition error:', event.error);
+          hideVoiceStatus();
+        };
+        
+        speechRecognition.onend = () => {
+          hideVoiceStatus();
+        };
+        
+        return true;
+      }
+      return false;
+    }
+
+    function startVoiceInput(inputElement) {
+      if (!speechRecognition && !initSpeechRecognition()) {
+        alert(t('voice.unavailable') || 'Spracherkennung nicht verfügbar');
+        return;
+      }
+      
+      // Update language setting
+      const langMap = {
+        'de': 'de-DE', 'en': 'en-US', 'tr': 'tr-TR', 'ru': 'ru-RU',
+        'ar': 'ar-SA', 'ku': 'ku-TR', 'pl': 'pl-PL', 'ro': 'ro-RO',
+        'it': 'it-IT', 'fr': 'fr-FR', 'es': 'es-ES', 'bg': 'bg-BG',
+        'nl': 'nl-NL', 'fa': 'fa-IR', 'uk': 'uk-UA'
+      };
+      speechRecognition.lang = langMap[state.language] || 'de-DE';
+      
+      currentVoiceField = inputElement;
+      showVoiceStatus();
+      
+      try {
+        speechRecognition.start();
+      } catch (e) {
+        console.error('Speech start error:', e);
+        hideVoiceStatus();
+        alert(t('voice.unavailable') || 'Spracherkennung konnte nicht gestartet werden');
+      }
+    }
+
+    function showVoiceStatus() {
+      document.getElementById('voiceStatus').classList.remove('hidden');
+    }
+
+    function hideVoiceStatus() {
+      document.getElementById('voiceStatus').classList.add('hidden');
+      currentVoiceField = null;
+    }
+
+    // ============================================================
+    // MEDICAL DICTIONARY FOR INTELLIGENT ANSWER ASSIGNMENT
+    // ============================================================
+    const MEDICAL_DICTIONARY = {
+      // Symptoms mapped to Q-codes
+      'kopfschmerzen': { qcode: 'q2000', value: 'q2000.neuro' },
+      'headache': { qcode: 'q2000', value: 'q2000.neuro' },
+      'bauchschmerzen': { qcode: 'q2000', value: 'q2000.gi' },
+      'stomach pain': { qcode: 'q2000', value: 'q2000.gi' },
+      'rückenschmerzen': { qcode: 'q2000', value: 'q2000.msk' },
+      'back pain': { qcode: 'q2000', value: 'q2000.msk' },
+      'husten': { qcode: 'q2000', value: 'q2000.resp' },
+      'cough': { qcode: 'q2000', value: 'q2000.resp' },
+      'atemnot': { qcode: 'q2000', value: 'q2000.resp' },
+      'shortness of breath': { qcode: 'q2000', value: 'q2000.resp' },
+      'brustschmerzen': { qcode: 'q2000', value: 'q2000.cardio' },
+      'chest pain': { qcode: 'q2000', value: 'q2000.cardio' },
+      'herzrasen': { qcode: 'q2000', value: 'q2000.cardio' },
+      'palpitations': { qcode: 'q2000', value: 'q2000.cardio' },
+      'schwindel': { qcode: 'q2000', value: 'q2000.neuro' },
+      'dizziness': { qcode: 'q2000', value: 'q2000.neuro' },
+      'fieber': { qcode: 'q1005', value: 'q1005.fever' },
+      'fever': { qcode: 'q1005', value: 'q1005.fever' },
+      'müdigkeit': { qcode: 'q1005', value: 'q1005.fatigue' },
+      'fatigue': { qcode: 'q1005', value: 'q1005.fatigue' },
+      'nachtschweiß': { qcode: 'q1005', value: 'q1005.nightsweats' },
+      'night sweats': { qcode: 'q1005', value: 'q1005.nightsweats' },
+      'gewichtsverlust': { qcode: 'q1005', value: 'q1005.weightloss' },
+      'weight loss': { qcode: 'q1005', value: 'q1005.weightloss' },
+      // Yes/No answers
+      'ja': { value: 'yes' },
+      'yes': { value: 'yes' },
+      'nein': { value: 'no' },
+      'no': { value: 'no' }
+    };
+
+    function analyzeSpokenText(text, qcode) {
+      const words = text.toLowerCase().split(/\s+/);
+      
+      for (const word of words) {
+        if (MEDICAL_DICTIONARY[word]) {
+          const match = MEDICAL_DICTIONARY[word];
+          
+          // If the match has a qcode, it's a symptom that can be auto-assigned
+          if (match.qcode) {
+            // Handle checkbox fields - ensure currentValues is always an array
+            let currentValues = state.formData[match.qcode];
+            if (!Array.isArray(currentValues)) {
+              currentValues = currentValues ? [currentValues] : [];
+            }
+            if (!currentValues.includes(match.value)) {
+              currentValues.push(match.value);
+              state.formData[match.qcode] = currentValues;
+            }
+          } else if (match.value && qcode) {
+            // Simple value assignment (yes/no)
+            state.formData[qcode] = match.value;
+          }
+        }
+      }
+      
+      updateAnswerSummary();
+      buildSections();
+    }
+  </script>
+</body>
+</html>
