@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anamnese-Fragebogen – Interaktiv</title>
+    <style>
+        /*
+         * Diese Datei basiert auf der bisherigen Anamnese‑Webapp und erweitert sie
+         * um eine Chat‑ähnliche Darstellung und eine integrierte Spracheingabe.
+         * Ziel ist es, die Interaktion natürlicher zu gestalten: Jede Frage und
+         * Antwort wird unterhalb des Formulars in einer Chat‑Liste aufgeführt.
+         * Die Nutzer*innen können Text eintippen oder per Mikrofon diktieren.
+         */
+
+        :root {
+            --color-primary: #007bff;
+            --color-secondary: #6c757d;
+            --color-success: #28a745;
+            --color-danger: #dc3545;
+            --color-warning: #ffc107;
+            --color-text: #212529;
+            --color-background: #f8f9fa;
+            --color-card-bg: #ffffff;
+            --color-border: #dee2e6;
+            --color-focus: #80bdff;
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        body.dark {
+            --color-text: #f8f9fa;
+            --color-background: #212529;
+            --color-card-bg: #343a40;
+            --color-border: #495057;
+        }
+
+        body {
+            font-family: var(--font-family);
+            margin: 0;
+            padding: 1rem;
+            background-color: var(--color-background);
+            color: var(--color-text);
+            transition: background-color 0.3s, color 0.3s;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        header {
+            text-align: center;
+            padding: 1rem 0;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .disclaimer {
+            background-color: var(--color-warning);
+            color: var(--color-text);
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            border-radius: 4px;
+            font-weight: bold;
+            text-align: center;
+            border: 1px solid #ffae00;
+        }
+        .disclaimer.success {
+            background-color: var(--color-success);
+            color: white;
+            border-color: var(--color-success);
+        }
+
+        .progress-container {
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .progress-bar {
+            height: 10px;
+            background-color: var(--color-border);
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .progress {
+            height: 100%;
+            background-color: var(--color-primary);
+            transition: width 0.4s ease-in-out;
+        }
+
+        .progress-text {
+            font-size: 0.9rem;
+            color: var(--color-secondary);
+        }
+
+        #question-area {
+            background-color: var(--color-card-bg);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        #question-area h2 {
+            font-size: 1.4rem;
+            margin-top: 0;
+            margin-bottom: 0.75rem;
+            border-bottom: 2px solid var(--color-border);
+            padding-bottom: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.4rem;
+            font-weight: 600;
+        }
+
+        input[type="text"], input[type="number"], input[type="date"], select, textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            box-sizing: border-box;
+            background-color: var(--color-card-bg);
+            color: var(--color-text);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+            outline: none;
+        }
+
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .options-list label {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s, border-color 0.2s;
+            font-weight: normal;
+        }
+
+        .options-list label:hover {
+            background-color: rgba(0, 123, 255, 0.05);
+        }
+
+        .options-list input[type="radio"], .options-list input[type="checkbox"] {
+            margin-right: 10px;
+            width: auto;
+        }
+
+        .nav-buttons, .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background-color 0.2s, opacity 0.2s;
+            flex-grow: 1;
+            min-width: 120px;
+        }
+
+        .btn-primary {
+            background-color: var(--color-primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+
+        .btn-secondary {
+            background-color: var(--color-secondary);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        .btn-danger {
+            background-color: var(--color-danger);
+            color: white;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        footer {
+            font-size: 0.8rem;
+            text-align: center;
+            margin-top: 2rem;
+            padding: 1rem 0;
+            border-top: 1px solid var(--color-border);
+            color: var(--color-secondary);
+        }
+
+        .language-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 1rem;
+        }
+
+        /* Chat-Bereich */
+        #chat-area {
+            border: 1px solid var(--color-border);
+            background-color: var(--color-card-bg);
+            border-radius: 8px;
+            padding: 1rem;
+            max-height: 250px;
+            overflow-y: auto;
+            margin-bottom: 1.5rem;
+        }
+        .chat-message {
+            margin-bottom: 0.8rem;
+        }
+        .chat-message.user {
+            text-align: right;
+        }
+        .chat-bubble {
+            display: inline-block;
+            padding: 0.6rem 1rem;
+            border-radius: 15px;
+            max-width: 80%;
+        }
+        .chat-message.system .chat-bubble {
+            background-color: #e9ecef;
+            color: var(--color-text);
+        }
+        .chat-message.user .chat-bubble {
+            background-color: var(--color-primary);
+            color: white;
+        }
+
+        /* Mikrofon-Button für Eingabefelder */
+        .input-with-mic {
+            position: relative;
+        }
+        .mic-button {
+            position: absolute;
+            top: 50%;
+            right: 10px;
+            transform: translateY(-50%);
+            background: var(--color-primary);
+            color: white;
+            border: none;
+            padding: 0.3rem 0.5rem;
+            border-radius: 50%;
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .mic-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Anamnese-Fragebogen</h1>
+            <div class="disclaimer">
+                Dies ist ein digitales Anamnese-Werkzeug und ersetzt keine ärztliche Untersuchung oder Diagnose.
+            </div>
+            <!-- Hinweis, dass die Applikation nicht online mit externen Diensten kommuniziert -->
+            <div class="disclaimer">
+                Ihre Eingaben werden lokal im Browser verarbeitet; es findet keine Übermittlung an Server statt.
+            </div>
+            <div class="disclaimer success">
+                Ihre Eingaben werden lokal in Ihrem Browser gespeichert und nur als Datei gespeichert/übergeben.
+            </div>
+        </header>
+
+        <div class="language-selector">
+            <label for="lang-select">Sprache:</label>
+            <select id="lang-select">
+                <option value="de">Deutsch</option>
+                <option value="en">English</option>
+                <option value="es">Español</option>
+                <option value="fr">Français</option>
+            </select>
+            <button id="toggle-mode" class="btn-secondary">Dark Mode</button>
+        </div>
+
+        <!-- Sprach- und Audio-Steuerung: Starten/Stoppen von Spracherkennung sowie Upload einer Audiodatei -->
+        <div id="voice-controls" style="margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;">
+            <label for="audio-upload" style="font-weight: 600; margin-right: 0.5rem;">Spracherkennung:</label>
+            <button id="start-voice" class="btn-secondary">Aufnahme starten</button>
+            <button id="stop-voice" class="btn-secondary" disabled>Aufnahme stoppen</button>
+            <input type="file" id="audio-upload" accept="audio/*" style="flex-grow: 1;" />
+        </div>
+
+        <div class="progress-container">
+            <div class="progress-text" id="progress-text">Schritt 1 von X (0%)</div>
+            <div class="progress-bar">
+                <div class="progress" id="progress-bar-fill"></div>
+            </div>
+        </div>
+
+        <div id="question-area"></div>
+
+        <div id="chat-area"></div>
+
+        <div class="nav-buttons">
+            <button id="back-btn" class="btn-secondary" disabled>Zurück</button>
+            <button id="next-btn" class="btn-primary">Weiter</button>
+        </div>
+
+        <div class="action-buttons">
+            <button id="export-named-btn" class="btn-primary hidden">Export (Voll)</button>
+            <button id="export-anon-btn" class="btn-secondary hidden">Export (Pseudonymisiert)</button>
+            <button id="new-start-btn" class="btn-danger">Neu beginnen</button>
+        </div>
+
+        <footer>
+            <p>Inhalte (medizinische Konzeption): Dr. Christian Klapproth</p>
+            <p>Technische Umsetzung/Konzept: Laith Alshdaifat (CEO DiggAi GmbH)</p>
+        </footer>
+    </div>
+
+    <script>
+        // ###########################################################
+        // 1. Datenmodelle: Fragebogenstruktur und Übersetzungen
+        // ###########################################################
+        /*
+         * Die Struktur des Fragebogens orientiert sich an gängigen Schmerz‑
+         * anamnesischen Leitfäden: Basisdaten, aktuelle Beschwerden,
+         * Schmerzdetails, Modifikatoren, Begleitsymptome, Vorerkrankungen,
+         * Medikamente, Allergien, Funktionseinschränkungen, Red Flags und
+         * Abschluss. Für weitergehende Systeme kann dieser Datensatz leicht
+         * erweitert werden (siehe ursprüngliche "question_tree_full_with_order.js").
+         */
+        const QUESTIONNAIRE_STRUCTURE = [
+            {
+                id: "q0000",
+                title: "Basisdaten",
+                fields: [
+                    { id: "0000", type: "text", label: "Patienten-ID (Pseudonym)", required: true },
+                    { id: "0001", type: "text", label: "Name, Vorname", required: true },
+                    { id: "0002", type: "select", label: "Geschlecht", options: ["männlich", "weiblich", "divers"], required: true },
+                    { id: "0003", type: "date", label: "Geburtsdatum", required: true },
+                    { id: "0004", type: "text", label: "Kontakt (Telefon/E-Mail)", required: false }
+                ],
+                is_red_flag_section: false
+            },
+            {
+                id: "q1000",
+                title: "Haben Sie aktuell Beschwerden?",
+                fields: [
+                    { id: "1000", type: "radio", options: ["Ja", "Nein"], required: true }
+                ],
+                is_red_flag_section: false
+            },
+            {
+                id: "q1010",
+                title: "Schmerz-Anamnese",
+                fields: [
+                    { id: "1010_beginn", type: "text", label: "Beginn der Beschwerden (Datum/Zeitraum)", required: true },
+                    { id: "1010_dauer", type: "text", label: "Dauer der Beschwerden (z.B. seit 3 Tagen, seit 2 Wochen)", required: true },
+                    { id: "1010_haeufigkeit", type: "select", label: "Häufigkeit", options: ["ständig", "mehrmals täglich", "täglich", "wöchentlich", "monatlich"], required: true },
+                    { id: "1010_lokalisation", type: "text", label: "Lokalisation (Wo genau tut es weh?)", required: true },
+                    { id: "1010_ausstrahlung", type: "text", label: "Ausstrahlung (Wohin zieht der Schmerz?)", required: false },
+                    { id: "1010_qualitaet", type: "text", label: "Qualität (z.B. stechend, dumpf, brennend)", required: false },
+                    { id: "1010_nrs", type: "number", label: "Schmerzintensität (NRS 0-10)", min: 0, max: 10, required: true }
+                ],
+                is_red_flag_section: false
+            },
+            {
+                id: "q1020",
+                title: "Was verbessert oder verschlechtert die Beschwerden?",
+                fields: [
+                    { id: "1020_besser", type: "textarea", label: "Besser durch...", required: false },
+                    { id: "1020_schlechter", type: "textarea", label: "Schlechter durch...", required: false }
+                ],
+                is_red_flag_section: false
+            },
+            {
+                id: "q1030",
+                title: "Begleitsymptome",
+                fields: [
+                    { id: "1030_fieber", type: "checkbox", label: "Fieber" },
+                    { id: "1030_schwindel", type: "checkbox", label: "Schwindel" },
+                    { id: "1030_uebelkeit", type: "checkbox", label: "Übelkeit/Erbrechen" },
+                    { id: "1030_andere", type: "textarea", label: "Andere Begleitsymptome (Freitext)", required: false }
+                ],
+                is_red_flag_section: false
+            },
+            {
+                id: "q2000",
+                title: "Vorerkrankungen",
+                fields: [
+                    { id: "2000_herz", type: "checkbox", label: "Herzerkrankungen" },
+                    { id: "2000_lunge", type: "checkbox", label: "Lungenerkrankungen (z.B. Asthma)" },
+                    { id: "2000_diabetes", type: "checkbox", label: "Diabetes mellitus" },
+                    { id: "2000_krebs", type: "checkbox", label: "Krebserkrankungen" },
+                    { id: "2000_freitext", type: "textarea", label: "Weitere Vorerkrankungen (Freitext)", required: false }
+                ],
+                is_red_flag_section: false
+            },
+            {
+                id: "q2010",
+                title: "Aktuelle Medikamente",
+                fields: [
+                    { id: "2010_meds", type: "textarea", label: "Bitte alle aktuellen Medikamente auflisten (Name, Dosis, Einnahmegrund)", required: false }
+                ],
+                is_red_flag_section: false
+            },
+            {
+                id: "q2020",
+                title: "Allergien und Unverträglichkeiten",
+                fields: [
+                    { id: "2020_allergien", type: "textarea", label: "Bitte alle bekannten Allergien/Unverträglichkeiten auflisten", required: false }
+                ],
+                is_red_flag_section: false
+            },
+            {
+                id: "q3000",
+                title: "Funktionseinschränkungen",
+                fields: [
+                    { id: "3000_mobilitaet", type: "checkbox", label: "Eingeschränkte Mobilität" },
+                    { id: "3000_alltag", type: "checkbox", label: "Einschränkungen im Alltag (z.B. Anziehen, Essen)" },
+                    { id: "3000_freitext", type: "textarea", label: "Weitere Einschränkungen (Freitext)", required: false }
+                ],
+                is_red_flag_section: false
+            },
+            {
+                id: "q4000",
+                title: "Red Flags (Wichtige Warnhinweise)",
+                fields: [
+                    { id: "4000_gewichtsverlust", type: "radio", label: "Unerklärlicher Gewichtsverlust (>5kg in 3 Monaten)?", options: ["Ja", "Nein"], red_flag_value: "Ja" },
+                    { id: "4000_nachtschweiss", type: "radio", label: "Nachtschweiß (durchnässtes Aufwachen)?", options: ["Ja", "Nein"], red_flag_value: "Ja" },
+                    { id: "4000_neurologie", type: "radio", label: "Neu aufgetretene Lähmungen oder Taubheitsgefühle?", options: ["Ja", "Nein"], red_flag_value: "Ja" }
+                ],
+                is_red_flag_section: true
+            },
+            {
+                id: "q9999",
+                title: "Abschluss",
+                fields: [],
+                is_red_flag_section: false
+            }
+        ];
+
+        // Übersetzungen (Deutsch, Englisch, Spanisch, Französisch). Weitere
+        // Sprachen können anhand der Excel‑Tabelle ergänzt werden. Platzhalter
+        // werden bei fehlenden Übersetzungen genutzt.
+        const TRANSLATIONS = {
+            "de": {
+                "title": "Anamnese-Fragebogen",
+                "disclaimer_medical": "Dies ist ein digitales Anamnese-Werkzeug und ersetzt keine ärztliche Untersuchung oder Diagnose.",
+                "disclaimer_local": "Ihre Eingaben werden lokal in Ihrem Browser gespeichert und nur als Datei gespeichert/übergeben.",
+                "lang_label": "Sprache:",
+                "dark_mode": "Dark Mode",
+                "step_of": "Schritt {current} von {total} ({percent}%)",
+                "back": "Zurück",
+                "next": "Weiter",
+                "export_full": "Export (Voll)",
+                "export_anon": "Export (Pseudonymisiert)",
+                "new_start": "Neu beginnen",
+                "confirm_new_start": "Sind Sie sicher, dass Sie alle Daten löschen und neu beginnen möchten?",
+                "red_flag_warning": "ACHTUNG: Ein oder mehrere Warnhinweise ('Red Flags') wurden angegeben. Bitte besprechen Sie dies umgehend mit Ihrem Arzt.",
+                "q0000_title": "Basisdaten",
+                "0000_label": "Patienten-ID (Pseudonym)",
+                "0001_label": "Name, Vorname",
+                "0002_label": "Geschlecht",
+                "0002_opt_1": "männlich",
+                "0002_opt_2": "weiblich",
+                "0002_opt_3": "divers",
+                "0003_label": "Geburtsdatum",
+                "0004_label": "Kontakt (Telefon/E-Mail)",
+                "q1000_title": "Haben Sie aktuell Beschwerden?",
+                "1000_opt_ja": "Ja",
+                "1000_opt_nein": "Nein",
+                "q1010_title": "Schmerz-Anamnese",
+                "1010_beginn_label": "Beginn der Beschwerden (Datum/Zeitraum)",
+                "1010_dauer_label": "Dauer der Beschwerden (z.B. seit 3 Tagen, seit 2 Wochen)",
+                "1010_haeufigkeit_label": "Häufigkeit",
+                "1010_haeufigkeit_opt_1": "ständig",
+                "1010_haeufigkeit_opt_2": "mehrmals täglich",
+                "1010_haeufigkeit_opt_3": "täglich",
+                "1010_haeufigkeit_opt_4": "wöchentlich",
+                "1010_haeufigkeit_opt_5": "monatlich",
+                "1010_lokalisation_label": "Lokalisation (Wo genau tut es weh?)",
+                "1010_ausstrahlung_label": "Ausstrahlung (Wohin zieht der Schmerz?)",
+                "1010_qualitaet_label": "Qualität (z.B. stechend, dumpf, brennend)",
+                "1010_nrs_label": "Schmerzintensität (NRS 0-10)",
+                "q1020_title": "Was verbessert oder verschlechtert die Beschwerden?",
+                "1020_besser_label": "Besser durch...",
+                "1020_schlechter_label": "Schlechter durch...",
+                "q1030_title": "Begleitsymptome",
+                "1030_fieber_label": "Fieber",
+                "1030_schwindel_label": "Schwindel",
+                "1030_uebelkeit_label": "Übelkeit/Erbrechen",
+                "1030_andere_label": "Andere Begleitsymptome (Freitext)",
+                "q2000_title": "Vorerkrankungen",
+                "2000_herz_label": "Herzerkrankungen",
+                "2000_lunge_label": "Lungenerkrankungen (z.B. Asthma)",
+                "2000_diabetes_label": "Diabetes mellitus",
+                "2000_krebs_label": "Krebserkrankungen",
+                "2000_freitext_label": "Weitere Vorerkrankungen (Freitext)",
+                "q2010_title": "Aktuelle Medikamente",
+                "2010_meds_label": "Bitte alle aktuellen Medikamente auflisten (Name, Dosis, Einnahmegrund)",
+                "q2020_title": "Allergien und Unverträglichkeiten",
+                "2020_allergien_label": "Bitte alle bekannten Allergien/Unverträglichkeiten auflisten",
+                "q3000_title": "Funktionseinschränkungen",
+                "3000_mobilitaet_label": "Eingeschränkte Mobilität",
+                "3000_alltag_label": "Einschränkungen im Alltag (z.B. Anziehen, Essen)",
+                "3000_freitext_label": "Weitere Einschränkungen (Freitext)",
+                "q4000_title": "Red Flags (Wichtige Warnhinweise)",
+                "4000_gewichtsverlust_label": "Unerklärlicher Gewichtsverlust (>5kg in 3 Monaten)?",
+                "4000_nachtschweiss_label": "Nachtschweiß (durchnässtes Aufwachen)?",
+                "4000_neurologie_label": "Neu aufgetretene Lähmungen oder Taubheitsgefühle?",
+                "q9999_title": "Vielen Dank für Ihre Angaben!",
+                "q9999_text": "Sie haben den Fragebogen abgeschlossen. Bitte speichern Sie Ihre Daten über die Export-Buttons und übergeben Sie die Datei Ihrem Arzt."
+            },
+            "en": {
+                "title": "Anamnesis Questionnaire",
+                "disclaimer_medical": "This is a digital anamnesis tool and does not replace a medical examination or diagnosis.",
+                "disclaimer_local": "Your entries are stored locally in your browser and are only saved/transferred as a file.",
+                "lang_label": "Language:",
+                "dark_mode": "Dark Mode",
+                "step_of": "Step {current} of {total} ({percent}%)",
+                "back": "Back",
+                "next": "Next",
+                "export_full": "Export (Full)",
+                "export_anon": "Export (Pseudonymized)",
+                "new_start": "Start New",
+                "confirm_new_start": "Are you sure you want to delete all data and start over?",
+                "red_flag_warning": "ATTENTION: One or more warning signs ('Red Flags') have been indicated. Please discuss this immediately with your doctor.",
+                "q0000_title": "Basic Data",
+                "0000_label": "Patient ID (Pseudonym)",
+                "0001_label": "Name, First Name",
+                "0002_label": "Gender",
+                "0002_opt_1": "male",
+                "0002_opt_2": "female",
+                "0002_opt_3": "diverse",
+                "0003_label": "Date of Birth",
+                "0004_label": "Contact (Phone/Email)",
+                "q1000_title": "Do you currently have any complaints?",
+                "1000_opt_ja": "Yes",
+                "1000_opt_nein": "No",
+                "q1010_title": "Pain Anamnesis",
+                "1010_beginn_label": "Onset of symptoms (Date/Period)",
+                "1010_dauer_label": "Duration of symptoms (e.g., for 3 days, for 2 weeks)",
+                "1010_haeufigkeit_label": "Frequency",
+                "1010_haeufigkeit_opt_1": "constant",
+                "1010_haeufigkeit_opt_2": "several times a day",
+                "1010_haeufigkeit_opt_3": "daily",
+                "1010_haeufigkeit_opt_4": "weekly",
+                "1010_haeufigkeit_opt_5": "monthly",
+                "1010_lokalisation_label": "Location (Where exactly does it hurt?)",
+                "1010_ausstrahlung_label": "Radiation (Where does the pain spread?)",
+                "1010_qualitaet_label": "Quality (e.g., stabbing, dull, burning)",
+                "1010_nrs_label": "Pain Intensity (NRS 0-10)",
+                "q1020_title": "What improves or worsens the symptoms?",
+                "1020_besser_label": "Better with...",
+                "1020_schlechter_label": "Worse with...",
+                "q1030_title": "Accompanying Symptoms",
+                "1030_fieber_label": "Fever",
+                "1030_schwindel_label": "Dizziness",
+                "1030_uebelkeit_label": "Nausea/Vomiting",
+                "1030_andere_label": "Other accompanying symptoms (Free text)",
+                "q2000_title": "Pre-existing Conditions",
+                "2000_herz_label": "Heart diseases",
+                "2000_lunge_label": "Lung diseases (e.g., asthma)",
+                "2000_diabetes_label": "Diabetes mellitus",
+                "2000_krebs_label": "Cancer diseases",
+                "2000_freitext_label": "Further pre-existing conditions (Free text)",
+                "q2010_title": "Current Medications",
+                "2010_meds_label": "Please list all current medications (Name, Dose, Reason for intake)",
+                "q2020_title": "Allergies and Intolerances",
+                "2020_allergien_label": "Please list all known allergies/intolerances",
+                "q3000_title": "Functional Limitations",
+                "3000_mobilitaet_label": "Restricted mobility",
+                "3000_alltag_label": "Limitations in daily life (e.g., dressing, eating)",
+                "3000_freitext_label": "Further limitations (Free text)",
+                "q4000_title": "Red Flags (Important Warning Signs)",
+                "4000_gewichtsverlust_label": "Unexplained weight loss (>5kg in 3 months)?",
+                "4000_nachtschweiss_label": "Night sweats (waking up drenched)?",
+                "4000_neurologie_label": "New onset of paralysis or numbness?",
+                "q9999_title": "Thank you for your information!",
+                "q9999_text": "You have completed the questionnaire. Please save your data via the export buttons and hand the file to your doctor."
+            },
+            "es": {
+                // Spanische Übersetzungen (Beispielhaft; vollständige Übersetzung sollte von Expert*innen geprüft werden)
+                "title": "Cuestionario de Anamnesis",
+                "disclaimer_medical": "Esta es una herramienta digital de anamnesis y no reemplaza una consulta o diagnóstico médico.",
+                "disclaimer_local": "Sus datos se guardan localmente en su navegador y sólo se guardan/se transfieren como un archivo.",
+                "lang_label": "Idioma:",
+                "dark_mode": "Modo oscuro",
+                "step_of": "Paso {current} de {total} ({percent}%)",
+                "back": "Atrás",
+                "next": "Siguiente",
+                "export_full": "Exportar (completo)",
+                "export_anon": "Exportar (seudonimizado)",
+                "new_start": "Empezar de nuevo",
+                "confirm_new_start": "¿Está seguro de que desea eliminar todos los datos y comenzar de nuevo?",
+                "red_flag_warning": "ATENCIÓN: Se ha indicado una o más 'banderas rojas'. Por favor, discútalo inmediatamente con su médico.",
+                "q0000_title": "Datos básicos",
+                "0000_label": "ID del paciente (seudónimo)",
+                "0001_label": "Nombre, apellidos",
+                "0002_label": "Género",
+                "0002_opt_1": "masculino",
+                "0002_opt_2": "femenino",
+                "0002_opt_3": "diverso",
+                "0003_label": "Fecha de nacimiento",
+                "0004_label": "Contacto (Teléfono/Correo electrónico)",
+                "q1000_title": "¿Tiene molestias actualmente?",
+                "1000_opt_ja": "Sí",
+                "1000_opt_nein": "No",
+                "q1010_title": "Anamnesis del dolor",
+                "1010_beginn_label": "Inicio de los síntomas (Fecha/Periodo)",
+                "1010_dauer_label": "Duración de los síntomas (p. ej., desde hace 3 días, desde hace 2 semanas)",
+                "1010_haeufigkeit_label": "Frecuencia",
+                "1010_haeufigkeit_opt_1": "constante",
+                "1010_haeufigkeit_opt_2": "varias veces al día",
+                "1010_haeufigkeit_opt_3": "diario",
+                "1010_haeufigkeit_opt_4": "semanal",
+                "1010_haeufigkeit_opt_5": "mensual",
+                "1010_lokalisation_label": "Localización (¿Dónde duele exactamente?)",
+                "1010_ausstrahlung_label": "Irradiación (¿Hacia dónde se extiende el dolor?)",
+                "1010_qualitaet_label": "Calidad (p. ej., punzante, sordo, ardiente)",
+                "1010_nrs_label": "Intensidad del dolor (NRS 0-10)",
+                "q1020_title": "¿Qué mejora o empeora los síntomas?",
+                "1020_besser_label": "Mejora con...",
+                "1020_schlechter_label": "Empeora con...",
+                "q1030_title": "Síntomas acompañantes",
+                "1030_fieber_label": "Fiebre",
+                "1030_schwindel_label": "Mareos",
+                "1030_uebelkeit_label": "Náuseas/Vómitos",
+                "1030_andere_label": "Otros síntomas acompañantes (Texto libre)",
+                "q2000_title": "Enfermedades preexistentes",
+                "2000_herz_label": "Enfermedades cardíacas",
+                "2000_lunge_label": "Enfermedades pulmonares (p. ej., asma)",
+                "2000_diabetes_label": "Diabetes mellitus",
+                "2000_krebs_label": "Enfermedades cancerosas",
+                "2000_freitext_label": "Otras enfermedades preexistentes (Texto libre)",
+                "q2010_title": "Medicamentos actuales",
+                "2010_meds_label": "Por favor, indique todos los medicamentos actuales (Nombre, Dosis, Motivo)",
+                "q2020_title": "Alergias e intolerancias",
+                "2020_allergien_label": "Por favor, indique todas las alergias/intolerancias conocidas",
+                "q3000_title": "Limitaciones funcionales",
+                "3000_mobilitaet_label": "Movilidad reducida",
+                "3000_alltag_label": "Limitaciones en la vida diaria (p. ej., vestirse, comer)",
+                "3000_freitext_label": "Otras limitaciones (Texto libre)",
+                "q4000_title": "Señales de alerta (Importantes)",
+                "4000_gewichtsverlust_label": "Pérdida de peso inexplicable (>5kg en 3 meses)?",
+                "4000_nachtschweiss_label": "Sudoración nocturna (despertarse empapado)?",
+                "4000_neurologie_label": "¿Nueva aparición de parálisis o entumecimiento?",
+                "q9999_title": "¡Gracias por su información!",
+                "q9999_text": "Ha completado el cuestionario. Guarde sus datos con los botones de exportación y entregue el archivo a su médico."
+            },
+            "fr": {
+                // Traductions françaises (exemples). À faire valider par un traducteur professionnel.
+                "title": "Questionnaire d'anamnèse",
+                "disclaimer_medical": "Ceci est un outil numérique d'anamnèse et ne remplace pas un examen ou un diagnostic médical.",
+                "disclaimer_local": "Vos données sont stockées localement dans votre navigateur et ne sont enregistrées/transférées que sous forme de fichier.",
+                "lang_label": "Langue :",
+                "dark_mode": "Mode sombre",
+                "step_of": "Étape {current} sur {total} ({percent}%)",
+                "back": "Précédent",
+                "next": "Suivant",
+                "export_full": "Exporter (complet)",
+                "export_anon": "Exporter (pseudonymisé)",
+                "new_start": "Recommencer",
+                "confirm_new_start": "Êtes-vous sûr de vouloir supprimer toutes les données et recommencer ?",
+                "red_flag_warning": "ATTENTION : Un ou plusieurs signaux d'alerte ('Red Flags') ont été indiqués. Veuillez en discuter immédiatement avec votre médecin.",
+                "q0000_title": "Données de base",
+                "0000_label": "ID du patient (Pseudonyme)",
+                "0001_label": "Nom, Prénom",
+                "0002_label": "Sexe",
+                "0002_opt_1": "masculin",
+                "0002_opt_2": "féminin",
+                "0002_opt_3": "divers",
+                "0003_label": "Date de naissance",
+                "0004_label": "Contact (Téléphone/Email)",
+                "q1000_title": "Avez-vous actuellement des symptômes ?",
+                "1000_opt_ja": "Oui",
+                "1000_opt_nein": "Non",
+                "q1010_title": "Anamnèse de la douleur",
+                "1010_beginn_label": "Début des symptômes (Date/Période)",
+                "1010_dauer_label": "Durée des symptômes (p. ex., depuis 3 jours, depuis 2 semaines)",
+                "1010_haeufigkeit_label": "Fréquence",
+                "1010_haeufigkeit_opt_1": "constante",
+                "1010_haeufigkeit_opt_2": "plusieurs fois par jour",
+                "1010_haeufigkeit_opt_3": "quotidien",
+                "1010_haeufigkeit_opt_4": "hebdomadaire",
+                "1010_haeufigkeit_opt_5": "mensuel",
+                "1010_lokalisation_label": "Localisation (Où exactement ça fait mal ?)",
+                "1010_ausstrahlung_label": "Irradiation (Où la douleur se propage-t-elle ?)",
+                "1010_qualitaet_label": "Qualité (p. ex., piquante, sourde, brûlante)",
+                "1010_nrs_label": "Intensité de la douleur (NRS 0-10)",
+                "q1020_title": "Qu'est-ce qui améliore ou aggrave les symptômes ?",
+                "1020_besser_label": "Amélioré par...",
+                "1020_schlechter_label": "Aggravé par...",
+                "q1030_title": "Symptômes accompagnants",
+                "1030_fieber_label": "Fièvre",
+                "1030_schwindel_label": "Vertiges",
+                "1030_uebelkeit_label": "Nausées/Vomissements",
+                "1030_andere_label": "Autres symptômes accompagnants (Texte libre)",
+                "q2000_title": "Antécédents médicaux",
+                "2000_herz_label": "Maladies cardiaques",
+                "2000_lunge_label": "Maladies pulmonaires (p. ex., asthme)",
+                "2000_diabetes_label": "Diabète sucré",
+                "2000_krebs_label": "Maladies cancéreuses",
+                "2000_freitext_label": "Autres antécédents (Texte libre)",
+                "q2010_title": "Médicaments actuels",
+                "2010_meds_label": "Veuillez énumérer tous les médicaments actuels (Nom, Dose, Motif)",
+                "q2020_title": "Allergies et intolérances",
+                "2020_allergien_label": "Veuillez indiquer toutes les allergies/intolérances connues",
+                "q3000_title": "Limitations fonctionnelles",
+                "3000_mobilitaet_label": "Mobilité réduite",
+                "3000_alltag_label": "Limitations dans la vie quotidienne (p. ex., s'habiller, manger)",
+                "3000_freitext_label": "Autres limitations (Texte libre)",
+                "q4000_title": "Signaux d'alerte (signes importants)",
+                "4000_gewichtsverlust_label": "Perte de poids inexpliquée (>5kg en 3 mois) ?",
+                "4000_nachtschweiss_label": "Sueurs nocturnes (se réveiller trempé) ?",
+                "4000_neurologie_label": "Nouvelle apparition de paralysie ou d'engourdissement ?",
+                "q9999_title": "Merci pour vos informations !",
+                "q9999_text": "Vous avez complété le questionnaire. Veuillez enregistrer vos données via les boutons d'exportation et remettre le fichier à votre médecin."
+            }
+        };
+
+        // ###########################################################
+        // 2. Zustand und Hilfsfunktionen
+        // ###########################################################
+        const STATE = {
+            currentSectionIndex: 0,
+            answers: {},
+            language: 'de',
+            isDarkMode: false
+        };
+
+        // Übersetzungshilfe
+        function T(key) {
+            const lang = STATE.language;
+            return (TRANSLATIONS[lang] && TRANSLATIONS[lang][key]) || TRANSLATIONS['de'][key] || key;
+        }
+
+        function saveStateToLocal() {
+            try {
+                localStorage.setItem('anamnese_chat_answers', JSON.stringify(STATE.answers));
+                localStorage.setItem('anamnese_chat_lang', STATE.language);
+                localStorage.setItem('anamnese_chat_darkmode', STATE.isDarkMode);
+            } catch (e) {
+                console.error(e);
+            }
+        }
+        function loadStateFromLocal() {
+            try {
+                const ans = localStorage.getItem('anamnese_chat_answers');
+                const lang = localStorage.getItem('anamnese_chat_lang');
+                const dm = localStorage.getItem('anamnese_chat_darkmode');
+                if (ans) STATE.answers = JSON.parse(ans);
+                if (lang && TRANSLATIONS[lang]) STATE.language = lang;
+                if (dm !== null) STATE.isDarkMode = dm === 'true';
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // Chat-Logik: fügt eine neue Nachricht zum Chat-Bereich hinzu.
+        function appendChatMessage(sender, text) {
+            const chatArea = document.getElementById('chat-area');
+            const msg = document.createElement('div');
+            msg.className = 'chat-message ' + (sender === 'user' ? 'user' : 'system');
+            const bubble = document.createElement('div');
+            bubble.className = 'chat-bubble';
+            bubble.textContent = text;
+            msg.appendChild(bubble);
+            chatArea.appendChild(msg);
+            // Scroll ans Ende
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        // Sprachaufnahme für Textfelder (Web Speech API)
+        let recognition;
+        function initSpeechRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) return null;
+            const rec = new SpeechRecognition();
+            rec.lang = STATE.language === 'de' ? 'de-DE' : 'en-US';
+            rec.continuous = false;
+            rec.interimResults = false;
+            return rec;
+        }
+        function startVoiceRecognition(fieldId) {
+            if (!recognition) {
+                recognition = initSpeechRecognition();
+                if (!recognition) {
+                    alert('Sprachfunktion in diesem Browser nicht verfügbar.');
+                    return;
+                }
+            }
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                const el = document.getElementById(fieldId);
+                if (el) {
+                    el.value = (el.value ? el.value + ' ' : '') + transcript;
+                    el.dispatchEvent(new Event('input'));
+                }
+            };
+            recognition.start();
+        }
+
+        // Rendert ein einzelnes Feld, optional mit Mikrofon
+        function renderField(field) {
+            const labelText = T(`${field.id}_label`) || field.label;
+            const required = field.required ? ' *' : '';
+            const currentValue = STATE.answers[field.id] || '';
+            let html = '<div class="form-group">';
+            if (['text', 'number', 'date'].includes(field.type)) {
+                html += `<label for="${field.id}">${labelText}${required}</label>`;
+                html += `<div class="input-with-mic">`;
+                html += `<input type="${field.type}" id="${field.id}" value="${currentValue}" ${field.min !== undefined ? `min=\"${field.min}\"` : ''} ${field.max !== undefined ? `max=\"${field.max}\"` : ''} ${field.required ? 'required' : ''}>`;
+                html += `<button class="mic-button" title="Spracheingabe" onclick="startVoiceRecognition('${field.id}')">🎤</button>`;
+                html += `</div>`;
+            } else if (field.type === 'textarea') {
+                html += `<label for="${field.id}">${labelText}${required}</label>`;
+                html += `<div class="input-with-mic">`;
+                html += `<textarea id="${field.id}" rows="3" ${field.required ? 'required' : ''}>${currentValue}</textarea>`;
+                html += `<button class="mic-button" title="Spracheingabe" onclick="startVoiceRecognition('${field.id}')">🎤</button>`;
+                html += `</div>`;
+            } else if (field.type === 'select') {
+                html += `<label for="${field.id}">${labelText}${required}</label>`;
+                html += `<select id="${field.id}" ${field.required ? 'required' : ''}>`;
+                html += `<option value="">-- Bitte wählen --</option>`;
+                field.options.forEach((opt, idx) => {
+                    const optKey = `${field.id}_opt_${idx + 1}`;
+                    const optText = T(optKey) || opt;
+                    const selected = currentValue === opt ? 'selected' : '';
+                    html += `<option value="${opt}" ${selected}>${optText}</option>`;
+                });
+                html += `</select>`;
+            } else if (field.type === 'radio' || field.type === 'checkbox') {
+                html += `<label>${labelText}${required}</label>`;
+                html += `<div class="options-list">`;
+                const options = field.options || ["Ja", "Nein"];
+                options.forEach((opt, idx) => {
+                    const optKey = `${field.id}_opt_${opt.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+                    const optText = T(optKey) || opt;
+                    const isChecked = field.type === 'checkbox'
+                        ? Array.isArray(currentValue) && currentValue.includes(opt)
+                        : currentValue === opt;
+                    const checkedAttr = isChecked ? 'checked' : '';
+                    html += `<label><input type="${field.type}" name="${field.id}" value="${opt}" ${checkedAttr}> ${optText}</label>`;
+                });
+                html += `</div>`;
+            }
+            html += '</div>';
+            return html;
+        }
+
+        function renderCurrentSection() {
+            const section = QUESTIONNAIRE_STRUCTURE[STATE.currentSectionIndex];
+            const qa = document.getElementById('question-area');
+            // Abschnittstitel
+            let html = `<h2>${T(`${section.id}_title`) || section.title}</h2>`;
+            if (section.id === 'q9999') {
+                html += `<p>${T('q9999_text')}</p>`;
+                if (checkForRedFlags()) {
+                    html += `<div class="red-flag-indicator">${T('red_flag_warning')}</div>`;
+                }
+                document.getElementById('next-btn').classList.add('hidden');
+                document.getElementById('export-named-btn').classList.remove('hidden');
+                document.getElementById('export-anon-btn').classList.remove('hidden');
+            } else {
+                section.fields.forEach(field => {
+                    html += renderField(field);
+                });
+                document.getElementById('next-btn').classList.remove('hidden');
+                document.getElementById('export-named-btn').classList.add('hidden');
+                document.getElementById('export-anon-btn').classList.add('hidden');
+            }
+            qa.innerHTML = html;
+            attachInputListeners();
+            updateProgress();
+            updateNavigationButtons();
+        }
+
+        // Speichert aktuelle Abschnittsdaten und fügt sie dem Chat hinzu
+        function saveCurrentSectionAnswers() {
+            const section = QUESTIONNAIRE_STRUCTURE[STATE.currentSectionIndex];
+            let answerSummary = '';
+            section.fields.forEach(field => {
+                const name = field.id;
+                const element = document.getElementById(name);
+                let value;
+                if (!element) {
+                    // Radio/Checkbox
+                    const inputs = document.querySelectorAll(`input[name="${name}"]`);
+                    if (field.type === 'radio') {
+                        const sel = document.querySelector(`input[name="${name}"]:checked`);
+                        value = sel ? sel.value : '';
+                    } else {
+                        value = Array.from(inputs).filter(i => i.checked).map(i => i.value);
+                    }
+                } else {
+                    if (field.type === 'number') {
+                        value = element.value ? parseFloat(element.value) : null;
+                    } else {
+                        value = element.value;
+                    }
+                }
+                STATE.answers[name] = value;
+                // Chat-Zusammenfassung
+                const questionLabel = T(`${name}_label`) || field.label;
+                let displayValue;
+                if (Array.isArray(value)) {
+                    displayValue = value.join(', ');
+                } else {
+                    displayValue = value;
+                }
+                if (displayValue) {
+                    answerSummary += `${questionLabel}: ${displayValue}\n`;
+                }
+            });
+            saveStateToLocal();
+            if (answerSummary) {
+                appendChatMessage('user', answerSummary.trim());
+            }
+        }
+
+        function isCurrentSectionValid() {
+            const section = QUESTIONNAIRE_STRUCTURE[STATE.currentSectionIndex];
+            let valid = true;
+            section.fields.forEach(field => {
+                if (field.required) {
+                    const val = STATE.answers[field.id];
+                    if (!val || (Array.isArray(val) && val.length === 0) || (typeof val === 'string' && val.trim() === '')) {
+                        valid = false;
+                    }
+                }
+            });
+            return valid;
+        }
+
+        function checkForRedFlags() {
+            return QUESTIONNAIRE_STRUCTURE.some(section => {
+                if (!section.is_red_flag_section) return false;
+                return section.fields.some(field => field.red_flag_value && STATE.answers[field.id] === field.red_flag_value);
+            });
+        }
+
+        function attachInputListeners() {
+            const section = QUESTIONNAIRE_STRUCTURE[STATE.currentSectionIndex];
+            section.fields.forEach(field => {
+                const elem = document.getElementById(field.id);
+                if (elem) {
+                    elem.addEventListener('input', () => {
+                        // Speichere sofort bei Eingabe
+                        saveCurrentSectionAnswers();
+                        updateNavigationButtons();
+                    });
+                } else {
+                    const inputs = document.querySelectorAll(`input[name="${field.id}"]`);
+                    inputs.forEach(i => i.addEventListener('change', () => {
+                        saveCurrentSectionAnswers();
+                        updateNavigationButtons();
+                    }));
+                }
+            });
+        }
+
+        function updateProgress() {
+            const total = QUESTIONNAIRE_STRUCTURE.length;
+            const current = STATE.currentSectionIndex + 1;
+            const percent = Math.round((current / total) * 100);
+            const text = T('step_of').replace('{current}', current).replace('{total}', total).replace('{percent}', percent);
+            document.getElementById('progress-text').textContent = text;
+            document.getElementById('progress-bar-fill').style.width = `${percent}%`;
+        }
+
+        function updateNavigationButtons() {
+            const backBtn = document.getElementById('back-btn');
+            const nextBtn = document.getElementById('next-btn');
+            backBtn.disabled = STATE.currentSectionIndex === 0;
+            nextBtn.disabled = STATE.currentSectionIndex < QUESTIONNAIRE_STRUCTURE.length - 1 && !isCurrentSectionValid();
+        }
+
+        function nextSection() {
+            if (STATE.currentSectionIndex < QUESTIONNAIRE_STRUCTURE.length - 1) {
+                if (!isCurrentSectionValid()) {
+                    alert('Bitte füllen Sie alle Pflichtfelder aus.');
+                    return;
+                }
+                // Frage in Chat schreiben
+                const sec = QUESTIONNAIRE_STRUCTURE[STATE.currentSectionIndex];
+                appendChatMessage('system', (T(`${sec.id}_title`) || sec.title));
+                saveCurrentSectionAnswers();
+                STATE.currentSectionIndex++;
+                renderCurrentSection();
+            }
+        }
+        function prevSection() {
+            if (STATE.currentSectionIndex > 0) {
+                STATE.currentSectionIndex--;
+                renderCurrentSection();
+            }
+        }
+
+        function updateLanguage(lang) {
+            if (TRANSLATIONS[lang]) {
+                STATE.language = lang;
+                saveStateToLocal();
+                renderCurrentSection();
+            }
+        }
+
+        function toggleDarkMode() {
+            STATE.isDarkMode = !STATE.isDarkMode;
+            document.body.classList.toggle('dark', STATE.isDarkMode);
+            saveStateToLocal();
+        }
+
+        function exportData(includeFull) {
+            const data = {
+                patient_meta: {
+                    id_pseudonym: STATE.answers['0000'] || '',
+                    name: includeFull ? {
+                        first: STATE.answers['0001'] ? STATE.answers['0001'].split(',')[0]?.trim() : '',
+                        last: STATE.answers['0001'] ? STATE.answers['0001'].split(',')[1]?.trim() : ''
+                    } : undefined,
+                    birthdate: includeFull ? STATE.answers['0003'] || '' : undefined,
+                    sex: includeFull ? STATE.answers['0002'] || '' : undefined,
+                    contact: includeFull ? STATE.answers['0004'] || '' : undefined,
+                    consent: true,
+                    timestamp_iso: new Date().toISOString()
+                },
+                answers: STATE.answers,
+                red_flags: checkForRedFlags()
+            };
+            if (!includeFull) {
+                delete data.patient_meta.name;
+                delete data.patient_meta.birthdate;
+                delete data.patient_meta.sex;
+                delete data.patient_meta.contact;
+            }
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = includeFull ? 'anamnese_full.json' : 'anamnese_pseudo.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function resetAll() {
+            if (confirm(T('confirm_new_start'))) {
+                localStorage.removeItem('anamnese_chat_answers');
+                localStorage.removeItem('anamnese_chat_lang');
+                localStorage.removeItem('anamnese_chat_darkmode');
+                STATE.currentSectionIndex = 0;
+                STATE.answers = {};
+                appendChatMessage('system', '--- Neustart ---');
+                renderCurrentSection();
+            }
+        }
+
+        // Event Listener nach DOM-Load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStateFromLocal();
+            document.getElementById('lang-select').value = STATE.language;
+            document.body.classList.toggle('dark', STATE.isDarkMode);
+            renderCurrentSection();
+            // Buttons
+            document.getElementById('next-btn').addEventListener('click', nextSection);
+            document.getElementById('back-btn').addEventListener('click', prevSection);
+            document.getElementById('export-named-btn').addEventListener('click', () => exportData(true));
+            document.getElementById('export-anon-btn').addEventListener('click', () => exportData(false));
+            document.getElementById('new-start-btn').addEventListener('click', resetAll);
+            document.getElementById('lang-select').addEventListener('change', (e) => updateLanguage(e.target.value));
+            document.getElementById('toggle-mode').addEventListener('click', toggleDarkMode);
+            // Sprachaufnahme starten
+            const startVoiceBtn = document.getElementById('start-voice');
+            const stopVoiceBtn = document.getElementById('stop-voice');
+            if (startVoiceBtn && stopVoiceBtn) {
+                startVoiceBtn.addEventListener('click', () => {
+                    if (!recognition) {
+                        recognition = initSpeechRecognition();
+                        if (!recognition) {
+                            alert('Sprachfunktion in diesem Browser nicht verfügbar.');
+                            return;
+                        }
+                    }
+                    appendChatMessage('system', 'Spracherkennung gestartet. Sprechen Sie nun.');
+                    recognition.onresult = function(event) {
+                        const transcript = event.results[0][0].transcript;
+                        // Finde erstes Text- oder Textarea-Feld im aktuellen Abschnitt
+                        const section = QUESTIONNAIRE_STRUCTURE[STATE.currentSectionIndex];
+                        for (const f of section.fields) {
+                            if (['text', 'number', 'date', 'textarea'].includes(f.type)) {
+                                const el = document.getElementById(f.id);
+                                if (el) {
+                                    el.value = (el.value ? el.value + ' ' : '') + transcript;
+                                    el.dispatchEvent(new Event('input'));
+                                    break;
+                                }
+                            }
+                        }
+                        appendChatMessage('user', transcript);
+                    };
+                    recognition.start();
+                    startVoiceBtn.disabled = true;
+                    stopVoiceBtn.disabled = false;
+                });
+                stopVoiceBtn.addEventListener('click', () => {
+                    if (recognition) {
+                        recognition.stop();
+                        appendChatMessage('system', 'Spracherkennung gestoppt.');
+                    }
+                    startVoiceBtn.disabled = false;
+                    stopVoiceBtn.disabled = true;
+                });
+            }
+            // Audio-Datei Upload
+            const audioUpload = document.getElementById('audio-upload');
+            if (audioUpload) {
+                audioUpload.addEventListener('change', (e) => {
+                    const file = e.target.files && e.target.files[0];
+                    if (file) {
+                        appendChatMessage('system', `Audio-Datei ausgewählt: ${file.name}. Offline-Transkription ist nicht verfügbar. Bitte nutzen Sie die Live-Spracherkennung oder füllen Sie den Fragebogen manuell aus.`);
+                    }
+                });
+            }
+            // Zeige den Startabschnitt im Chat
+            appendChatMessage('system', (T(`${QUESTIONNAIRE_STRUCTURE[0].id}_title`) || QUESTIONNAIRE_STRUCTURE[0].title));
+        });
+    </script>
+</body>
+</html>
